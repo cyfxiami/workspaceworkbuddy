@@ -1,0 +1,6390 @@
+﻿    // 登录处理函数
+    function handleLogin() {
+        alert('登录功能即将上线，敬请期待！');
+    }
+    
+    // 打开数字人聊天界面
+    function handleTopAvatarClick(avatarType) {
+        if (getPanelKey() === 'org') {
+            selectOrgAgent(avatarType);
+            return;
+        }
+        if (getPanelKey() === 'support') {
+            selectSupportAgent(avatarType);
+            return;
+        }
+        openAvatarChat(avatarType);
+    }
+
+    function openAvatarChat(avatarType) {
+        const avatarNames = {
+            'ib': '投行业务助理',
+            'asset': '资管业务助理',
+            'retail': '零售业务助理',
+            'invest': '投资业务助理',
+            'sales': '销交业务助理',
+            'institution': '机构业务助理',
+            'research': '研究业务助理',
+            'credit': '信用业务助理',
+            'verify': '交叉验证助理'
+        };
+        const avatarName = avatarNames[avatarType] || '业务助理';
+        
+        // 如果是资管业务助理，打开资管业务支持中心对话页面（徽商银行）
+        if (avatarType === 'asset') {
+            openAssetSupportDetail('徽商银行');
+            return;
+        }
+        
+        alert(`正在连接${avatarName}...\n\n数字人对话功能即将上线！`);
+    }
+    
+    // 打开业绩看板详情（客户总资产/总收入）
+    function openDashboardDetail(type) {
+        // 复用toggleCustomerDetails函数打开对应的二级页面
+        toggleCustomerDetails(type);
+    }
+    
+    // 打开客户详情二级页面
+    function toggleCustomerDetails(type) {
+        const detailPage = document.getElementById('detail-page');
+        const assetsDetails = document.getElementById('assets-details-page');
+        const revenueDetails = document.getElementById('revenue-details-page');
+        const costDetails = document.getElementById('cost-details-page');
+        const detailTitle = document.getElementById('detail-page-title');
+        
+        // 隐藏所有详情
+        assetsDetails.style.display = 'none';
+        revenueDetails.style.display = 'none';
+        costDetails.style.display = 'none';
+        
+        // 根据类型显示对应详情
+        if (type === 'assets') {
+            detailTitle.textContent = '客户总资产及明细';
+            assetsDetails.style.display = 'block';
+        } else if (type === 'revenue') {
+            detailTitle.textContent = '客户带来的总收入及明细';
+            revenueDetails.style.display = 'block';
+        } else if (type === 'cost') {
+            detailTitle.textContent = '维护客户的总成本及明细';
+            costDetails.style.display = 'block';
+        }
+        
+        // 显示二级页面
+        detailPage.style.display = 'block';
+        document.body.style.overflow = 'hidden'; // 禁止背景滚动
+    }
+    
+    // 关闭二级页面
+    function closeDetailPage() {
+        const detailPage = document.getElementById('detail-page');
+        detailPage.style.display = 'none';
+        document.body.style.overflow = ''; // 恢复背景滚动
+    }
+    
+    // 计算绩效奖金
+    function calculateBonus() {
+        const startDate = getPanelEl('start-date')?.value;
+        const endDate = getPanelEl('end-date')?.value;
+        
+        if (!startDate || !endDate) {
+            alert('请选择开始和结束日期');
+            return;
+        }
+        
+        if (new Date(startDate) > new Date(endDate)) {
+            alert('开始日期不能晚于结束日期');
+            return;
+        }
+        
+        // 模拟计算逻辑（实际应用中应该从后端获取数据）
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        
+        // 根据选择的时间段计算收入（这里使用示例数据）
+        let revenue = 30; // 基础收入30万元
+        
+        // 如果是2026年1月，显示示例数据
+        if (startDate === '2026-01-01' && endDate === '2026-01-31') {
+            revenue = 30;
+        } else {
+            // 根据天数比例计算（示例算法）
+            revenue = Math.round((daysDiff / 31) * 30 * 100) / 100;
+        }
+        
+        const bonusRate = 20; // 20%提取比例（后台参数，不显示）
+        const bonusAmount = Math.round(revenue * (bonusRate / 100) * 100) / 100;
+        
+        // 更新显示 - 只显示收入和奖金，不显示提取比例
+        getPanelEl('customer-revenue').textContent = revenue + '万元';
+        getPanelEl('bonus-amount').textContent = bonusAmount + '万元';
+        
+        // 添加动画效果
+        const resultDiv = getPanelEl('calculation-result');
+        resultDiv.style.opacity = '0.5';
+        setTimeout(() => {
+            resultDiv.style.opacity = '1';
+        }, 200);
+    }
+    
+    // 按时间点查询客户总资产
+    function queryAssetsByDate() {
+        const date = document.getElementById('assets-date').value;
+        if (!date) {
+            alert('请选择查询日期');
+            return;
+        }
+        
+        // 格式化日期显示
+        const dateObj = new Date(date);
+        const formattedDate = dateObj.getFullYear() + '年' + (dateObj.getMonth() + 1) + '月' + dateObj.getDate() + '日';
+        
+        // 更新时间显示
+        const displayElements = document.querySelectorAll('#assets-details-page .current-time-display');
+        displayElements.forEach(el => {
+            el.textContent = '当前显示：' + formattedDate + ' 数据';
+        });
+        
+        // 模拟数据变化（实际应用中应该从后端获取数据）
+        // 这里添加动画效果
+        const summaryCards = document.querySelectorAll('#assets-details-page .summary-card');
+        summaryCards.forEach(card => {
+            card.style.opacity = '0.5';
+            setTimeout(() => {
+                card.style.opacity = '1';
+            }, 200);
+        });
+        
+        // 提示用户
+        alert('已更新至 ' + formattedDate + ' 的资产数据');
+    }
+    
+    // 按时间段查询客户收入
+    function queryRevenueByRange() {
+        const startDate = document.getElementById('revenue-start-date').value;
+        const endDate = document.getElementById('revenue-end-date').value;
+        
+        if (!startDate || !endDate) {
+            alert('请选择开始和结束日期');
+            return;
+        }
+        
+        if (new Date(startDate) > new Date(endDate)) {
+            alert('开始日期不能晚于结束日期');
+            return;
+        }
+        
+        // 格式化日期显示
+        const startObj = new Date(startDate);
+        const endObj = new Date(endDate);
+        const formattedStart = startObj.getFullYear() + '年' + (startObj.getMonth() + 1) + '月' + startObj.getDate() + '日';
+        const formattedEnd = endObj.getFullYear() + '年' + (endObj.getMonth() + 1) + '月' + endObj.getDate() + '日';
+        
+        // 更新时间显示
+        const displayElements = document.querySelectorAll('#revenue-details-page .current-time-display');
+        displayElements.forEach(el => {
+            el.textContent = '当前显示：' + formattedStart + ' - ' + formattedEnd + ' 数据';
+        });
+        
+        // 模拟数据变化动画
+        const summaryCards = document.querySelectorAll('#revenue-details-page .summary-card');
+        summaryCards.forEach(card => {
+            card.style.opacity = '0.5';
+            setTimeout(() => {
+                card.style.opacity = '1';
+            }, 200);
+        });
+        
+        // 提示用户
+        alert('已更新 ' + formattedStart + ' 至 ' + formattedEnd + ' 的收入数据');
+    }
+    
+    // 按时间段查询客户成本
+    function queryCostByRange() {
+        const startDate = document.getElementById('cost-start-date').value;
+        const endDate = document.getElementById('cost-end-date').value;
+        
+        if (!startDate || !endDate) {
+            alert('请选择开始和结束日期');
+            return;
+        }
+        
+        if (new Date(startDate) > new Date(endDate)) {
+            alert('开始日期不能晚于结束日期');
+            return;
+        }
+        
+        // 格式化日期显示
+        const startObj = new Date(startDate);
+        const endObj = new Date(endDate);
+        const formattedStart = startObj.getFullYear() + '年' + (startObj.getMonth() + 1) + '月' + startObj.getDate() + '日';
+        const formattedEnd = endObj.getFullYear() + '年' + (endObj.getMonth() + 1) + '月' + endObj.getDate() + '日';
+        
+        // 更新时间显示
+        const displayElements = document.querySelectorAll('#cost-details-page .current-time-display');
+        displayElements.forEach(el => {
+            el.textContent = '当前显示：' + formattedStart + ' - ' + formattedEnd + ' 数据';
+        });
+        
+        // 模拟数据变化动画
+        const summaryCards = document.querySelectorAll('#cost-details-page .summary-card');
+        summaryCards.forEach(card => {
+            card.style.opacity = '0.5';
+            setTimeout(() => {
+                card.style.opacity = '1';
+            }, 200);
+        });
+        
+        // 提示用户
+        alert('已更新 ' + formattedStart + ' 至 ' + formattedEnd + ' 的成本数据');
+    }
+    
+    // ========== 工作台 Tab 切换 ==========
+    const workbenchPanelState = {
+        support: { chatModeActive: false, currentCardIndex: 0, miniAvatarsInitialized: false, currentSupportAgent: null, currentSupportInputAgent: 'daily-task', currentTaskAgentId: null, currentTask: null, currentTodoStep: null, supportWelcomeShown: false, currentSessionId: null, supportChatMessages: [] },
+        org: { chatModeActive: true, currentCardIndex: 0, miniAvatarsInitialized: false, currentOrgAgent: null },
+        employee: { chatModeActive: false, currentCardIndex: 0, miniAvatarsInitialized: false, currentSessionId: null, chatMessages: [], employeeModelGuide: null }
+    };
+
+    const supportCategoryAgentTasks = {
+        organizer: {
+            ib: [
+                {
+                    id: 'ib-1',
+                    title: '机构客户"测试科技有限公司"开户绿色通道申请待审批',
+                    description: '机构客户"测试科技有限公司"开户绿色通道申请待审批，需协调运营部加急处理。',
+                    completedSteps: ['开户申请已提交至运营系统', '客户资料初审已完成', '已标记绿色通道加急标签'],
+                    nextSteps: ['需协调运营部加急处理']
+                },
+                {
+                    id: 'ib-2',
+                    title: '客户张三（账户资产待核验）拟参与"演示一号"股权投资项目',
+                    description: '客户张三（账户资产待核验）拟参与"演示一号"股权投资项目，需协助完成投资者准入认定（金融资产≥300万元）。',
+                    completedSteps: ['客户表达参与意向', '初步核验资产与风险测评', '收集投资者准入材料清单（资产证明、收入证明）'],
+                    nextSteps: ['需协助完成投资者准入认定（金融资产≥300万元）']
+                }
+            ]
+        },
+        investment_manager: {
+            asset: [
+                {
+                    id: 'asset-1',
+                    title: '客户李四"测试一号"私募基金双录视频待合规审核',
+                    description: '客户李四"测试一号"私募基金双录视频待合规审核，需协助推进产品签约流程。',
+                    completedSteps: ['客户已完成风险揭示书签署', '双录视频已上传系统', '产品合同草案已生成'],
+                    nextSteps: ['需协助推进产品签约流程']
+                }
+            ]
+        },
+        account_service: {
+            retail: [
+                {
+                    id: 'retail-1',
+                    title: '团队定投缺口8户且客户周八（C1持有R4）待复核',
+                    description: '团队定投缺口8户；客户周八触发规则「C1不得持有R4产品」，待督导客户经理复核。',
+                    completedSteps: ['定投任务完成率已统计（22/30户）', 'C1持有R4客户已标记', '客户经理名单已梳理'],
+                    nextSteps: ['需督导客户经理并协调资源']
+                }
+            ]
+        }
+    };
+
+    const supportAgents = [
+        {
+            id: 'ib',
+            name: '投行业务助理',
+            image: 'images/Avatar1.png',
+            tasks: []
+        },
+        {
+            id: 'asset',
+            name: '资管业务助理',
+            image: 'images/Avatar2.png',
+            tasks: []
+        },
+        {
+            id: 'retail',
+            name: '零售业务助理',
+            image: 'images/Avatar3.png',
+            tasks: [
+                {
+                    id: 'retail-1',
+                    title: '协和医院赵宇主任开户跟进',
+                    description: '赵宇主任已提交开户资料，并提出调降两融费率的申请，今日需联系确认。',
+                    completedSteps: ['收到并审核开户资料', '完成适当性评估', '梳理两融费率政策依据'],
+                    nextSteps: ['今日与赵主任电话沟通确认', '准备费率调整申请方案', '跟进账户开通进度']
+                },
+                {
+                    id: 'retail-2',
+                    title: '账户资产500万以上客户资产配置',
+                    description: '为账户资产500万以上的客户制定季度资产配置建议，需结合持仓结构与风险测评结果。',
+                    completedSteps: ['更新客户风险测评结果', '梳理当前持仓结构', '完成大类资产研判'],
+                    nextSteps: ['出具资产配置建议书', '预约客户面谈讲解', '跟进调仓执行方案']
+                },
+                {
+                    id: 'retail-3',
+                    title: '两融业务费率策略优化',
+                    description: '针对活跃两融客户群体，分析费率策略与客户留存关系。',
+                    completedSteps: ['提取近三月两融客户数据', '完成费率敏感度分析', '对标同业费率水平'],
+                    nextSteps: ['制定差异化费率方案', '提交审批并配置系统', '通知客户经理执行口径']
+                }
+            ]
+        },
+        {
+            id: 'invest',
+            name: '投资业务助理',
+            image: 'images/Avatar4.png',
+            tasks: [
+                {
+                    id: 'invest-1',
+                    title: '中银金租新能源研究服务',
+                    description: '中银金租有新能源方面的研究服务需求，需协调研究所研究员路演。',
+                    completedSteps: ['确认客户研究需求范围', '联系新能源领域首席研究员', '初步拟定路演提纲'],
+                    nextSteps: ['本周安排研究员路演', '准备新能源行业对比分析材料', '路演后跟进客户反馈']
+                },
+                {
+                    id: 'invest-2',
+                    title: '某行业Research Memo',
+                    description: '撰写半导体行业Research Memo，覆盖投资逻辑与核心标的筛选。',
+                    completedSteps: ['完成行业产业链梳理', '收集核心公司财务数据', '整理政策文件与可验证行业指标'],
+                    nextSteps: ['撰写投资逻辑与风险提示', '完成核心标的对比表', '提交内部评审']
+                },
+                {
+                    id: 'invest-3',
+                    title: '投资组合风险评估',
+                    description: '对现有投资组合进行季度风险评估与压力测试。',
+                    completedSteps: ['更新持仓与市场数据', '完成VaR测算', '识别集中度风险点'],
+                    nextSteps: ['撰写风险评估报告', '提出调仓建议', '组织投研讨论会']
+                }
+            ]
+        },
+        {
+            id: 'sales',
+            name: '销交业务助理',
+            image: 'images/Avatar5.png',
+            tasks: [
+                {
+                    id: 'sales-1',
+                    title: '机构客户债券销售路演',
+                    description: '某省城投债发行项目，需向机构客户开展销售路演。',
+                    completedSteps: ['完成路演材料初稿', '确定目标客户名单', '预约首轮路演时间'],
+                    nextSteps: ['完善路演PPT与FAQ', '开展机构客户路演', '汇总意向认购反馈']
+                },
+                {
+                    id: 'sales-2',
+                    title: '大客户交易服务方案',
+                    description: '为战略机构客户制定专属交易服务方案，提升客户粘性。',
+                    completedSteps: ['梳理客户历史交易特征', '访谈客户交易需求', '对标同业服务方案'],
+                    nextSteps: ['撰写专属服务方案', '协调交易台资源支持', '提交客户确认']
+                },
+                {
+                    id: 'sales-3',
+                    title: '市场行情策略简报',
+                    description: '整理本周债券市场行情与交易策略要点，供销售团队使用。',
+                    completedSteps: ['收集宏观与政策动态', '整理收益率曲线变化', '汇总热门品种成交情况'],
+                    nextSteps: ['撰写策略简报', '销售晨会宣讲', '更新客户推送话术']
+                }
+            ]
+        },
+        {
+            id: 'institution',
+            name: '机构业务助理',
+            image: 'images/Avatar6.png',
+            tasks: [
+                {
+                    id: 'institution-1',
+                    title: '海南农商行机构准入',
+                    description: '海南农商行机构准入事项已与黄亮副行长沟通，建议本周安排与金融市场部赵翔鹏总经理面谈。',
+                    completedSteps: ['完成准入申请材料准备', '与黄亮副行长初步沟通', '梳理合作业务方向'],
+                    nextSteps: ['本周安排赵翔鹏总经理面谈', '准备路演与合作方案材料', '跟进准入审批进度']
+                },
+                {
+                    id: 'institution-2',
+                    title: '机构客户年度服务计划',
+                    description: '为重点机构客户制定年度服务计划，覆盖研究、交易、产品等多维度。',
+                    completedSteps: ['完成客户分析记录更新', '梳理年度合作回顾', '收集各部门服务资源'],
+                    nextSteps: ['撰写年度服务计划书', '预约客户高层拜访', '确定季度服务里程碑']
+                },
+                {
+                    id: 'institution-3',
+                    title: '跨境业务合作合规要点',
+                    description: '推进与境外机构跨境业务合作，需梳理合规要点与审批流程。',
+                    completedSteps: ['研读最新跨境监管规定', '梳理现有合作模式', '识别合规风险点'],
+                    nextSteps: ['形成合规要点清单', '提交合规部门预审', '更新合作协议模板']
+                }
+            ]
+        },
+        {
+            id: 'research',
+            name: '研究业务助理',
+            image: 'images/Avatar8.png',
+            tasks: []
+        },
+        {
+            id: 'credit',
+            name: '信用业务助理',
+            image: 'images/Avatar9.png',
+            tasks: []
+        },
+        {
+            id: 'verify',
+            name: '交叉验证助理',
+            image: 'images/Avatar7.png',
+            tasks: [
+                {
+                    id: 'verify-1',
+                    title: 'IPO尽调数据交叉验证',
+                    description: '对某IPO项目尽调报告中的财务数据进行多来源交叉验证。',
+                    completedSteps: ['收集招股书与审计报告数据', '比对工商与公开披露信息', '标记初步差异项'],
+                    nextSteps: ['逐项核实差异原因', '撰写交叉验证报告', '反馈项目组补充说明']
+                },
+                {
+                    id: 'verify-2',
+                    title: '研究结论关键假设复核',
+                    description: '复核新能源行业对比分析报告中的关键假设与结论逻辑。',
+                    completedSteps: ['提取报告核心结论与假设', '核对数据来源与计算过程', '标注待确认假设项'],
+                    nextSteps: ['与研究员沟通确认', '更新复核意见', '归档复核工作底稿']
+                },
+                {
+                    id: 'verify-3',
+                    title: '合规要件完整性核验',
+                    description: '核验某资管产品发行前的合规要件是否完整齐备。',
+                    completedSteps: ['梳理合规要件清单', '逐项核对已提交材料', '记录缺失与待补项'],
+                    nextSteps: ['督促相关部门补齐材料', '完成最终核验确认', '出具合规核验意见']
+                }
+            ]
+        }
+    ];
+
+    const supportBadgeAgentIds = ['ib', 'asset', 'retail'];
+
+    const supportAgentCategoryMap = {
+        ib: 'organizer',
+        asset: 'investment_manager',
+        retail: 'account_service',
+        invest: 'investment_manager',
+        sales: 'account_service',
+        institution: 'organizer',
+        research: 'investment_manager',
+        credit: 'account_service',
+        verify: 'product_design'
+    };
+
+    const supportTopCategories = [
+        { id: 'organizer', name: '组织者助理', desc: '统筹项目资源与进度', icon: 'users', badgeAgentIds: ['ib'] },
+        { id: 'investment_manager', name: '投资经理助理', desc: '管理投资组合与收益', icon: 'trending-up', badgeAgentIds: ['asset'] },
+        { id: 'account_service', name: '账户服务助理', desc: '处理账户相关事务', icon: 'shield', badgeAgentIds: ['retail'] },
+        { id: 'product_design', name: '产品设计助理', desc: '设计金融产品方案', icon: 'layers', badgeAgentIds: [] }
+    ];
+
+    let currentSupportCategoryId = null;
+
+    const orgAgents = [
+        {
+            id: 'ib',
+            name: '投行业务助理',
+            image: 'images/Avatar1.png',
+            prompts: [
+                '帮我梳理IPO项目尽调清单',
+                '生成招股书核心章节写作框架',
+                '对比同行业上市公司资产负债与现金流',
+                '整理投行业务合规审查要点',
+                '撰写IPO路演PPT核心内容提纲',
+                '梳理定增项目关键审批流程',
+                '对比近期同行业IPO定价策略'
+            ],
+            getReply: (msg) => `您好，我是投行业务助理。关于「${msg}」，我将从项目尽调、发行方案、合规审查等维度为您提供支持。请补充具体项目名称或客户信息，以便进一步分析。`
+        },
+        {
+            id: 'asset',
+            name: '资管业务助理',
+            image: 'images/Avatar2.png',
+            prompts: [
+                '设计一款固收+资管产品方案',
+                '分析客户风险测评结果与产品匹配',
+                '整理资管合同关键条款要点',
+                '生成产品说明书核心内容框架',
+                '对比同类资管产品收益与风险特征',
+                '梳理私募产品投资者准入认定流程（金融资产≥300万元）',
+                '撰写资管产品路演材料提纲'
+            ],
+            getReply: (msg) => `您好，我是资管业务助理。针对「${msg}」，我可以协助您完成产品设计、风险匹配与合规要点梳理。请告诉我目标客户类型与产品方向。`
+        },
+        {
+            id: 'retail',
+            name: '零售业务助理',
+            image: 'images/Avatar3.png',
+            prompts: [
+                '为账户资产500万以上的客户制定资产配置建议',
+                '分析两融业务客户需求与费率策略',
+                '生成客户拜访谈话要点',
+                '整理零售客户投诉处理流程',
+                '梳理新开客户开户与适当性匹配流程',
+                '撰写理财产品营销话术要点',
+                '分析近期活跃客户交易行为特征'
+            ],
+            getReply: (msg) => `您好，我是零售业务助理。关于「${msg}」，我将结合客户分析结果与业务规则为您提供建议。请补充客户基本情况。`
+        },
+        {
+            id: 'invest',
+            name: '投资业务助理',
+            image: 'images/Avatar4.png',
+            prompts: [
+                '分析某行业投资逻辑与核心标的',
+                '生成Research Memo研究框架',
+                '对比同赛道竞品财务指标',
+                '梳理投资组合风险评估要点',
+                '撰写行业对比分析框架提纲',
+                '分析宏观政策对某板块的影响',
+                '整理投研会议纪要关键结论'
+            ],
+            getReply: (msg) => `您好，我是投资业务助理。针对「${msg}」，我将从对比对象、比较维度、资产负债与现金流等方面协助您。请提供具体行业或标的名称。`
+        },
+        {
+            id: 'sales',
+            name: '销交业务助理',
+            image: 'images/Avatar5.png',
+            prompts: [
+                '整理机构客户交易需求对接流程',
+                '生成债券销售路演材料提纲',
+                '分析市场行情与交易策略要点',
+                '梳理大客户交易服务方案',
+                '撰写固收产品推介核心卖点',
+                '对比同类债券发行利率水平',
+                '整理机构客户分级服务体系'
+            ],
+            getReply: (msg) => `您好，我是销交业务助理。关于「${msg}」，我可以协助整理对接流程、路演材料与交易策略。请说明具体业务场景。`
+        },
+        {
+            id: 'institution',
+            name: '机构业务助理',
+            image: 'images/Avatar6.png',
+            prompts: [
+                '准备机构客户准入路演材料',
+                '梳理机构业务合作方案框架',
+                '分析机构客户分层与业务机会',
+                '生成机构拜访会议纪要模板',
+                '撰写机构客户年度服务计划提纲',
+                '整理跨境业务合作合规要点',
+                '分析重点机构客户业务渗透空间'
+            ],
+            getReply: (msg) => `您好，我是机构业务助理。针对「${msg}」，我将协助您完成准入材料、合作方案与客户分析。请提供机构客户名称。`
+        },
+        {
+            id: 'research',
+            name: '研究业务助理',
+            image: 'images/Avatar8.png',
+            prompts: [
+                '撰写行业对比分析框架（对比对象+比较维度）',
+                '整理宏观策略周报核心观点',
+                '分析某上市公司资产负债、现金流与资产配置',
+                '梳理研究所路演材料要点',
+                '对比同行业竞品财务与经营指标',
+                '生成Research Memo研究提纲',
+                '汇总最新政策对行业影响分析'
+            ],
+            getReply: (msg) => `您好，我是研究业务助理。关于「${msg}」，我将从资产负债、现金流、资产配置及对比维度等方面协助您。请提供具体研究主题或标的。`
+        },
+        {
+            id: 'credit',
+            name: '信用业务助理',
+            image: 'images/Avatar9.png',
+            prompts: [
+                '分析客户信用评级与授信方案',
+                '梳理两融业务风险监控要点',
+                '生成股票质押项目尽调清单',
+                '整理信用业务合规审查流程',
+                '评估客户担保品折算率调整建议',
+                '撰写信用风险预警报告框架',
+                '对比同业信用业务产品方案'
+            ],
+            getReply: (msg) => `您好，我是信用业务助理。针对「${msg}」，我将从授信评估、风险监控、合规审查等维度为您提供支持。请补充客户或项目基本情况。`
+        },
+        {
+            id: 'verify',
+            name: '交叉验证助理',
+            image: 'images/Avatar7.png',
+            prompts: [
+                '交叉验证财务数据一致性',
+                '复核研究结论关键假设',
+                '核验合规要件完整性',
+                '比对多来源信息差异点',
+                '梳理尽调报告逻辑漏洞检查清单',
+                '验证定价模型关键参数与公开数据一致性',
+                '比对招股书与公开披露信息差异'
+            ],
+            getReply: (msg) => `您好，我是交叉验证助理。关于「${msg}」，我将从数据一致性、结论复核、合规核验等维度为您交叉验证。请提供需验证的材料或数据来源。`
+        }
+    ];
+
+    const orgDefaultPrompts = [
+        '请示事项：帮我汇总本周待审批请示事项，并跟踪流转进度',
+        '经营看板：展示各业务条线核心经营指标、收入成本与同比环比趋势',
+        '风险提示：汇总当前合规、操作与市场等各类风险提示清单',
+        '队伍状况：查看各部门人员配置、出勤情况与团队绩效概况',
+        '应急组织：展示应急预案、应急联络机制与当前响应状态'
+    ];
+
+    function getOrgDefaultPromptReply(message) {
+        const replies = {
+            '请示事项：帮我汇总本周待审批请示事项，并跟踪流转进度': '您好，这里是组织协同管理平台。我已收到您的请示事项查询需求，可为您汇总本周待审批事项清单、跟踪各节点流转进度，并提醒即将到期的关键审批。请说明具体请示类型、涉及部门或优先级，我将为您整理明细。',
+            '经营看板：展示各业务条线核心经营指标、收入成本与同比环比趋势': '您好，这里是组织协同管理平台。我可以为您展示投行、资管、经纪等各业务条线的核心经营指标，包括收入、成本、利润及同比环比变化趋势。请告诉我您关注的业务条线、统计口径或时间范围（如本月、本季度）。',
+            '风险提示：汇总当前合规、操作与市场等各类风险提示清单': '您好，这里是组织协同管理平台。我可以汇总当前需关注的合规风险、操作风险与市场风险预警信息，并按优先级分类展示。请说明您需要查看的风险类别（如合规、信用、流动性等）或关注范围。',
+            '队伍状况：查看各部门人员配置、出勤情况与团队绩效概况': '您好，这里是组织协同管理平台。我可以提供各部门人员编制、在岗出勤、梯队结构及绩效达成概况，帮助您掌握队伍运行状态。请告诉我您需要了解的部门、团队或管理层级范围。',
+            '应急组织：展示应急预案、应急联络机制与当前响应状态': '您好，这里是组织协同管理平台。我可以展示现有应急预案、各层级应急联络机制及当前响应状态，协助您快速掌握应急组织运行情况。请说明需要查看的应急场景或事件类型（如系统故障、舆情、业务中断等）。'
+        };
+        return replies[message] || `您好，这里是组织协同管理平台。关于「${message}」，我将从组织协同视角为您提供支持。您也可以先选择上方业务助理获得更专业的协助。`;
+    }
+
+    function getActiveWorkbenchPanel() {
+        return document.querySelector('.workbench-panel.active');
+    }
+
+    const WORKBENCH_ROLE_STORAGE_KEY = 'workbenchRole';
+    const WORKBENCH_LOGIN_STORAGE_KEY = 'workbenchLoggedIn';
+    const SUPPORT_SESSIONS_KEY = 'workbench-sessions-support-v1';
+    let currentWorkbenchRole = null;
+    let loginAccountMode = 'oa';
+    let workbenchInitialized = false;
+
+    const loginAccountModeConfig = {
+        oa: {
+            label: 'OA账号',
+            placeholder: '请输入OA账号',
+            toggleText: '使用用户名登录',
+            emptyHint: '请输入OA账号和密码'
+        },
+        username: {
+            label: '用户名',
+            placeholder: '请输入用户名',
+            toggleText: '使用OA账号登录',
+            emptyHint: '请输入用户名和密码'
+        }
+    };
+
+    function applyLoginAccountMode(mode, options = {}) {
+        const config = loginAccountModeConfig[mode] || loginAccountModeConfig.oa;
+        loginAccountMode = mode;
+
+        const labelEl = document.getElementById('login-account-label');
+        const usernameInput = document.getElementById('login-username');
+        const passwordInput = document.getElementById('login-password');
+        const toggleBtn = document.getElementById('login-mode-toggle-btn');
+        const errorEl = document.getElementById('login-error');
+
+        if (labelEl) labelEl.textContent = config.label;
+        if (usernameInput) {
+            usernameInput.placeholder = config.placeholder;
+            if (options.clearInputs) {
+                usernameInput.value = '';
+            } else if (mode === 'oa' && !usernameInput.value.trim()) {
+                usernameInput.value = 'demo';
+            }
+        }
+        if (passwordInput && options.clearInputs) {
+            passwordInput.value = '';
+        } else if (passwordInput && mode === 'oa' && !passwordInput.value) {
+            passwordInput.value = '123456';
+        }
+        if (toggleBtn) toggleBtn.textContent = config.toggleText;
+        if (errorEl) errorEl.hidden = true;
+
+        if (options.focusInput && usernameInput) {
+            usernameInput.focus();
+        }
+    }
+
+    function toggleLoginAccountMode() {
+        const nextMode = loginAccountMode === 'oa' ? 'username' : 'oa';
+        applyLoginAccountMode(nextMode, { clearInputs: true, focusInput: true });
+        if (nextMode === 'oa') {
+            const usernameInput = document.getElementById('login-username');
+            const passwordInput = document.getElementById('login-password');
+            if (usernameInput) usernameInput.value = 'demo';
+            if (passwordInput) passwordInput.value = '123456';
+        }
+    }
+
+    function resetLoginFormState() {
+        applyLoginAccountMode('oa', { clearInputs: false });
+        const usernameInput = document.getElementById('login-username');
+        const passwordInput = document.getElementById('login-password');
+        if (usernameInput) usernameInput.value = 'demo';
+        if (passwordInput) passwordInput.value = '123456';
+    }
+
+    function getStoredWorkbenchRole() {
+        const role = sessionStorage.getItem(WORKBENCH_ROLE_STORAGE_KEY);
+        return role === 'support' ? 'support' : 'employee';
+    }
+
+    function isWorkbenchLoggedIn() {
+        return sessionStorage.getItem(WORKBENCH_LOGIN_STORAGE_KEY) === 'true';
+    }
+
+    function getWorkbenchBrandTitle(role) {
+        const resolvedRole = role || currentWorkbenchRole || 'employee';
+        return resolvedRole === 'support' ? '业务支持中心工作台' : '业务团队工作台';
+    }
+
+    function getWorkbenchUserLabel(role) {
+        const resolvedRole = role || currentWorkbenchRole || 'employee';
+        return resolvedRole === 'support' ? '业务支持人员' : '业务团队人员';
+    }
+
+    function updateNavTitleForRole(role) {
+        const resolvedRole = role || currentWorkbenchRole || 'employee';
+        const brandTitle = getWorkbenchBrandTitle(resolvedRole);
+        const userLabel = getWorkbenchUserLabel(resolvedRole);
+        const sidebarTitleEl = document.getElementById('sidebar-title');
+        const heroTitleEl = document.getElementById('center-hero-title');
+        const sidebarUserNameEl = document.getElementById('sidebar-user-name');
+        if (sidebarTitleEl) sidebarTitleEl.textContent = brandTitle;
+        if (sidebarUserNameEl) sidebarUserNameEl.textContent = userLabel;
+        if (heroTitleEl && resolvedRole === 'employee') heroTitleEl.textContent = brandTitle;
+
+        const supportHeroTitle = document.querySelector('#workbench-panel-support #center-hero-title-support');
+        const supportHeroSub = document.querySelector('#workbench-panel-support .center-hero-sub');
+        if (supportHeroTitle && resolvedRole === 'support') {
+            supportHeroTitle.textContent = brandTitle;
+        }
+        if (supportHeroSub && resolvedRole === 'support') {
+            supportHeroSub.textContent = '你的业务超能力';
+        }
+
+        const titleEl = document.getElementById('nav-page-title');
+        const brandEl = titleEl?.closest('.nav-brand');
+        if (!titleEl) return;
+
+        if (resolvedRole === 'support') {
+            titleEl.classList.add('nav-title-multiline');
+            brandEl?.classList.add('nav-brand-support-title');
+            titleEl.innerHTML = '<span class="nav-title-line-main">业务支持中心</span><span class="nav-title-line-sub">工作台</span>';
+        } else {
+            titleEl.classList.add('nav-title-multiline');
+            brandEl?.classList.remove('nav-brand-support-title');
+            titleEl.innerHTML = '<span class="nav-title-line-main">业务团队</span><span class="nav-title-line-sub">工作台</span>';
+        }
+    }
+
+    function showLoginPage() {
+        document.getElementById('login-page')?.removeAttribute('hidden');
+        document.getElementById('app-workbench')?.setAttribute('hidden', '');
+        document.body.classList.remove('support-tab-active', 'org-tab-active', 'wb-workbench-active', 'employee-chat-mode');
+        document.body.style.overflow = '';
+        resetLoginFormState();
+    }
+
+    function logoutWorkbench() {
+        const lastRole = currentWorkbenchRole || getStoredWorkbenchRole();
+        try {
+            sessionStorage.removeItem(WORKBENCH_LOGIN_STORAGE_KEY);
+            sessionStorage.removeItem(WORKBENCH_ROLE_STORAGE_KEY);
+            currentWorkbenchRole = null;
+
+            hideSupportAvatarsNav();
+            restoreSupportSecondaryAvatarFullNames();
+            setSupportSecondaryNavExpanded(false);
+
+            const supportPanel = document.getElementById('workbench-panel-support');
+            if (supportPanel) {
+                const supportState = getPanelState(supportPanel);
+                supportState.currentSessionId = null;
+                supportState.supportChatMessages = [];
+                supportState.supportWelcomeShown = false;
+            }
+            highlightSupportSessionInSidebar(null);
+
+            if (typeof window.resetEmployeeChat === 'function') {
+                window.resetEmployeeChat();
+            }
+            if (typeof window.resetSupportChatView === 'function') {
+                window.resetSupportChatView();
+            }
+            if (window.ContextPanel?.reset) {
+                window.ContextPanel.reset();
+            }
+            if (window.AppShell?.setCurrentSessionId) {
+                window.AppShell.setCurrentSessionId(null);
+            }
+            if (window.AppShell?.returnToMainSessionView) {
+                window.AppShell.returnToMainSessionView();
+            }
+
+            document.body.classList.remove('support-tab-active', 'org-tab-active', 'employee-chat-mode');
+            document.body.style.overflow = '';
+
+            const loginError = document.getElementById('login-error');
+            if (loginError) loginError.hidden = true;
+            const roleInput = document.querySelector(`input[name="workbench-role"][value="${lastRole}"]`)
+                || document.querySelector('input[name="workbench-role"][value="employee"]');
+            if (roleInput) roleInput.checked = true;
+        } catch (error) {
+            console.error('退出登录清理失败', error);
+        } finally {
+            if (typeof window.showLoginPage === 'function') {
+                window.showLoginPage();
+            } else {
+                showLoginPage();
+            }
+        }
+    }
+
+    window.logoutWorkbench = logoutWorkbench;
+    window.showLoginPage = showLoginPage;
+
+    function enterWorkbench(role) {
+        const resolvedRole = role === 'support' ? 'support' : 'employee';
+        currentWorkbenchRole = resolvedRole;
+        sessionStorage.setItem(WORKBENCH_LOGIN_STORAGE_KEY, 'true');
+        sessionStorage.setItem(WORKBENCH_ROLE_STORAGE_KEY, resolvedRole);
+
+        document.getElementById('login-page')?.setAttribute('hidden', '');
+        document.getElementById('app-workbench')?.removeAttribute('hidden');
+        document.body.classList.add('wb-workbench-active');
+        updateNavTitleForRole(resolvedRole);
+
+        if (!workbenchInitialized) {
+            initWorkbenchTabs();
+            initEmployeeDailyTasks();
+            workbenchInitialized = true;
+        }
+        switchWorkbenchTab(resolvedRole);
+    }
+
+    function handleLoginSubmit(event) {
+        event.preventDefault();
+        const errorEl = document.getElementById('login-error');
+        const username = document.getElementById('login-username')?.value.trim();
+        const password = document.getElementById('login-password')?.value.trim();
+        const roleInput = document.querySelector('input[name="workbench-role"]:checked');
+        const emptyHint = loginAccountModeConfig[loginAccountMode]?.emptyHint || '请输入账号和密码';
+
+        if (!username || !password) {
+            if (errorEl) {
+                errorEl.textContent = emptyHint;
+                errorEl.hidden = false;
+            }
+            return;
+        }
+        if (!roleInput) {
+            if (errorEl) {
+                errorEl.textContent = '请选择登录角色';
+                errorEl.hidden = false;
+            }
+            return;
+        }
+        if (errorEl) errorEl.hidden = true;
+        enterWorkbench(roleInput.value);
+    }
+
+    function getPanelKey(panel) {
+        if (panel?.dataset?.panel) return panel.dataset.panel;
+        const activePanel = getActiveWorkbenchPanel();
+        if (activePanel?.dataset?.panel) return activePanel.dataset.panel;
+        return currentWorkbenchRole || getStoredWorkbenchRole();
+    }
+
+    function getPanelState(panel) {
+        return workbenchPanelState[getPanelKey(panel)];
+    }
+
+    function getPanelEl(id, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (!p) return document.getElementById(id);
+        const key = getPanelKey(p);
+        if (key === 'employee') {
+            return p.querySelector('#' + id) || document.getElementById(id);
+        }
+        return p.querySelector('#' + id + '-' + key);
+    }
+
+    function getScrollableAncestor(element) {
+        let parent = element?.parentElement;
+        const scrollables = [];
+        while (parent) {
+            const style = window.getComputedStyle(parent);
+            if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+                scrollables.push(parent);
+            }
+            parent = parent.parentElement;
+        }
+
+        for (const el of scrollables) {
+            if (el.scrollHeight > el.clientHeight + 1) {
+                return el;
+            }
+        }
+
+        return scrollables[0] || null;
+    }
+
+    function getWorkbenchChatScrollEl(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const card = getLastChatCardElement(p);
+        const fromCard = card ? getScrollableAncestor(card) : null;
+        if (fromCard) return fromCard;
+
+        const key = getPanelKey(p);
+        if (key === 'org') {
+            return p.querySelector('.org-workbench-scroll');
+        }
+
+        const candidates = [];
+        if (key === 'employee') {
+            candidates.push(
+                getPanelEl('ai-chat-messages', p),
+                getPanelEl('ai-chat-view', p),
+                document.getElementById('session-scroll')
+            );
+        } else if (key === 'support') {
+            candidates.push(getPanelEl('ai-chat-view', p));
+        } else {
+            candidates.push(getPanelEl('ai-chat-view', p));
+        }
+
+        for (const el of candidates) {
+            if (!el) continue;
+            const overflowY = window.getComputedStyle(el).overflowY;
+            if (overflowY === 'auto' || overflowY === 'scroll') {
+                return el;
+            }
+        }
+
+        return candidates.find(Boolean) || null;
+    }
+
+    function getLastChatCardElement(panel) {
+        const messagesEl = getPanelEl('ai-chat-messages', panel);
+        if (!messagesEl) return null;
+        const rows = messagesEl.querySelectorAll('.chat-row');
+        if (rows.length) return rows[rows.length - 1];
+        const blocks = messagesEl.querySelectorAll('.chat-conversation-block');
+        return blocks.length ? blocks[blocks.length - 1] : null;
+    }
+
+    function getChatCardHeight(card) {
+        if (!card) return 0;
+        const style = window.getComputedStyle(card);
+        const marginTop = parseFloat(style.marginTop) || 0;
+        const marginBottom = parseFloat(style.marginBottom) || 0;
+        return card.offsetHeight + marginTop + marginBottom;
+    }
+
+    function scrollLastChatCardIntoView(panel, options = {}) {
+        const padding = typeof options.padding === 'number' ? options.padding : 8;
+        const card = options.card || getLastChatCardElement(panel);
+        const scrollEl = getWorkbenchChatScrollEl(panel);
+        if (!scrollEl || !card) return;
+
+        const applyScroll = () => {
+            const viewportHeight = scrollEl.clientHeight;
+            const cardHeight = getChatCardHeight(card);
+
+            if (cardHeight <= viewportHeight) {
+                scrollEl.scrollTop = Math.max(0, scrollEl.scrollHeight - scrollEl.clientHeight);
+                return;
+            }
+
+            const containerRect = scrollEl.getBoundingClientRect();
+            const elementRect = card.getBoundingClientRect();
+            scrollEl.scrollTop += elementRect.top - containerRect.top - padding;
+        };
+
+        applyScroll();
+        requestAnimationFrame(() => {
+            applyScroll();
+            requestAnimationFrame(applyScroll);
+        });
+    }
+
+    function scrollWorkbenchChatToBottom(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (getLastChatCardElement(p)) {
+            scrollLastChatCardIntoView(p);
+            return;
+        }
+
+        const scrollEl = getWorkbenchChatScrollEl(p);
+        if (!scrollEl) return;
+
+        const doScroll = () => {
+            scrollEl.scrollTop = scrollEl.scrollHeight;
+        };
+
+        doScroll();
+        requestAnimationFrame(() => {
+            doScroll();
+            requestAnimationFrame(doScroll);
+        });
+    }
+
+    function scrollChatElementToTop(panel, element, padding = 12) {
+        if (!element) return;
+        scrollLastChatCardIntoView(panel, { card: element, padding });
+    }
+
+    function initExceptionReminderBoards(root) {
+        const scope = root || document;
+        scope.querySelectorAll('.exception-reminder-board').forEach((board) => {
+            if (board.dataset.initialized === 'true') return;
+            board.dataset.initialized = 'true';
+
+            const tabs = board.querySelectorAll('.exception-tab');
+            const panels = board.querySelectorAll('.exception-tab-panel');
+            tabs.forEach((tab) => {
+                tab.addEventListener('click', () => {
+                    const key = tab.dataset.exceptionTab;
+                    if (!key) return;
+                    tabs.forEach((item) => {
+                        const active = item.dataset.exceptionTab === key;
+                        item.classList.toggle('is-active', active);
+                        item.setAttribute('aria-selected', String(active));
+                    });
+                    panels.forEach((panel) => {
+                        const show = panel.dataset.exceptionPanel === key;
+                        panel.hidden = !show;
+                        panel.classList.toggle('is-active', show);
+                    });
+                });
+            });
+
+            board.querySelectorAll('.exception-alert-card').forEach((card) => {
+                card.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        card.click();
+                    }
+                });
+            });
+        });
+    }
+
+    function cloneWorkbenchPanels() {
+        const source = document.getElementById('workbench-panel-employee');
+        ['support', 'org'].forEach((key) => {
+            const target = document.getElementById('workbench-panel-' + key);
+            target.innerHTML = source.innerHTML;
+            target.querySelectorAll('[id]').forEach((el) => {
+                if (el.id) el.id = el.id + '-' + key;
+            });
+            const performanceSection = target.querySelector('#performance-section-' + key);
+            if (performanceSection) {
+                performanceSection.remove();
+            }
+            if (key === 'org') {
+                customizeOrgPanel(target);
+            }
+            if (key === 'support') {
+                target.querySelector('#center-view-performance-support')?.remove();
+                customizeSupportPanel(target);
+            }
+        });
+        initExceptionReminderBoards();
+    }
+
+    function restoreSupportStandardInput(panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        const container = p?.querySelector('.input-container');
+        if (!container) return;
+
+        container.querySelector('.support-input-agent-picker')?.remove();
+        teardownSupportInputTopRow(p);
+        container.classList.remove('support-input-container');
+        container.dataset.supportInputReady = 'false';
+
+        const field = container.closest('.enhanced-input-wrap')?.querySelector('.chat-input, .enhanced-textarea, .support-chat-input');
+        if (field) {
+            field.classList.remove('support-chat-input');
+            field.classList.add('enhanced-textarea');
+            field.placeholder = getMainInputDefaultPlaceholder(p);
+        }
+
+        const sendBtn = container.querySelector('.send-btn');
+        if (sendBtn) sendBtn.classList.remove('support-input-send-btn');
+    }
+
+    function syncSupportHomeLayout(panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        if (!p) return;
+
+        const state = getPanelState(p);
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        const hasMessages = (messagesEl?.children.length || 0) > 0;
+        const inChat = !!(state.chatModeActive || hasMessages);
+
+        const hero = p.querySelector('#center-hero-support');
+        const welcome = p.querySelector('.support-welcome-section');
+        const chatView = getPanelEl('ai-chat-view', p);
+        const sessionScroll = p.querySelector('#session-scroll-support');
+        const workbench = p.querySelector('.ai-workbench-section');
+        const inputSection = p.querySelector('.input-section');
+
+        if (hero) hero.classList.toggle('is-hidden', inChat);
+        if (welcome) welcome.classList.toggle('is-hidden', inChat);
+        const homeCards = p.querySelector('#support-home-cards');
+        if (homeCards) homeCards.classList.toggle('is-hidden', inChat);
+        if (chatView) {
+            chatView.style.display = inChat ? 'flex' : 'none';
+            chatView.classList.toggle('is-visible', inChat);
+        }
+        if (sessionScroll) sessionScroll.classList.toggle('is-chat-active', inChat);
+        if (workbench) workbench.classList.toggle('support-chat-mode', inChat);
+        if (inputSection) inputSection.classList.toggle('chat-mode', inChat);
+        if (inChat && messagesEl) {
+            messagesEl.classList.add('overlay-scrollbar');
+            bindOverlayScrollbar(messagesEl);
+        }
+    }
+
+    function enterSupportChatMode(panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        const state = getPanelState(p);
+        state.chatModeActive = true;
+        syncSupportHomeLayout(p);
+    }
+
+    function exitSupportChatMode(panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        const state = getPanelState(p);
+        state.chatModeActive = false;
+        syncSupportHomeLayout(p);
+    }
+
+    function returnToSupportMainPage() {
+        window.AppShell?.setCenterView?.('session');
+        document.body.classList.remove('support-exceptions-view-active');
+        document.querySelectorAll('.sidebar .bc-item-nav[data-bc="exceptions"]').forEach((el) => {
+            el.classList.remove('is-center-active');
+        });
+        const panel = document.getElementById('workbench-panel-support');
+        if (!panel) return;
+        exitSupportChatMode(panel);
+        document.getElementById('session-scroll-support')?.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function customizeSupportPanel(panel) {
+        const workbench = panel.querySelector('.ai-workbench-section');
+
+        panel.querySelector('#ai-carousel-view-support')?.remove();
+        panel.querySelector('.card-indicators')?.remove();
+
+        const miniAvatars = panel.querySelector('#ai-mini-avatars-support');
+        if (miniAvatars) miniAvatars.remove();
+
+        const chatView = panel.querySelector('#ai-chat-view-support');
+        if (chatView) {
+            chatView.style.display = 'none';
+            chatView.classList.remove('is-visible');
+        }
+
+        const hero = panel.querySelector('#center-hero-support');
+        if (hero) hero.classList.remove('is-hidden');
+
+        if (workbench) {
+            workbench.classList.add('support-workbench-mode');
+
+            const jumpBar = document.createElement('div');
+            jumpBar.className = 'support-agent-jump-bar';
+            const agentBtn = document.createElement('button');
+            agentBtn.type = 'button';
+            agentBtn.className = 'org-current-agent-name';
+            agentBtn.id = 'support-current-agent-name-support';
+            agentBtn.textContent = '去投行业务助理';
+            agentBtn.style.display = 'none';
+            jumpBar.appendChild(agentBtn);
+            workbench.insertBefore(jumpBar, workbench.firstChild);
+        }
+
+        panel.querySelector('.support-daily-task-panel')?.remove();
+        ensureSupportHomeCards(panel);
+        initSupportInputAgentSelect(panel);
+        panel.dataset.supportCustomized = 'true';
+    }
+
+    function collectSupportExceptionAlerts() {
+        const board = document.getElementById('exception-reminder-board-support')
+            || document.getElementById('exception-reminder-board');
+        if (!board) return [];
+        return Array.from(board.querySelectorAll('.exception-alert-card')).map((card) => ({
+            title: card.querySelector('.exception-alert-title')?.textContent?.trim() || '',
+            dept: card.querySelector('.exception-alert-dept')?.textContent?.trim() || '',
+            desc: card.querySelector('.exception-alert-desc')?.textContent?.trim() || '',
+            status: card.querySelector('.exception-status-tag')?.textContent?.trim() || ''
+        })).filter((item) => item.title);
+    }
+
+    function ensureSupportHomeCards(panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        const sessionScroll = p?.querySelector('#session-scroll-support');
+        const hero = p?.querySelector('#center-hero-support');
+        if (!sessionScroll || p.querySelector('#support-home-cards')) return;
+
+        const taskCount = getSupportTotalTaskCount();
+        const exceptionCount = collectSupportExceptionAlerts().length;
+        const section = document.createElement('div');
+        section.className = 'ai-team-section support-home-cards';
+        section.id = 'support-home-cards';
+        section.innerHTML = `
+            <div class="ai-cards-fan support-home-cards-fan">
+                <div class="ai-card-fan support-home-card" data-support-card="tasks" role="button" tabindex="0" aria-label="查看今日任务">
+                    <div class="ai-card-fan-inner">
+                        <div class="ai-card-fan-avatar support-home-card-avatar support-home-card-avatar--tasks">📋</div>
+                        <div class="ai-card-fan-name">今日任务</div>
+                        <div class="ai-card-fan-desc">${taskCount} 项待办协同</div>
+                    </div>
+                </div>
+                <div class="ai-card-fan support-home-card" data-support-card="exceptions" role="button" tabindex="0" aria-label="查看异常提醒">
+                    <div class="ai-card-fan-inner">
+                        <div class="ai-card-fan-avatar support-home-card-avatar support-home-card-avatar--exceptions">⚠️</div>
+                        <div class="ai-card-fan-name">异常提醒</div>
+                        <div class="ai-card-fan-desc">${exceptionCount} 项需关注</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        if (hero?.parentNode) {
+            hero.parentNode.insertBefore(section, hero.nextSibling);
+        } else {
+            sessionScroll.appendChild(section);
+        }
+
+        if (p.dataset.supportHomeCardsBound !== 'true') {
+            p.dataset.supportHomeCardsBound = 'true';
+            section.addEventListener('click', (event) => {
+                const card = event.target.closest('.support-home-card');
+                if (!card) return;
+                const cardType = card.dataset.supportCard;
+                if (cardType) openSupportHomeCardInChat(cardType);
+            });
+            section.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                const card = event.target.closest('.support-home-card');
+                if (!card) return;
+                event.preventDefault();
+                const cardType = card.dataset.supportCard;
+                if (cardType) openSupportHomeCardInChat(cardType);
+            });
+        }
+    }
+
+    function refreshSupportHomeCardCounts(panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        const section = p?.querySelector('#support-home-cards');
+        if (!section) return;
+        const tasksDesc = section.querySelector('[data-support-card="tasks"] .ai-card-fan-desc');
+        const exceptionsDesc = section.querySelector('[data-support-card="exceptions"] .ai-card-fan-desc');
+        if (tasksDesc) tasksDesc.textContent = `${getSupportTotalTaskCount()} 项待办协同`;
+        if (exceptionsDesc) exceptionsDesc.textContent = `${collectSupportExceptionAlerts().length} 项需关注`;
+    }
+
+    function buildSupportAllExceptionsChatHtml() {
+        const items = collectSupportExceptionAlerts();
+        if (!items.length) {
+            return '<p>当前暂无异常提醒。</p>';
+        }
+        let html = `<p>您好，我是<strong>今日任务助理</strong>。以下是当前全部 <strong>${items.length}</strong> 项异常提醒：</p>`;
+        items.forEach((item, index) => {
+            html += `<p class="support-chat-todo-line support-chat-todo-title">${index + 1}. <button type="button" class="support-chat-todo-trigger support-exception-item-trigger" data-exception-title="${escapeHtmlAttr(item.title)}"><strong>${escapeHtmlText(item.title)}</strong></button>${item.dept ? ` <span class="support-exception-dept">（${escapeHtmlText(item.dept)}）</span>` : ''}</p>`;
+            if (item.desc) {
+                html += `<p class="support-chat-todo-line">${escapeHtmlText(item.desc)}</p>`;
+            }
+            if (item.status) {
+                html += `<p class="support-chat-exception-status">状态：${escapeHtmlText(item.status)}</p>`;
+            }
+        });
+        html += '<p>点击异常项发送到对话框，我将协助您推进处理。</p>';
+        return html;
+    }
+
+    function buildSupportExceptionReplyHtml(item) {
+        if (!item) {
+            return `<p>已收到，我将为您汇总相关背景、影响范围与建议处置步骤。</p>`;
+        }
+        return `<p>已收到，正在协助您处理<strong>${escapeHtmlText(item.title)}</strong>。</p>
+            <p><strong>责任部门：</strong>${escapeHtmlText(item.dept || '—')}</p>
+            <p>${escapeHtmlText(item.desc || '')}</p>
+            <p><strong>当前状态：</strong>${escapeHtmlText(item.status || '待处理')}</p>
+            <p>建议：确认事实背景 → 同步相关同事 → 在截止时间前提交处置方案。</p>`;
+    }
+
+    function sendSupportExceptionQuick(title) {
+        const panel = document.getElementById('workbench-panel-support');
+        if (!panel || !title) return;
+
+        const item = collectSupportExceptionAlerts().find((entry) => entry.title === title);
+        const message = `请协助处理「${title}」异常提醒`;
+        const state = getPanelState(panel);
+
+        if (!state.chatModeActive) {
+            enterSupportChatMode(panel);
+        }
+
+        appendSupportChatMessage(message, 'user', panel);
+        setTimeout(() => {
+            appendSupportChatMessage(
+                buildSupportExceptionReplyHtml(item),
+                'assistant',
+                panel,
+                { html: true, agentId: SUPPORT_INPUT_AGENT_DAILY_TASK }
+            );
+        }, 400);
+    }
+
+    function openSupportHomeCardInChat(cardType) {
+        const panel = document.getElementById('workbench-panel-support');
+        if (!panel) return;
+
+        const labels = { tasks: '今日任务', exceptions: '异常提醒' };
+        const label = labels[cardType] || '工作台';
+        enterSupportChatMode(panel);
+        appendSupportChatMessage(`查看${label}`, 'user', panel);
+
+        const replyHtml = cardType === 'exceptions'
+            ? buildSupportAllExceptionsChatHtml()
+            : buildSupportDailyTasksSummaryHtml({ forChatCard: true });
+
+        setTimeout(() => {
+            appendSupportChatMessage(replyHtml, 'assistant', panel, {
+                html: true,
+                agentId: SUPPORT_INPUT_AGENT_DAILY_TASK
+            });
+        }, 400);
+    }
+
+    const SUPPORT_DAILY_TASK_AVATAR_SRC = 'images/daily-task-assistant-avatar.png';
+    const SUPPORT_INPUT_AGENT_DAILY_TASK = 'daily-task';
+
+    function getSupportDailyTaskRobotAvatarHtml() {
+        return `<div class="support-daily-task-robot-avatar" title="今日任务">
+            <img src="${SUPPORT_DAILY_TASK_AVATAR_SRC}" alt="今日任务" class="support-daily-task-robot-avatar-img">
+        </div>`;
+    }
+
+    function getSupportDailyTaskChevronHtml() {
+        return `<svg class="support-daily-task-chevron" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`;
+    }
+
+    function syncSupportDailyTaskToggle(panel) {
+        const dailyPanel = getSupportDailyTaskPanel(panel);
+        if (!dailyPanel) return;
+        const toggle = dailyPanel.querySelector('.support-daily-task-toggle');
+        if (!toggle) return;
+        const collapsed = dailyPanel.classList.contains('is-collapsed');
+        toggle.setAttribute('aria-expanded', String(!collapsed));
+        toggle.setAttribute('aria-label', collapsed ? '展开' : '收起');
+    }
+
+    function getSupportDailyTaskPanel(panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        return p?.querySelector('.support-daily-task-panel') || null;
+    }
+
+    function renderSupportDailyTaskContent(html, panel) {
+        renderSupportSidebarTasks(panel);
+    }
+
+    function getSupportTotalTaskCount() {
+        let count = 0;
+        supportBadgeAgentIds.forEach((agentId) => {
+            count += getSupportAgentAllTasks(agentId).length;
+        });
+        return count;
+    }
+
+    function updateSupportSidebarTasksCount() {
+        const countEl = document.getElementById('support-sidebar-tasks-count');
+        if (countEl) countEl.textContent = String(getSupportTotalTaskCount());
+    }
+
+    function renderSupportSidebarTasks(panel) {
+        const body = document.getElementById('support-sidebar-tasks-body');
+        if (!body) return;
+        body.innerHTML = `<div class="support-sidebar-tasks-content support-daily-task-body">${buildSupportDailyTasksSummaryHtml()}</div>`;
+        updateSupportSidebarTasksCount();
+        refreshSupportHomeCardCounts(panel);
+        const scrollEl = body.closest('.support-sidebar-tasks-scroll');
+        if (scrollEl) bindOverlayScrollbar(scrollEl);
+    }
+
+    function formatSupportRelativeTime(ts) {
+        const diff = Date.now() - (ts || 0);
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1) return '刚刚';
+        if (mins < 60) return mins + ' 分钟前';
+        const hours = Math.floor(mins / 60);
+        if (hours < 24) return hours + ' 小时前';
+        const days = Math.floor(hours / 24);
+        return days + ' 天前';
+    }
+
+    function getSupportSessions() {
+        try {
+            return JSON.parse(localStorage.getItem(SUPPORT_SESSIONS_KEY) || '[]');
+        } catch {
+            return [];
+        }
+    }
+
+    function saveSupportSessions(list) {
+        localStorage.setItem(SUPPORT_SESSIONS_KEY, JSON.stringify(list.slice(0, 50)));
+    }
+
+    function renderSupportSessionHistory() {
+        const list = document.getElementById('support-sidebar-sessions-list');
+        if (!list) return;
+        const panel = document.getElementById('workbench-panel-support');
+        const state = panel ? getPanelState(panel) : { currentSessionId: null };
+        const sessions = getSupportSessions().slice().sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        if (!sessions.length) {
+            list.innerHTML = '<div class="context-empty">暂无历史会话</div>';
+            return;
+        }
+        list.innerHTML = sessions.map((s) =>
+            `<button type="button" class="session-item${s.id === state.currentSessionId ? ' active' : ''}" data-session-id="${escapeHtmlAttr(s.id)}">
+                <span class="session-item-title">${escapeHtmlText(s.title)}</span>
+                <span class="session-item-time">${formatSupportRelativeTime(s.timestamp)}</span>
+            </button>`
+        ).join('');
+    }
+
+    function highlightSupportSessionInSidebar(sessionId) {
+        document.querySelectorAll('#support-sidebar-sessions-list .session-item').forEach((el) => {
+            el.classList.toggle('active', !!sessionId && el.dataset.sessionId === sessionId);
+        });
+    }
+
+    function createSupportSession(title) {
+        const sessions = getSupportSessions();
+        const panel = document.getElementById('workbench-panel-support');
+        const state = getPanelState(panel);
+        const entry = {
+            id: 'ss-' + Date.now(),
+            title: (title || '新对话').slice(0, 40),
+            timestamp: Date.now(),
+            messages: []
+        };
+        sessions.unshift(entry);
+        saveSupportSessions(sessions);
+        state.currentSessionId = entry.id;
+        state.supportChatMessages = [];
+        renderSupportSessionHistory();
+        highlightSupportSessionInSidebar(entry.id);
+        return entry;
+    }
+
+    function touchSupportSession(title) {
+        const panel = document.getElementById('workbench-panel-support');
+        const state = getPanelState(panel);
+        if (!state.currentSessionId) return;
+        const sessions = getSupportSessions();
+        const session = sessions.find((s) => s.id === state.currentSessionId);
+        if (!session) return;
+        const fallbackTitle = /对话$/.test(session.title) || session.title === '新对话';
+        if (title && fallbackTitle) {
+            session.title = title.slice(0, 40);
+        }
+        session.timestamp = Date.now();
+        saveSupportSessions(sessions);
+        renderSupportSessionHistory();
+        highlightSupportSessionInSidebar(state.currentSessionId);
+    }
+
+    function persistSupportChat(panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        const state = getPanelState(p);
+        if (!state.currentSessionId) return;
+        const sessions = getSupportSessions();
+        const session = sessions.find((s) => s.id === state.currentSessionId);
+        if (!session) return;
+        session.messages = Array.isArray(state.supportChatMessages) ? state.supportChatMessages.slice(-100) : [];
+        session.timestamp = Date.now();
+        saveSupportSessions(sessions);
+        renderSupportSessionHistory();
+    }
+
+    function recordSupportChatMessage(panel, message) {
+        const state = getPanelState(panel);
+        if (!state.supportChatMessages) state.supportChatMessages = [];
+        if (!state.currentSessionId && message.role === 'user') {
+            createSupportSession((message.text || '业务支持对话').slice(0, 30));
+        }
+        state.supportChatMessages.push(message);
+        if (message.role === 'user') {
+            const userMsgs = state.supportChatMessages.filter((m) => m.role === 'user');
+            if (userMsgs.length === 1) {
+                touchSupportSession(message.text.slice(0, 30));
+            }
+        }
+        persistSupportChat(panel);
+    }
+
+    function restoreSupportChatFromSession(panel, session) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        const state = getPanelState(p);
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (!messagesEl || !session) return;
+
+        messagesEl.innerHTML = '';
+        state.currentSessionId = session.id;
+        state.supportChatMessages = Array.isArray(session.messages) ? session.messages.slice() : [];
+        highlightSupportSessionInSidebar(session.id);
+
+        state.supportChatMessages.forEach((msg) => {
+            appendSupportChatMessage(msg.text, msg.role, p, {
+                skipPersist: true,
+                html: msg.html,
+                agentId: msg.agentId
+            });
+        });
+        if (state.supportChatMessages.length) {
+            state.chatModeActive = true;
+        }
+        updateSupportChatLayout(p);
+    }
+
+    function toggleSupportDailyTaskPanel(panel) {
+        const dailyPanel = getSupportDailyTaskPanel(panel);
+        if (!dailyPanel) return;
+        dailyPanel.classList.toggle('is-collapsed');
+        syncSupportDailyTaskToggle(panel);
+    }
+
+    function updateSupportDailyTaskPanelState(panel, hasChat) {
+        const dailyPanel = getSupportDailyTaskPanel(panel);
+        if (!dailyPanel) return;
+        if (hasChat) {
+            dailyPanel.classList.add('is-collapsed');
+        } else {
+            dailyPanel.classList.remove('is-collapsed');
+        }
+        syncSupportDailyTaskToggle(panel);
+    }
+
+    function getSupportAgent(agentId) {
+        return supportAgents.find(a => a.id === agentId) || supportAgents[0];
+    }
+
+    function getSupportCategoryAgentTasks(categoryId, agentId) {
+        return supportCategoryAgentTasks[categoryId]?.[agentId] || [];
+    }
+
+    function getSupportAgentAllTasks(agentId) {
+        const tasks = [];
+        Object.values(supportCategoryAgentTasks).forEach(categoryMap => {
+            const list = categoryMap[agentId];
+            if (list?.length) tasks.push(...list);
+        });
+        return tasks;
+    }
+
+    function getSupportAgentTasksWithCategory(agentId) {
+        const items = [];
+        supportTopCategories.forEach(cat => {
+            getSupportCategoryAgentTasks(cat.id, agentId).forEach(task => {
+                items.push({ categoryId: cat.id, categoryName: cat.name, task });
+            });
+        });
+        return items;
+    }
+
+    function getSupportAgentTaskCount(agentId, categoryId) {
+        if (categoryId) return getSupportCategoryAgentTasks(categoryId, agentId).length;
+        return getSupportAgentAllTasks(agentId).length;
+    }
+
+    function updateSupportAgentButton(panel, agentId) {
+        const agentBtn = panel.querySelector('#support-current-agent-name-support');
+        const jumpBar = panel.querySelector('.support-agent-jump-bar');
+        if (!agentBtn) return;
+        if (!agentId) {
+            agentBtn.style.display = 'none';
+            if (jumpBar) jumpBar.classList.remove('is-visible');
+            return;
+        }
+        const agent = getSupportAgent(agentId);
+        agentBtn.style.display = '';
+        agentBtn.textContent = '去' + agent.name;
+        agentBtn.onclick = () => showOrgAgentJumpToast(agent.name);
+        if (jumpBar) jumpBar.classList.add('is-visible');
+    }
+
+    function escapeHtmlText(text) {
+        return String(text ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function escapeHtmlAttr(text) {
+        return escapeHtmlText(text).replace(/"/g, '&quot;');
+    }
+
+    const supportExecSuggestions = [
+        '梳理该项工作的背景材料、责任人与截止时间',
+        '按优先级推进关键协作事项，并同步相关同事',
+        '完成后更新任务进展，便于团队跟踪'
+    ];
+
+    function buildSupportTodoTriggerHtml(agentId, task, displayText, stepText, replyMode = 'task') {
+        return `<button type="button" class="support-chat-todo-trigger" data-agent-id="${escapeHtmlAttr(agentId)}" data-task-id="${escapeHtmlAttr(task.id)}" data-step-text="${escapeHtmlAttr(stepText)}" data-send-text="${escapeHtmlAttr(displayText)}" data-reply-mode="${escapeHtmlAttr(replyMode)}">${escapeHtmlText(displayText)}</button>`;
+    }
+
+    function buildSupportTodoLineSummaryHtml(agentId, task, index) {
+        const nextStep = task.nextSteps[0] || '请跟进推进';
+        const lineText = `${index + 1}. ${task.title}：${nextStep}`;
+        return `<p class="support-chat-todo-line">${buildSupportTodoTriggerHtml(agentId, task, lineText, nextStep)}</p>`;
+    }
+
+    function buildSupportTodoLineGuideHtml(agentId, task, index) {
+        const nextStep = task.nextSteps[0] || '请跟进推进';
+        const stepText = `→ ${nextStep}`;
+        return `<p class="support-chat-todo-line support-chat-todo-title">${index + 1}. <strong>${escapeHtmlText(task.title)}</strong></p>
+<p class="support-chat-todo-line support-chat-todo-step">${buildSupportTodoTriggerHtml(agentId, task, stepText, nextStep)}</p>`;
+    }
+
+    function getSupportCategoryById(categoryId) {
+        return supportTopCategories.find(cat => cat.id === categoryId) || null;
+    }
+
+    function getSupportAgentCategoryId(agentId) {
+        return supportAgentCategoryMap[agentId] || null;
+    }
+
+    function getSupportAgentDisplayLabel(agentId) {
+        if (agentId === SUPPORT_INPUT_AGENT_DAILY_TASK) return '今日任务助理';
+        return getSupportAgent(agentId)?.name || '';
+    }
+
+    function getSupportInputAgentMeta(agentId) {
+        if (!agentId) return null;
+        if (agentId === SUPPORT_INPUT_AGENT_DAILY_TASK) {
+            return { id: SUPPORT_INPUT_AGENT_DAILY_TASK, name: '今日任务助理', image: SUPPORT_DAILY_TASK_AVATAR_SRC };
+        }
+        const agent = getSupportAgent(agentId);
+        return agent ? { id: agentId, name: agent.name, image: agent.image } : null;
+    }
+
+    function getSupportInputPlaceholder(agentId) {
+        const name = getSupportInputAgentMeta(agentId)?.name || '今日任务助理';
+        return `向${name}发送工作指令`;
+    }
+
+    function getMainInputDefaultPlaceholder(panel) {
+        if (getPanelKey(panel) === 'support') {
+            const state = getPanelState(panel);
+            return getSupportInputPlaceholder(getSupportInputReplyAgentId(state));
+        }
+        return '开启我的工作';
+    }
+
+    function updateSupportInputPlaceholder(panel, agentId) {
+        const input = getPanelEl('main-chat-input', panel);
+        if (input) input.placeholder = getSupportInputPlaceholder(agentId);
+    }
+
+    function ensureSupportInputTopRow(panel) {
+        const wrap = panel?.querySelector('.enhanced-input-wrap');
+        const field = wrap?.querySelector('.support-chat-input, .chat-input, .enhanced-textarea');
+        if (!wrap || !field) return null;
+
+        let topRow = wrap.querySelector('.support-input-top-row');
+        if (!topRow) {
+            topRow = document.createElement('div');
+            topRow.className = 'support-input-top-row';
+            wrap.insertBefore(topRow, field);
+            topRow.appendChild(field);
+        } else if (field.parentElement !== topRow) {
+            topRow.appendChild(field);
+        }
+        wrap.classList.add('support-input-wrap');
+        return topRow;
+    }
+
+    function teardownSupportInputTopRow(panel) {
+        const wrap = panel?.querySelector('.enhanced-input-wrap');
+        if (!wrap) return;
+
+        wrap.classList.remove('support-input-wrap');
+        const topRow = wrap.querySelector('.support-input-top-row');
+        if (!topRow) return;
+
+        const field = topRow.querySelector('.chat-input, .enhanced-textarea, .support-chat-input');
+        if (field) {
+            wrap.insertBefore(field, topRow);
+        }
+        topRow.remove();
+    }
+
+    function prepareSupportInputField(panel) {
+        const wrap = panel?.querySelector('.enhanced-input-wrap');
+        const container = panel?.querySelector('.input-container');
+        const input = wrap?.querySelector('.chat-input') || container?.querySelector('.chat-input');
+        if (!container || !input || container.dataset.supportInputReady === 'true') return;
+
+        container.classList.add('support-input-container');
+        container.dataset.supportInputReady = 'true';
+
+        let field = input;
+        if (input.tagName !== 'TEXTAREA') {
+            const textarea = document.createElement('textarea');
+            textarea.id = input.id;
+            textarea.className = 'chat-input support-chat-input';
+            textarea.rows = 1;
+            textarea.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMainMessage();
+                }
+            });
+            textarea.addEventListener('input', () => autoResizeTextarea(textarea));
+            input.replaceWith(textarea);
+            field = textarea;
+        } else {
+            field.classList.add('support-chat-input');
+        }
+
+        const sendBtn = container.querySelector('.send-btn');
+        if (sendBtn) sendBtn.classList.add('support-input-send-btn');
+
+        const state = getPanelState(panel);
+        updateSupportInputPlaceholder(panel, state.currentSupportInputAgent || SUPPORT_INPUT_AGENT_DAILY_TASK);
+        ensureSupportInputTopRow(panel);
+    }
+
+    function getSupportInputReplyAgentId(state) {
+        return state?.currentSupportInputAgent || SUPPORT_INPUT_AGENT_DAILY_TASK;
+    }
+
+    function getSupportInputAgentOptions() {
+        const options = [getSupportInputAgentMeta(SUPPORT_INPUT_AGENT_DAILY_TASK)];
+        supportAgents.forEach((agent) => {
+            options.push(getSupportInputAgentMeta(agent.id));
+        });
+        return options.filter(Boolean);
+    }
+
+    function buildSupportInputAgentOptionHtml(meta, isActive) {
+        return `
+            <button type="button" class="support-input-agent-option${isActive ? ' is-active' : ''}" data-agent-id="${escapeHtml(meta.id)}" role="option" aria-selected="${isActive ? 'true' : 'false'}">
+                <span class="support-input-agent-option-avatar">
+                    <img src="${escapeHtml(meta.image)}" alt="">
+                </span>
+                <span class="support-input-agent-option-name">${escapeHtmlText(meta.name)}</span>
+            </button>
+        `;
+    }
+
+    function updateSupportInputAgentPickerUI(picker, agentId) {
+        if (!picker) return;
+        const meta = getSupportInputAgentMeta(agentId);
+        if (!meta) return;
+
+        const panel = picker.closest('.workbench-panel');
+        const trigger = picker.querySelector('.support-input-agent-trigger');
+        const triggerImg = picker.querySelector('.support-input-agent-trigger-img');
+        if (trigger) {
+            trigger.dataset.agentName = meta.name;
+            trigger.setAttribute('aria-label', `当前助理：${meta.name}，点击切换`);
+            trigger.title = meta.name;
+        }
+        if (triggerImg) {
+            triggerImg.src = meta.image;
+            triggerImg.alt = meta.name;
+        }
+        if (panel) updateSupportInputPlaceholder(panel, agentId);
+
+        picker.querySelectorAll('.support-input-agent-option').forEach((btn) => {
+            const active = btn.dataset.agentId === agentId;
+            btn.classList.toggle('is-active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+    }
+
+    function closeSupportInputAgentPicker(picker) {
+        if (!picker) return;
+        picker.classList.remove('is-open');
+        picker.querySelector('.support-input-agent-trigger')?.setAttribute('aria-expanded', 'false');
+    }
+
+    function closeAllSupportInputAgentPickers(exceptPicker) {
+        document.querySelectorAll('.support-input-agent-picker.is-open').forEach((picker) => {
+            if (exceptPicker && picker === exceptPicker) return;
+            closeSupportInputAgentPicker(picker);
+        });
+    }
+
+    function setSupportInputAgent(panel, agentId) {
+        const state = getPanelState(panel);
+        state.currentSupportInputAgent = agentId;
+        const picker = panel?.querySelector('.support-input-agent-picker');
+        if (picker) {
+            updateSupportInputAgentPickerUI(picker, agentId);
+        } else {
+            updateSupportInputPlaceholder(panel, agentId);
+        }
+    }
+
+    function toggleSupportInputAgentPicker(picker) {
+        if (!picker) return;
+        const willOpen = !picker.classList.contains('is-open');
+        closeAllSupportInputAgentPickers(picker);
+        picker.classList.toggle('is-open', willOpen);
+        picker.querySelector('.support-input-agent-trigger')?.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    }
+
+    function initSupportInputAgentSelect(panel) {
+        const container = panel?.querySelector('.input-container');
+        if (!container) return;
+
+        prepareSupportInputField(panel);
+        container.querySelector('.support-input-agent-select')?.remove();
+
+        const topRow = ensureSupportInputTopRow(panel);
+        let picker = topRow?.querySelector('.support-input-agent-picker')
+            || container.querySelector('.support-input-agent-picker');
+        if (!picker) {
+            const defaultMeta = getSupportInputAgentMeta(SUPPORT_INPUT_AGENT_DAILY_TASK);
+            const optionsHtml = getSupportInputAgentOptions()
+                .map((meta) => buildSupportInputAgentOptionHtml(meta, meta.id === SUPPORT_INPUT_AGENT_DAILY_TASK))
+                .join('');
+
+            picker = document.createElement('div');
+            picker.className = 'support-input-agent-picker';
+            picker.innerHTML = `
+                <button type="button" class="support-input-agent-trigger" aria-haspopup="listbox" aria-expanded="false" data-agent-name="${escapeHtmlText(defaultMeta.name)}" title="${escapeHtmlText(defaultMeta.name)}">
+                    <img src="${escapeHtml(defaultMeta.image)}" alt="${escapeHtmlText(defaultMeta.name)}" class="support-input-agent-trigger-img">
+                </button>
+                <div class="support-input-agent-menu" role="listbox" aria-label="选择助理" hidden>
+                    ${optionsHtml}
+                </div>
+            `;
+
+            const insertTarget = topRow || container.querySelector('.input-actions-left') || container;
+            insertTarget.insertBefore(picker, insertTarget.firstChild);
+        } else if (topRow && picker.parentElement !== topRow) {
+            topRow.insertBefore(picker, topRow.firstChild);
+        }
+
+        const state = getPanelState(panel);
+        if (!state.currentSupportInputAgent) {
+            state.currentSupportInputAgent = SUPPORT_INPUT_AGENT_DAILY_TASK;
+        }
+        updateSupportInputAgentPickerUI(picker, state.currentSupportInputAgent);
+
+        if (!picker.dataset.bound) {
+            picker.dataset.bound = 'true';
+
+            const trigger = picker.querySelector('.support-input-agent-trigger');
+            const menu = picker.querySelector('.support-input-agent-menu');
+
+            trigger?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleSupportInputAgentPicker(picker);
+                if (picker.classList.contains('is-open')) {
+                    menu?.removeAttribute('hidden');
+                } else {
+                    menu?.setAttribute('hidden', '');
+                }
+            });
+
+            picker.querySelectorAll('.support-input-agent-option').forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const agentId = btn.dataset.agentId;
+                    if (!agentId) return;
+                    setSupportInputAgent(panel, agentId);
+                    closeSupportInputAgentPicker(picker);
+                    menu?.setAttribute('hidden', '');
+                });
+            });
+        }
+    }
+
+    if (!window.__supportInputAgentPickerDocBound) {
+        window.__supportInputAgentPickerDocBound = true;
+        document.addEventListener('click', () => {
+            closeAllSupportInputAgentPickers();
+            document.querySelectorAll('.support-input-agent-menu').forEach((menu) => {
+                menu.setAttribute('hidden', '');
+            });
+        });
+    }
+
+    function getSupportAgentIntroHtml(agentId) {
+        return `<strong>${escapeHtmlText(getSupportAgentDisplayLabel(agentId))}</strong>`;
+    }
+
+    function getSupportCategoryTaskCount(categoryId) {
+        const cat = getSupportCategoryById(categoryId);
+        if (!cat?.badgeAgentIds?.length) return 0;
+        return cat.badgeAgentIds.reduce((sum, agentId) => {
+            return sum + getSupportCategoryAgentTasks(categoryId, agentId).length;
+        }, 0);
+    }
+
+    function shouldShowSupportAgentBadge(agentId, categoryId) {
+        const cat = getSupportCategoryById(categoryId);
+        if (!cat?.badgeAgentIds?.includes(agentId)) return false;
+        return getSupportCategoryAgentTasks(categoryId, agentId).length > 0;
+    }
+
+    function updateSupportCategoryCardBadges() {
+        if (!document.body.classList.contains('support-tab-active')) return;
+        supportTopCategories.forEach(cat => {
+            const btn = document.querySelector(`.support-category-item[data-support-category="${cat.id}"]`);
+            if (!btn) return;
+            btn.querySelector('.support-category-task-badge')?.remove();
+            const count = getSupportCategoryTaskCount(cat.id);
+            if (count <= 0) return;
+            const badge = document.createElement('span');
+            badge.className = 'support-category-task-badge';
+            badge.textContent = String(count);
+            badge.setAttribute('aria-label', count + '项今日任务');
+            btn.appendChild(badge);
+        });
+    }
+
+    function buildSupportDailyTasksSummaryHtml(options = {}) {
+        let html = '<p>以下是有待办事项的业务助理任务汇总：</p>';
+        supportBadgeAgentIds.forEach(agentId => {
+            const agent = getSupportAgent(agentId);
+            const allTasks = getSupportAgentAllTasks(agentId);
+            if (!allTasks.length) return;
+            html += `<p><strong>${escapeHtmlText(agent.name)}</strong>（${allTasks.length}项待办）</p>`;
+            getSupportAgentTasksWithCategory(agentId).forEach((item, index) => {
+                html += buildSupportTodoLineSummaryHtml(agentId, item.task, index);
+            });
+        });
+        html += options.forChatCard
+            ? '<p>点击任务项发送到对话框，我将协助您推进处理。</p>'
+            : '<p>请点击任务项，或选择带角标的业务助理头像，快速发起对话。</p>';
+        return html;
+    }
+
+    function buildSupportAgentTasksGuideHtml(agentId) {
+        const agent = getSupportAgent(agentId);
+        const allTasks = getSupportAgentAllTasks(agentId);
+        let html = `<p>您好，我是${getSupportAgentIntroHtml(agentId)}。您有 <strong>${allTasks.length}</strong> 项今日待办，建议优先处理：</p>`;
+        allTasks.forEach((task, index) => {
+            html += buildSupportTodoLineGuideHtml(agentId, task, index);
+        });
+        html += '<p>请在下方对话框输入具体待办内容，或<strong>直接点击</strong>上方待办文字快速发送，我将协助您推进处理。</p>';
+        return html;
+    }
+
+    function findSupportTask(agentId, taskId) {
+        for (const categoryMap of Object.values(supportCategoryAgentTasks)) {
+            const task = categoryMap[agentId]?.find(item => item.id === taskId);
+            if (task) return task;
+        }
+        return null;
+    }
+
+    function sendSupportTodoQuick(agentId, taskId, sendText, stepText, replyMode = 'task', options = {}) {
+        const panel = document.getElementById('workbench-panel-support');
+        if (!panel || !supportBadgeAgentIds.includes(agentId)) return;
+
+        const task = findSupportTask(agentId, taskId);
+        const message = (options.preferTaskTitle && task?.title)
+            ? `请协助处理：${task.title}`
+            : (sendText || stepText || task?.nextSteps?.[0] || '').trim();
+        if (!message) return;
+
+        const state = getPanelState(panel);
+        state.currentTaskAgentId = agentId;
+        state.currentTask = task;
+        state.currentTodoStep = stepText || task?.nextSteps?.[0] || message;
+
+        if (!state.chatModeActive) {
+            enterSupportChatMode(panel);
+        }
+
+        appendSupportChatMessage(message, 'user', panel);
+        setTimeout(() => {
+            if (!task) {
+                appendSupportChatMessage(getSupportAgentReply(message, agentId), 'assistant', panel, { agentId });
+                return;
+            }
+            if (replyMode === 'step') {
+                appendSupportChatMessage(buildSupportStepReplyHtml(task, agentId, stepText || message), 'assistant', panel, { html: true, agentId });
+            } else if (replyMode === 'exec') {
+                appendSupportChatMessage(buildSupportExecStepReplyHtml(task, agentId, stepText || state.currentTodoStep, message), 'assistant', panel, { html: true, agentId });
+            } else {
+                appendSupportChatMessage(buildSupportTaskReplyHtml(task, agentId), 'assistant', panel, { html: true, agentId });
+            }
+        }, 400);
+    }
+
+    function initSupportChatTodoActions(panel) {
+        if (window.__supportTodoActionsBound === 'true') return;
+        window.__supportTodoActionsBound = 'true';
+
+        document.addEventListener('click', (event) => {
+            if (!document.body.classList.contains('support-tab-active')) return;
+
+            const trigger = event.target.closest('.support-chat-todo-trigger');
+            if (!trigger) return;
+
+            const exceptionTitle = trigger.dataset.exceptionTitle;
+            if (exceptionTitle && trigger.classList.contains('support-exception-item-trigger')) {
+                event.preventDefault();
+                sendSupportExceptionQuick(exceptionTitle);
+                return;
+            }
+
+            const inSidebar = trigger.closest('#support-sidebar-tasks-body, .support-sidebar-tasks-content');
+            const inSupportPanel = trigger.closest('#workbench-panel-support');
+            const inChatMessages = trigger.closest('#ai-chat-messages');
+            if (!inSidebar && !inSupportPanel) return;
+
+            event.preventDefault();
+
+            if (inSidebar) {
+                const agent = getSupportAgent(trigger.dataset.agentId);
+                if (agent) showSupportAgentJumpToast(agent.name);
+                return;
+            }
+
+            const exceptionsEl = document.getElementById('center-view-exceptions-support') || document.getElementById('center-view-exceptions');
+            if (exceptionsEl && !exceptionsEl.hidden) {
+                window.AppShell?.returnToMainSessionView?.();
+            }
+
+            sendSupportTodoQuick(
+                trigger.dataset.agentId,
+                trigger.dataset.taskId,
+                trigger.dataset.sendText,
+                trigger.dataset.stepText,
+                trigger.dataset.replyMode || 'task',
+                { preferTaskTitle: !!inChatMessages }
+            );
+        });
+    }
+
+    function showSupportWelcomeMessage(panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        const state = getPanelState(p);
+        if (state.supportWelcomeShown) return;
+        renderSupportSidebarTasks(p);
+        renderSupportSessionHistory();
+        state.supportWelcomeShown = true;
+    }
+
+    function resetSupportChatView(panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (messagesEl) messagesEl.innerHTML = '';
+
+        const input = getPanelEl('main-chat-input', p);
+        if (input) input.value = '';
+
+        const state = getPanelState(p);
+        state.currentTaskAgentId = null;
+        state.currentTask = null;
+        state.currentTodoStep = null;
+        state.chatModeActive = false;
+        renderSupportSidebarTasks(p);
+        exitSupportChatMode(p);
+        updateSupportChatLayout(p);
+    }
+
+    function initSupportPanel(panel) {
+        const state = getPanelState(panel);
+        state.currentSupportAgent = null;
+        state.currentSupportInputAgent = SUPPORT_INPUT_AGENT_DAILY_TASK;
+        state.chatModeActive = false;
+        state.supportWelcomeShown = false;
+        initSupportInputAgentSelect(panel);
+        updateSupportAgentButton(panel, null);
+        updateTopAvatarActive(null);
+        updateSupportAvatarPendingDots();
+        initSupportChatTodoActions(panel);
+        ensureSupportHomeCards(panel);
+        refreshSupportHomeCardCounts(panel);
+        showSupportWelcomeMessage(panel);
+        syncSupportHomeLayout(panel);
+        panel.dataset.initialized = 'true';
+    }
+
+    function appendSupportAgentTaskGuide(agentId, panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (!messagesEl) return;
+
+        const agent = getSupportAgent(agentId);
+        const row = document.createElement('div');
+        row.className = 'chat-row chat-row-assistant support-assistant-row';
+        row.dataset.supportAgentGuide = agentId;
+        row.innerHTML = `
+            <div class="chat-avatar support-chat-avatar"><img src="${agent.image}" alt="${escapeHtmlText(getSupportAgentDisplayLabel(agentId))}"></div>
+            <div class="chat-bubble chat-bubble-assistant">${buildSupportAgentTasksGuideHtml(agentId)}</div>
+        `;
+        messagesEl.appendChild(row);
+        updateSupportChatLayout(p);
+    }
+
+    function selectSupportAgent(agentId) {
+        const panel = document.getElementById('workbench-panel-support');
+        if (!panel) return;
+
+        if (getPanelKey() !== 'support') {
+            switchWorkbenchTab('support');
+        }
+
+        const agent = getSupportAgent(agentId);
+        const state = getPanelState(panel);
+        state.currentSupportAgent = null;
+        updateSupportAgentButton(panel, null);
+        updateTopAvatarActive(null);
+        showOrgAgentJumpToast(agent.name);
+    }
+
+    function appendSupportChatMessage(text, role, panel, options = {}) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (!messagesEl) return;
+
+        const state = getPanelState(p);
+        const agentId = options.agentId || state.currentTaskAgentId || state.currentSupportInputAgent || state.currentSupportAgent;
+        const agentMeta = agentId ? getSupportInputAgentMeta(agentId) : null;
+        const row = document.createElement('div');
+        row.className = role === 'user' ? 'chat-row chat-row-user' : 'chat-row chat-row-assistant support-assistant-row';
+
+        const assistantBody = options.html ? text : markdownToHtml(text);
+
+        if (role === 'user') {
+            row.innerHTML = `<div class="chat-bubble chat-bubble-user">${escapeHtml(text)}</div>`;
+        } else if (agentMeta) {
+            row.innerHTML = `
+                <div class="chat-avatar support-chat-avatar"><img src="${agentMeta.image}" alt="${escapeHtmlText(agentMeta.name)}"></div>
+                <div class="chat-bubble chat-bubble-assistant">${assistantBody}</div>
+            `;
+        } else {
+            row.innerHTML = `
+                <div class="chat-avatar support-chat-avatar support-daily-task-chat-avatar">${getSupportDailyTaskRobotAvatarHtml()}</div>
+                <div class="chat-bubble chat-bubble-assistant">${assistantBody}</div>
+            `;
+        }
+
+        messagesEl.appendChild(row);
+        if (!options.skipPersist) {
+            recordSupportChatMessage(p, {
+                role,
+                text,
+                html: !!options.html,
+                agentId: options.agentId || null
+            });
+        }
+        updateSupportChatLayout(p);
+    }
+
+    function buildSupportStepReplyHtml(task, agentId, stepText) {
+        let html = `<p>好的，我来协助您推进「${escapeHtmlText(task.title)}」中的：<strong>${escapeHtmlText(stepText)}</strong>。</p>`;
+        html += '<p><strong>执行建议</strong></p><ul class="chat-md-list support-task-exec-steps">';
+        supportExecSuggestions.forEach(execStep => {
+            html += `<li>${buildSupportTodoTriggerHtml(agentId, task, execStep, stepText, 'exec')}</li>`;
+        });
+        html += '</ul><p>您可<strong>直接点击</strong>上方执行建议快速发送，我将协助您推进处理；也可在对话框继续输入具体需求。</p>';
+        return html;
+    }
+
+    function buildSupportExecStepReplyHtml(task, agentId, parentStepText, execStepText) {
+        let html = `<p>收到，我是${getSupportAgentIntroHtml(agentId)}。正在协助您处理「${escapeHtmlText(task.title)}」—「${escapeHtmlText(parentStepText)}」中的：<strong>${escapeHtmlText(execStepText)}</strong>。</p>`;
+        html += getSupportExecProcessingHtml(task, parentStepText, execStepText);
+        html += '<p>如需我继续帮您起草文档、整理清单或安排会议，请直接告诉我。</p>';
+        return html;
+    }
+
+    function getSupportExecProcessingHtml(task, parentStepText, execStepText) {
+        const maps = {
+            '梳理该项工作的背景材料、责任人与截止时间': `
+                <p><strong>背景材料清单</strong></p>
+                <ul class="chat-md-list">
+                    <li>任务概况：${escapeHtmlText(task.description)}</li>
+                    <li>当前步骤：${escapeHtmlText(parentStepText)}</li>
+                    <li>建议收集：相关审批记录、历史沟通纪要、模板与参考样例</li>
+                </ul>
+                <p><strong>责任与节点</strong></p>
+                <ul class="chat-md-list">
+                    <li>建议明确主责人与协作方，并设定目标完成日期</li>
+                    <li>涉及跨部门事项时，提前同步合规、风控等相关同事</li>
+                </ul>`,
+            '按优先级推进关键协作事项，并同步相关同事': `
+                <p><strong>协作推进建议</strong></p>
+                <ul class="chat-md-list">
+                    <li>优先推进「${escapeHtmlText(parentStepText)}」中的关键阻塞项</li>
+                    <li>同步相关业务、合规及运营同事，确认分工与交付口径</li>
+                    <li>对需外部配合的事项，建议今日内发出协作通知并跟进回执</li>
+                </ul>
+                <p><strong>沟通要点</strong></p>
+                <ul class="chat-md-list">
+                    <li>说明任务背景、当前进展与期望产出</li>
+                    <li>明确截止时间、材料格式及反馈方式</li>
+                </ul>`,
+            '完成后更新任务进展，便于团队跟踪': `
+                <p><strong>进展更新建议</strong></p>
+                <ul class="chat-md-list">
+                    <li>记录「${escapeHtmlText(parentStepText)}」的完成状态与关键结论</li>
+                    <li>更新任务看板或工作日志，标注下一步待办与责任人</li>
+                    <li>如有风险或延期，及时同步团队并调整优先级</li>
+                </ul>
+                <p><strong>可同步内容</strong></p>
+                <ul class="chat-md-list">
+                    <li>已完成事项摘要、遗留问题及预计解决时间</li>
+                    <li>相关文档链接或附件清单，便于团队查阅跟踪</li>
+                </ul>`
+        };
+        return maps[execStepText] || `<p>我将围绕「${escapeHtmlText(execStepText)}」为您梳理处理思路，请补充更多具体信息以便进一步协助。</p>`;
+    }
+
+    function buildSupportTaskReplyHtml(task, agentId) {
+        let html = `<p>您好，我是${getSupportAgentIntroHtml(agentId)}。已收到您关于「${escapeHtmlText(task.title)}」的跟进请求。</p>`;
+        html += `<p><strong>任务概况</strong><br>${escapeHtmlText(task.description)}</p>`;
+        html += '<p><strong>已完成步骤</strong></p><ul class="chat-md-list support-task-steps-list">';
+        task.completedSteps.forEach(step => {
+            html += `<li>${escapeHtmlText(step)}</li>`;
+        });
+        html += '</ul><p><strong>建议下一步</strong></p><ul class="chat-md-list support-task-next-steps">';
+        task.nextSteps.forEach(step => {
+            html += `<li>${buildSupportTodoTriggerHtml(agentId, task, step, step, 'step')}</li>`;
+        });
+        html += '</ul><p>如需我协助撰写材料、安排会议或推进审批，请直接点击上方建议步骤，或在对话框告诉我。</p>';
+        return html;
+    }
+
+    function updateSupportChatLayout(panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        const workbench = p?.querySelector('.ai-workbench-section');
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (!workbench || !messagesEl) return;
+        const hasChat = messagesEl.children.length > 0;
+        if (hasChat) {
+            getPanelState(p).chatModeActive = true;
+        }
+        workbench.classList.toggle('support-has-chat', hasChat);
+        syncSupportHomeLayout(p);
+        if (hasChat) {
+            scrollWorkbenchChatToBottom(p);
+        }
+    }
+
+    function findSupportTaskByMessage(message, agentId) {
+        return getSupportAgentAllTasks(agentId).find(task =>
+            message.includes(task.title) ||
+            task.nextSteps.some(step => message.includes(step) || step.includes(message))
+        ) || null;
+    }
+
+    function appendSupportAssistantReply(message, agentId, panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        const state = getPanelState(p);
+        const resolvedAgentId = agentId || state.currentSupportInputAgent || state.currentTaskAgentId || state.currentSupportAgent;
+        const task = state.currentTask || (resolvedAgentId ? findSupportTaskByMessage(message, resolvedAgentId) : null);
+        if (task && resolvedAgentId) {
+            state.currentTask = task;
+            appendSupportChatMessage(buildSupportTaskReplyHtml(task, resolvedAgentId), 'assistant', p, { html: true, agentId: resolvedAgentId });
+            return;
+        }
+        appendSupportChatMessage(getSupportAgentReply(message, resolvedAgentId), 'assistant', p, { agentId: resolvedAgentId });
+    }
+
+    function getSupportTaskReply(task, agentId) {
+        const done = task.completedSteps.map(s => `• ${s}`).join('\n');
+        const next = task.nextSteps.map(s => `• ${s}`).join('\n');
+        return `您好，我是${getSupportAgentDisplayLabel(agentId)}。已收到您关于「${task.title}」的跟进请求。\n\n**任务概况**\n${task.description}\n\n**已完成步骤**\n${done}\n\n**建议下一步**\n${next}\n\n如需我协助撰写材料、安排会议或推进审批，请直接告诉我。`;
+    }
+
+    function getSupportAgentReply(message, agentId) {
+        if (!agentId) {
+            for (const id of supportBadgeAgentIds) {
+                const agent = getSupportAgent(id);
+                for (const task of getSupportAgentAllTasks(id)) {
+                    const matchedStep = task.nextSteps.find(step => message.includes(step) || step.includes(message));
+                    if (matchedStep || message.includes(task.title)) {
+                        return `您好，该待办属于**${getSupportAgentDisplayLabel(id)}**。\n\n` + getSupportTaskReply(task, id).replace(/^您好[^\n]+\n\n/, '');
+                    }
+                }
+            }
+            const badgeHint = supportBadgeAgentIds.map(id => {
+                return `**${getSupportAgentDisplayLabel(id)}**（${getSupportAgentTaskCount(id)}）`;
+            }).join('、');
+            return `您好，我已收到您的消息。您可在上方点击${badgeHint}选择对应助理；也可直接在对话框输入具体待办内容，我将协助您跟进处理。`;
+        }
+        const supportState = getPanelState(document.getElementById('workbench-panel-support'));
+        const task = supportState?.currentTask;
+        if (task && (message.includes(task.title) || task.nextSteps.some(step => message.includes(step) || step.includes(message)))) {
+            return getSupportTaskReply(task, agentId || supportState.currentTaskAgentId);
+        }
+        if (agentId === SUPPORT_INPUT_AGENT_DAILY_TASK) {
+            return `您好，我是今日任务助理。关于「${message}」，我将为您汇总待办并协助跟进处理。请补充具体需求或相关材料。`;
+        }
+        return `您好，我是${getSupportAgentDisplayLabel(agentId)}。关于「${message}」，我将结合当前任务进展为您提供支持。请补充具体需求或相关材料。`;
+    }
+
+    function customizeOrgPanel(panel) {
+        const workTips = panel.querySelector('#work-tips-section-org');
+        if (workTips) workTips.remove();
+
+        const carousel = panel.querySelector('#ai-carousel-view-org');
+        if (carousel) carousel.remove();
+
+        const miniAvatars = panel.querySelector('#ai-mini-avatars-org');
+        if (miniAvatars) miniAvatars.remove();
+
+        const chatView = panel.querySelector('#ai-chat-view-org');
+        const workbench = panel.querySelector('.ai-workbench-section');
+        if (chatView) chatView.style.display = '';
+        if (workbench) {
+            workbench.classList.add('org-workbench-mode');
+
+            const jumpBar = document.createElement('div');
+            jumpBar.className = 'org-agent-jump-bar';
+            jumpBar.innerHTML = '<button type="button" class="org-current-agent-name" id="org-current-agent-name-org" style="display: none;">去业务助理</button>';
+            workbench.insertBefore(jumpBar, workbench.firstChild);
+
+            const scrollBody = document.createElement('div');
+            scrollBody.className = 'org-workbench-scroll';
+
+            const promptsCenter = document.createElement('div');
+            promptsCenter.className = 'org-prompts-center';
+            promptsCenter.innerHTML = '<div class="org-agent-prompts-list" id="org-agent-prompts-list-org"></div>';
+            scrollBody.appendChild(promptsCenter);
+
+            const inputSection = workbench.querySelector('.input-section');
+            if (chatView) scrollBody.appendChild(chatView);
+            workbench.insertBefore(scrollBody, inputSection);
+        }
+
+        panel.dataset.orgCustomized = 'true';
+    }
+
+    function getOrgAgent(agentId) {
+        return orgAgents.find(a => a.id === agentId) || orgAgents[0];
+    }
+
+    function updateTopAvatarActive(agentId) {
+        document.querySelectorAll('.avatar-item[data-avatar-type]').forEach(item => {
+            item.classList.toggle('active', !!agentId && item.dataset.avatarType === agentId);
+        });
+    }
+
+    function getSupportCategoryIconHtml(iconName) {
+        const icons = {
+            'users': {
+                color: '#4A90E2',
+                svg: '<circle cx="12" cy="7" r="4" fill="#4A90E2" opacity="0.2"/><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#4A90E2" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="7" r="4" stroke="#4A90E2" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="#4A90E2" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="#4A90E2" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+            },
+            'trending-up': {
+                color: '#E74C3C',
+                svg: '<path d="M23 6L13.5 15.5L8.5 10.5L1 18" stroke="#E74C3C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><polyline points="17 6 23 6 23 12" stroke="#E74C3C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23" cy="6" r="3" fill="#E74C3C" opacity="0.2"/>'
+            },
+            'shield': {
+                color: '#27AE60',
+                svg: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#27AE60" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="#27AE60" opacity="0.15"/><path d="M9 12l2 2 4-4" stroke="#27AE60" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+            },
+            'layers': {
+                color: '#F39C12',
+                svg: '<polygon points="12 2 2 7 12 12 22 7 12 2" stroke="#F39C12" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><polygon points="12 2 2 7 12 12 22 7 12 2" fill="#F39C12" opacity="0.15"/><polyline points="2 17 12 22 22 17" stroke="#F39C12" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><polyline points="2 12 12 17 22 12" stroke="#F39C12" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+            }
+        };
+        const icon = icons[iconName] || icons['users'];
+        return `<svg class="support-category-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${icon.svg}</svg>`;
+    }
+
+    function initSupportCategoryRow() {
+        const row = document.getElementById('support-category-row');
+        if (!row || row.dataset.initialized === 'true') return;
+        row.innerHTML = supportTopCategories.map(cat => {
+            const hasDropdown = hasSupportCategoryDropdown(cat.id);
+            return `
+            <button type="button" class="support-category-item${hasDropdown ? '' : ' is-no-dropdown'}" role="tab" data-support-category="${cat.id}" data-has-dropdown="${hasDropdown ? 'true' : 'false'}" aria-selected="false" aria-expanded="false" onclick="toggleSupportCategory('${cat.id}', event)">
+                <div class="support-category-item-left">
+                    ${getSupportCategoryIconHtml(cat.icon)}
+                </div>
+                <div class="support-category-item-center">
+                    <span class="support-category-item-title">${cat.name}</span>
+                </div>
+            </button>
+        `;
+        }).join('');
+        row.dataset.initialized = 'true';
+        initSupportCategoryDropdownDismiss();
+        updateSupportCategoryCardBadges();
+    }
+
+    function toggleSupportCategory(categoryId, event) {
+        event?.stopPropagation();
+        if (!hasSupportCategoryDropdown(categoryId)) {
+            handleSupportCategoryDirectClick(categoryId);
+            return;
+        }
+        if (currentSupportCategoryId === categoryId) {
+            clearSupportCategorySelection();
+            return;
+        }
+        selectSupportCategory(categoryId);
+    }
+
+    function handleSupportCategoryDirectClick(categoryId) {
+        if (currentSupportCategoryId) {
+            clearSupportCategorySelection();
+        }
+        const cat = getSupportCategoryById(categoryId);
+        const agentIds = getSupportCategoryVisibleAgentIds(categoryId);
+        const toastMessage = cat?.directJumpToast
+            || (agentIds.length === 1 ? '点击跳转' + getSupportAgent(agentIds[0]).name : '点击跳转相应页面');
+        showOrgAgentJumpToast(toastMessage, { fullMessage: true });
+
+        if (agentIds.length === 1) {
+            const panel = document.getElementById('workbench-panel-support');
+            if (!panel) return;
+            const state = getPanelState(panel);
+            state.currentSupportAgent = null;
+            updateSupportAgentButton(panel, null);
+            updateTopAvatarActive(null);
+        }
+    }
+
+    function initSupportCategoryDropdownDismiss() {
+        if (document.body.dataset.supportDropdownDismissBound === 'true') return;
+
+        document.addEventListener('click', () => {
+            if (!document.body.classList.contains('support-tab-active')) return;
+            if (!currentSupportCategoryId) return;
+            clearSupportCategorySelection();
+        });
+
+        document.getElementById('support-category-row')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        document.getElementById('support-secondary-avatars-wrap')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        document.getElementById('support-top-nav-stack')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        document.body.dataset.supportDropdownDismissBound = 'true';
+    }
+
+    const allSupportAgentIds = ['ib', 'asset', 'retail', 'invest', 'sales', 'institution', 'research', 'credit', 'verify'];
+
+    function getSupportCategoryExcludedAgentIds(categoryId) {
+        return supportTopCategories.find(cat => cat.id === categoryId)?.excludeAgentIds || [];
+    }
+
+    function getSupportCategoryVisibleAgentIds(categoryId) {
+        const excluded = new Set(getSupportCategoryExcludedAgentIds(categoryId));
+        return allSupportAgentIds.filter(id => !excluded.has(id));
+    }
+
+    function hasSupportCategoryDropdown(categoryId) {
+        return getSupportCategoryVisibleAgentIds(categoryId).length >= 2;
+    }
+
+    function updateSupportAvatarsVisibility(categoryId) {
+        const excluded = new Set(getSupportCategoryExcludedAgentIds(categoryId));
+        document.querySelectorAll('.avatar-item[data-avatar-type]').forEach(item => {
+            const hidden = excluded.has(item.dataset.avatarType);
+            item.hidden = hidden;
+            item.style.display = hidden ? 'none' : '';
+        });
+        updateDigitalAvatarsScrollButtons();
+    }
+
+    function resetSupportAvatarsVisibility() {
+        document.querySelectorAll('.avatar-item[data-avatar-type]').forEach(item => {
+            item.hidden = false;
+            item.style.display = '';
+        });
+        updateDigitalAvatarsScrollButtons();
+    }
+
+    function setSupportSecondaryNavExpanded(expanded) {
+        const host = document.getElementById('top-nav-avatars-host');
+        const stack = document.getElementById('support-top-nav-stack');
+        host?.classList.toggle('is-secondary-expanded', expanded);
+        stack?.classList.toggle('is-secondary-expanded', expanded);
+    }
+
+    function selectSupportCategory(categoryId) {
+        if (!supportTopCategories.some(cat => cat.id === categoryId)) return;
+        currentSupportCategoryId = categoryId;
+        setSupportSecondaryNavExpanded(true);
+        document.querySelectorAll('.support-category-item').forEach(btn => {
+            const active = btn.dataset.supportCategory === categoryId;
+            btn.classList.toggle('active', active);
+            btn.classList.toggle('is-expanded', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+            btn.setAttribute('aria-expanded', active ? 'true' : 'false');
+        });
+        const secondaryWrap = document.getElementById('support-secondary-avatars-wrap');
+        secondaryWrap?.classList.add('is-visible');
+        updateSupportAvatarsVisibility(categoryId);
+        updateSupportAvatarPendingDots(categoryId);
+    }
+
+    function clearSupportCategorySelection() {
+        currentSupportCategoryId = null;
+        setSupportSecondaryNavExpanded(false);
+        document.querySelectorAll('.support-category-item').forEach(btn => {
+            btn.classList.remove('active', 'is-expanded');
+            btn.setAttribute('aria-selected', 'false');
+            btn.setAttribute('aria-expanded', 'false');
+        });
+        const secondaryWrap = document.getElementById('support-secondary-avatars-wrap');
+        secondaryWrap?.classList.remove('is-visible');
+        resetSupportAvatarsVisibility();
+        restoreSupportSecondaryAvatarFullNames();
+    }
+
+    function showSupportAvatarsNav() {
+        const host = document.getElementById('top-nav-avatars-host');
+        const secondaryWrap = document.getElementById('support-secondary-avatars-wrap');
+        host?.classList.add('is-support-avatars-only');
+        secondaryWrap?.classList.add('is-visible');
+        resetSupportAvatarsVisibility();
+        document.querySelectorAll('.avatar-item[data-avatar-type]').forEach(item => {
+            const agentId = item.dataset.avatarType;
+            const nameEl = item.querySelector('.avatar-name');
+            const fullName = getSupportAgent(agentId)?.name || '';
+            if (!nameEl || !fullName) return;
+            nameEl.dataset.fullLabel = fullName;
+            nameEl.textContent = fullName;
+        });
+        updateSupportAvatarPendingDots();
+        updateDigitalAvatarsScrollButtons();
+    }
+
+    function hideSupportAvatarsNav() {
+        const host = document.getElementById('top-nav-avatars-host');
+        const secondaryWrap = document.getElementById('support-secondary-avatars-wrap');
+        host?.classList.remove('is-support-avatars-only', 'is-secondary-expanded');
+        secondaryWrap?.classList.remove('is-visible');
+        document.getElementById('support-top-nav-stack')?.classList.remove('is-secondary-expanded');
+    }
+
+    function syncSupportTopNavLayout() {
+        const host = document.getElementById('top-nav-avatars-host');
+        const isSupport = document.body.classList.contains('support-tab-active');
+        if (!host) return;
+
+        host.classList.toggle('is-support-mode', isSupport);
+
+        // 业务助理统一展示在中栏顶部
+        hideSupportAvatarsNav();
+        if (!isSupport) {
+            restoreSupportSecondaryAvatarFullNames();
+        }
+        updateDigitalAvatarsScrollButtons();
+    }
+
+    function getAvatarNameFullLabel(nameEl) {
+        if (!nameEl) return '';
+        if (nameEl.dataset.fullLabel) return nameEl.dataset.fullLabel;
+        const stored = nameEl.textContent.trim();
+        nameEl.dataset.fullLabel = stored;
+        return stored;
+    }
+
+    function stripAssistantSuffix(name) {
+        const suffix = '助理';
+        return name && name.endsWith(suffix) ? name.slice(0, -suffix.length) : (name || '');
+    }
+
+    function getSupportSecondaryAvatarDisplayName(nameEl) {
+        return stripAssistantSuffix(getAvatarNameFullLabel(nameEl));
+    }
+
+    function applySupportSecondaryAvatarDisplayName(nameEl) {
+        if (!nameEl) return;
+        nameEl.textContent = getSupportSecondaryAvatarDisplayName(nameEl);
+    }
+
+    function restoreSupportSecondaryAvatarFullNames() {
+        document.querySelectorAll('.avatar-item[data-avatar-type] .avatar-name').forEach(nameEl => {
+            if (!nameEl.dataset.fullLabel) return;
+            nameEl.textContent = nameEl.dataset.fullLabel;
+        });
+    }
+
+    function restoreAvatarNameLabel(nameEl) {
+        if (!nameEl) return;
+        const full = getAvatarNameFullLabel(nameEl);
+        nameEl.textContent = full;
+    }
+
+    function setAvatarImgTaskBadge(wrap, count) {
+        if (!wrap) return;
+        const badge = document.createElement('span');
+        badge.className = 'avatar-task-badge';
+        badge.textContent = String(count);
+        badge.setAttribute('aria-label', count + '项今日任务');
+        wrap.appendChild(badge);
+    }
+
+    function updateSupportAvatarPendingDots() {
+        const isSupportTab = document.body.classList.contains('support-tab-active');
+
+        document.querySelectorAll('.avatar-item[data-avatar-type]').forEach(item => {
+            const agentId = item.dataset.avatarType;
+            const wrap = item.querySelector('.avatar-img-wrap');
+            const nameEl = item.querySelector('.avatar-name');
+            if (!wrap || !nameEl) return;
+
+            wrap.querySelector('.avatar-pending-dot')?.remove();
+            wrap.querySelector('.avatar-task-badge')?.remove();
+            nameEl.querySelector('.avatar-task-badge')?.remove();
+
+            if (!isSupportTab) {
+                restoreAvatarNameLabel(nameEl);
+                return;
+            }
+
+            restoreAvatarNameLabel(nameEl);
+
+            if (!supportBadgeAgentIds.includes(agentId)) return;
+            const count = getSupportAgentAllTasks(agentId).length;
+            if (count > 0) setAvatarImgTaskBadge(wrap, count);
+        });
+    }
+
+    function renderOrgPrompts(panel, agentId) {
+        const listEl = panel.querySelector('#org-agent-prompts-list-org');
+        const nameEl = panel.querySelector('#org-current-agent-name-org');
+        if (!listEl) return;
+
+        if (!agentId) {
+            if (nameEl) nameEl.style.display = 'none';
+            panel.querySelector('.org-agent-jump-bar')?.classList.remove('is-visible');
+            listEl.className = 'org-agent-prompts-list org-prompts-stagger';
+            listEl.innerHTML = orgDefaultPrompts.map(prompt => `
+                <button type="button" class="org-prompt-chip">${prompt}</button>
+            `).join('');
+            listEl.querySelectorAll('.org-prompt-chip').forEach((btn, index) => {
+                btn.onclick = () => useOrgPrompt(orgDefaultPrompts[index]);
+            });
+            return;
+        }
+
+        const agent = getOrgAgent(agentId);
+        if (nameEl) {
+            nameEl.style.display = '';
+            nameEl.textContent = '去' + agent.name;
+            nameEl.onclick = () => showOrgAgentJumpToast(agent.name);
+        }
+        panel.querySelector('.org-agent-jump-bar')?.classList.add('is-visible');
+
+        listEl.className = 'org-agent-prompts-list';
+        listEl.innerHTML = agent.prompts.map(prompt => `
+            <button type="button" class="org-prompt-chip">${prompt}</button>
+        `).join('');
+
+        listEl.querySelectorAll('.org-prompt-chip').forEach((btn, index) => {
+            btn.onclick = () => useOrgPrompt(agent.prompts[index]);
+        });
+    }
+
+    function showOrgAgentJumpToast(agentName, options = {}) {
+        document.querySelectorAll('.org-agent-jump-toast').forEach(el => el.remove());
+
+        const toast = document.createElement('div');
+        toast.className = 'org-agent-jump-toast';
+        if (options.fullMessage) {
+            toast.textContent = agentName;
+        } else if (options.supportRedirect) {
+            toast.textContent = `跳转至${agentName}处理`;
+            toast.classList.add('support-agent-jump-toast');
+            positionSupportAgentJumpToast(toast);
+        } else if (options.switchMode) {
+            toast.textContent = `跳转到${agentName}处理`;
+        } else {
+            toast.textContent = '点击跳转' + agentName;
+        }
+        document.body.appendChild(toast);
+
+        requestAnimationFrame(() => toast.classList.add('show'));
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    }
+
+    function positionSupportAgentJumpToast(toast) {
+        const anchor = document.getElementById('center-agents-bar');
+        if (!anchor) return;
+        const rect = anchor.getBoundingClientRect();
+        toast.style.top = `${Math.round(rect.top + rect.height * 0.42)}px`;
+        toast.style.left = `${Math.round(rect.left + rect.width / 2)}px`;
+        toast.style.transform = 'translate(-50%, -50%) translateY(6px)';
+    }
+
+    function showSupportAgentJumpToast(agentName) {
+        showOrgAgentJumpToast(agentName, { supportRedirect: true });
+    }
+
+    function initOrgPanel(panel) {
+        const state = getPanelState(panel);
+        state.currentOrgAgent = null;
+        state.chatModeActive = true;
+        renderOrgPrompts(panel, null);
+        updateTopAvatarActive(null);
+        panel.dataset.initialized = 'true';
+    }
+
+    function selectOrgAgent(agentId) {
+        const panel = document.getElementById('workbench-panel-org');
+        if (!panel) return;
+
+        if (getPanelKey() !== 'org') {
+            switchWorkbenchTab('org');
+        }
+
+        const agent = getOrgAgent(agentId);
+        const state = getPanelState(panel);
+        state.currentOrgAgent = null;
+        updateTopAvatarActive(null);
+        showOrgAgentJumpToast(agent.name);
+    }
+
+    function resetOrgChatView(panel) {
+        const p = panel || document.getElementById('workbench-panel-org');
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (messagesEl) messagesEl.innerHTML = '';
+
+        const input = getPanelEl('main-chat-input', p);
+        if (input) input.value = '';
+
+        updateOrgChatLayout(p);
+    }
+
+    function useOrgPrompt(promptText) {
+        const panel = document.getElementById('workbench-panel-org');
+        if (!panel) return;
+
+        appendOrgChatMessage(promptText, 'user', panel);
+        setTimeout(() => {
+            const agentId = getPanelState(panel).currentOrgAgent;
+            const reply = agentId
+                ? getOrgAgentReply(promptText, agentId)
+                : getOrgDefaultPromptReply(promptText);
+            appendOrgChatMessage(reply, 'assistant', panel);
+        }, 400);
+
+        const input = getPanelEl('main-chat-input', panel);
+        if (input) input.value = '';
+    }
+
+    function appendOrgChatMessage(text, role, panel) {
+        const p = panel || document.getElementById('workbench-panel-org');
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (!messagesEl) return;
+
+        const state = getPanelState(p);
+        const agent = state.currentOrgAgent ? getOrgAgent(state.currentOrgAgent) : null;
+        const row = document.createElement('div');
+        row.className = role === 'user' ? 'chat-row chat-row-user' : 'chat-row chat-row-assistant org-assistant-row';
+
+        if (role === 'user') {
+            row.innerHTML = `<div class="chat-bubble chat-bubble-user">${escapeHtml(text)}</div>`;
+        } else if (agent) {
+            row.innerHTML = `
+                <div class="chat-avatar org-chat-avatar"><img src="${agent.image}" alt="${agent.name}"></div>
+                <div class="chat-bubble chat-bubble-assistant">${markdownToHtml(text)}</div>
+            `;
+        } else {
+            row.innerHTML = `
+                <div class="chat-avatar org-chat-avatar org-chat-avatar-default">📊</div>
+                <div class="chat-bubble chat-bubble-assistant">${markdownToHtml(text)}</div>
+            `;
+        }
+
+        messagesEl.appendChild(row);
+        updateOrgChatLayout(p);
+    }
+
+    function updateOrgChatLayout(panel) {
+        const p = panel || document.getElementById('workbench-panel-org');
+        const workbench = p?.querySelector('.ai-workbench-section');
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (!workbench || !messagesEl) return;
+        workbench.classList.toggle('org-has-chat', messagesEl.children.length > 0);
+        if (messagesEl.children.length > 0) {
+            scrollWorkbenchChatToBottom(p);
+        }
+    }
+
+    function getOrgAgentReply(message, agentId) {
+        const agent = getOrgAgent(agentId);
+        return agent.getReply(message);
+    }
+
+    function initWorkbenchPanel(panel) {
+        const key = getPanelKey(panel);
+        if (key === 'org') {
+            initOrgPanel(panel);
+            return;
+        }
+        if (key === 'support') {
+            initSupportPanel(panel);
+            return;
+        }
+        initIndicatorsForPanel(panel);
+        const targetCard = panel.querySelector('.ai-card-fan[data-index="0"]');
+        if (targetCard) {
+            panel.querySelectorAll('.ai-card-fan').forEach(card => card.classList.remove('active'));
+            panel.querySelectorAll('.indicator').forEach(ind => ind.classList.remove('active'));
+            targetCard.classList.add('active');
+            const indicators = panel.querySelectorAll('.indicator');
+            if (indicators[0]) indicators[0].classList.add('active');
+        }
+        panel.dataset.initialized = 'true';
+    }
+
+    function syncSidebarForRole(tabKey) {
+        const isEmployee = tabKey === 'employee';
+        const isSupport = tabKey === 'support';
+        document.querySelectorAll('.employee-only-nav').forEach((el) => {
+            el.style.display = isEmployee ? '' : 'none';
+        });
+        document.querySelectorAll('.support-only-nav').forEach((el) => {
+            el.style.display = isSupport ? '' : 'none';
+        });
+        const mainHeader = document.getElementById('main-area-header');
+        if (mainHeader) {
+            mainHeader.style.display = (isEmployee || isSupport) ? '' : 'none';
+        }
+        if (typeof window.AppShell?.syncBreadcrumbForRole === 'function') {
+            window.AppShell.syncBreadcrumbForRole(tabKey);
+        }
+        const workTips = document.getElementById('work-tips-section');
+        if (workTips) workTips.style.display = tabKey === 'support' ? 'none' : '';
+        if (isSupport) {
+            renderSupportSidebarTasks();
+            renderSupportSessionHistory();
+            const supportPanel = document.getElementById('workbench-panel-support');
+            if (supportPanel && !supportPanel.querySelector('.support-input-agent-picker')) {
+                const container = supportPanel.querySelector('.input-container');
+                if (container) container.dataset.supportInputReady = 'false';
+                initSupportInputAgentSelect(supportPanel);
+            }
+            requestAnimationFrame(() => syncSupportHomeLayout(supportPanel));
+        }
+    }
+
+    function switchWorkbenchTab(tabKey) {
+        currentWorkbenchRole = tabKey === 'support' ? 'support' : (tabKey === 'org' ? 'org' : 'employee');
+        document.querySelectorAll('.workbench-panel').forEach(panel => {
+            panel.classList.toggle('active', panel.dataset.panel === tabKey);
+        });
+        document.body.classList.toggle('org-tab-active', tabKey === 'org');
+        document.body.classList.toggle('support-tab-active', tabKey === 'support');
+        syncSidebarForRole(tabKey);
+        syncSupportTopNavLayout();
+        syncEmployeeChatModeLayout();
+        updateNavTitleForRole(tabKey === 'support' ? 'support' : 'employee');
+
+        if (tabKey === 'org') {
+            const orgPanel = document.getElementById('workbench-panel-org');
+            updateTopAvatarActive(getPanelState(orgPanel).currentOrgAgent || null);
+        } else if (tabKey === 'support') {
+            const supportPanel = document.getElementById('workbench-panel-support');
+            updateTopAvatarActive(getPanelState(supportPanel).currentSupportAgent || null);
+        } else {
+            document.querySelectorAll('.avatar-item[data-avatar-type]').forEach(item => item.classList.remove('active'));
+        }
+
+        const panel = document.getElementById('workbench-panel-' + tabKey);
+        if (panel && panel.dataset.initialized !== 'true') {
+            initWorkbenchPanel(panel);
+        }
+        updateSupportAvatarPendingDots();
+        updateDigitalAvatarsScrollButtons();
+        requestAnimationFrame(updateDigitalAvatarsScrollButtons);
+    }
+
+    function bindOverlayScrollbar(el) {
+        if (!el || el.dataset.overlayScrollbarBound === 'true') return;
+        el.dataset.overlayScrollbarBound = 'true';
+        el.classList.add('overlay-scrollbar');
+        let hideTimer;
+        el.addEventListener('scroll', () => {
+            el.classList.add('is-scrolling');
+            clearTimeout(hideTimer);
+            hideTimer = setTimeout(() => el.classList.remove('is-scrolling'), 800);
+        }, { passive: true });
+    }
+
+    function initOverlayScrollbars(root) {
+        const scope = root || document;
+        scope.querySelectorAll('.ai-chat-view, .support-dialogue, .org-workbench-scroll, .employee-tasks-scroll').forEach(bindOverlayScrollbar);
+    }
+
+    function initWorkbenchTabs() {
+        cloneWorkbenchPanels();
+        initWorkbenchPanel(document.getElementById('workbench-panel-employee'));
+        initOverlayScrollbars();
+    }
+
+    // AI横向堆叠卡片功能
+    const totalCards = 5;
+
+    const aiAssistants = [
+        {
+            index: 0,
+            name: '客户分析助手',
+            emoji: '🧠',
+            avatarClass: 'canmou',
+            welcomeText: `**客户分析助手**\n\n从资产、行为、交易、合作记录等维度分析客户价值与风险。\n\n输入：客户名称、客户类型或分析维度。`
+        },
+        {
+            index: 1,
+            name: '业务分析助手',
+            emoji: '🐎',
+            avatarClass: 'tanma',
+            welcomeText: `**业务分析助手**\n\n按业务分析模型（找目标）匹配业务类型与具体模型。`
+        },
+        {
+            index: 2,
+            name: '方案生成助手',
+            emoji: '📋',
+            avatarClass: 'junshi',
+            type: 'solution'
+        },
+        {
+            index: 3,
+            name: '交叉验证助手',
+            emoji: '🔍',
+            avatarClass: 'jiaocha',
+            welcomeText: `**交叉验证助手**\n\n按交叉验证模型（核异常）匹配业务与核验模型。`
+        },
+        {
+            index: 4,
+            name: '客户服务助手',
+            emoji: '👁️',
+            avatarClass: 'tianyan',
+            welcomeText: `**客户服务助手**\n\n按客户服务模块匹配买方分析、信披判断、临时公告生成模型。`
+        }
+    ];
+
+    function markdownToHtml(text) {
+        const lines = text.split('\n');
+        let html = '';
+        let inList = false;
+
+        lines.forEach((line) => {
+            if (line.startsWith('• ')) {
+                if (!inList) {
+                    html += '<ul class="chat-md-list">';
+                    inList = true;
+                }
+                const content = line.replace(/^•\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                html += `<li>${content}</li>`;
+            } else {
+                if (inList) {
+                    html += '</ul>';
+                    inList = false;
+                }
+                if (line.trim() === '') return;
+                const content = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                html += `<p>${content}</p>`;
+            }
+        });
+
+        if (inList) html += '</ul>';
+        return html;
+    }
+
+    function getSolutionSelectHtml(blockId) {
+        const radioName = `solution-type-${blockId}`;
+        return `
+            <p><strong>方案生成助手</strong> · 选择方案类型</p>
+            <div class="solution-select-card">
+                <div class="solution-select-header">方案生成助手</div>
+                <div class="solution-select-subtitle">选择方案类型，按方案设计模型继续</div>
+                <label class="solution-option">
+                    <input type="radio" name="${radioName}" value="bankruptcy">
+                    <div class="solution-option-content">
+                        <strong>破产重整</strong>
+                        <span>企业破产重整方案设计，包含偿债方案、投资人引入等</span>
+                    </div>
+                </label>
+                <label class="solution-option">
+                    <input type="radio" name="${radioName}" value="placement">
+                    <div class="solution-option-content">
+                        <strong>定增</strong>
+                        <span>定向增发方案设计</span>
+                    </div>
+                </label>
+                <label class="solution-option">
+                    <input type="radio" name="${radioName}" value="bond">
+                    <div class="solution-option-content">
+                        <strong>债券</strong>
+                        <span>债券发行方案设计</span>
+                    </div>
+                </label>
+                <label class="solution-option">
+                    <input type="radio" name="${radioName}" value="asset">
+                    <div class="solution-option-content">
+                        <strong>资管产品</strong>
+                        <span>资产管理产品方案设计</span>
+                    </div>
+                </label>
+                <div class="solution-select-actions">
+                    <button type="button" class="solution-btn-cancel" onclick="cancelSolutionSelect('${blockId}')">取消</button>
+                    <button type="button" class="solution-btn-confirm" onclick="confirmSolutionSelect('${blockId}')">确认</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function initMiniAvatars(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const state = getPanelState(p);
+        const container = getPanelEl('ai-mini-avatars', p);
+        if (!container || state.miniAvatarsInitialized) return;
+
+        aiAssistants.forEach((assistant) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `ai-mini-avatar ${assistant.avatarClass}`;
+            btn.dataset.index = assistant.index;
+            btn.title = assistant.name;
+            btn.innerHTML = `<span>${assistant.emoji}</span>`;
+            btn.onclick = () => selectAssistant(assistant.index, p);
+            container.appendChild(btn);
+        });
+        state.miniAvatarsInitialized = true;
+    }
+
+    function syncEmployeeChatModeLayout() {
+        const employeePanel = document.getElementById('workbench-panel-employee');
+        const isActive = employeePanel?.classList.contains('active');
+        const inChat = employeePanel && getPanelState(employeePanel).chatModeActive;
+        document.body.classList.toggle('employee-chat-mode', !!(isActive && inChat));
+    }
+
+    function persistEmployeeChat(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (getPanelKey(p) !== 'employee') return;
+        const state = getPanelState(p);
+        if (!state.currentSessionId || !window.AppShell?.saveSessionMessages) return;
+        window.AppShell.saveSessionMessages(state.currentSessionId, state.chatMessages || [], state.currentCardIndex);
+    }
+
+    function recordEmployeeChatMessage(panel, message) {
+        const state = getPanelState(panel);
+        if (!state.chatMessages) state.chatMessages = [];
+        state.chatMessages.push(message);
+        if (message.role === 'user') {
+            const userMsgs = state.chatMessages.filter((m) => m.role === 'user');
+            if (userMsgs.length === 1 && window.AppShell?.touchCurrentSession) {
+                window.AppShell.touchCurrentSession(message.text.slice(0, 30));
+            }
+        }
+        persistEmployeeChat(panel);
+    }
+
+    function restoreChatFromSession(panel, session) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        const state = getPanelState(p);
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (!messagesEl) return;
+
+        messagesEl.innerHTML = '';
+        state.chatMessages = Array.isArray(session?.messages) ? session.messages.slice() : [];
+        state.currentCardIndex = typeof session?.assistantIndex === 'number' ? session.assistantIndex : 0;
+        updateMiniAvatarActive(state.currentCardIndex, p);
+
+        if (!state.chatMessages.length) {
+            appendAssistantConversation(state.currentCardIndex, p);
+            return;
+        }
+
+        state.chatMessages.forEach((msg) => {
+            if (msg.type === 'welcome') {
+                appendAssistantConversation(msg.assistantIndex ?? 0, p, { skipPersist: true });
+                return;
+            }
+            if (msg.role === 'user') {
+                appendChatMessage(msg.text, 'user', p, { skipPersist: true });
+            } else if (msg.role === 'assistant') {
+                appendChatMessage(msg.text, 'assistant', p, {
+                    skipPersist: true,
+                    assistantIndex: msg.assistantIndex
+                });
+            }
+        });
+        scrollWorkbenchChatToBottom(p);
+    }
+
+    function applyEmployeeChatModeUI(panel, options = {}) {
+        const p = panel || getActiveWorkbenchPanel();
+        const state = getPanelState(p);
+        const index = typeof options.index === 'number' ? options.index : (state.currentCardIndex ?? 0);
+        const showWelcome = options.showWelcome !== false;
+        const createHistory = options.createHistory !== false;
+
+        state.chatModeActive = true;
+        state.currentCardIndex = index;
+
+        const hero = document.getElementById('center-hero');
+        const carousel = getPanelEl('ai-carousel-view', p);
+        const chatView = getPanelEl('ai-chat-view', p);
+        const miniAvatars = getPanelEl('ai-mini-avatars', p);
+        const workbench = p.querySelector('.ai-workbench-section');
+        const inputSection = p.querySelector('.input-section');
+        const sessionScroll = document.getElementById('session-scroll');
+
+        if (hero) hero.classList.add('is-hidden');
+        if (carousel) carousel.style.display = 'none';
+        if (chatView) {
+            chatView.style.display = 'flex';
+            chatView.classList.add('is-visible');
+        }
+        if (miniAvatars) miniAvatars.style.display = 'flex';
+        if (workbench) workbench.classList.add('chat-mode');
+        if (inputSection) inputSection.classList.add('chat-mode');
+        if (sessionScroll) sessionScroll.classList.add('is-chat-active');
+
+        collapseTopSections(p);
+        initMiniAvatars(p);
+        updateMiniAvatarActive(index, p);
+
+        if (createHistory && window.AppShell?.createSession) {
+            const assistant = aiAssistants[index];
+            const title = options.sessionTitle || `${assistant?.name || '助手'}对话`;
+            const session = window.AppShell.createSession(title, index);
+            state.currentSessionId = session.id;
+            window.AppShell.setCurrentSessionId(session.id);
+        } else if (options.sessionId) {
+            state.currentSessionId = options.sessionId;
+            window.AppShell?.setCurrentSessionId?.(options.sessionId);
+            window.AppShell?.highlightSessionInSidebar?.(options.sessionId);
+        }
+
+        if (showWelcome) {
+            const messagesEl = getPanelEl('ai-chat-messages', p);
+            if (messagesEl) messagesEl.innerHTML = '';
+            state.chatMessages = [];
+            appendAssistantConversation(index, p);
+        }
+
+        syncEmployeeChatModeLayout();
+    }
+
+    function enterChatMode(index, panel) {
+        applyEmployeeChatModeUI(panel, { index, showWelcome: true, createHistory: true });
+    }
+
+    function toggleSection(sectionName) {
+        const panel = getActiveWorkbenchPanel();
+        const key = getPanelKey(panel);
+        const sectionId = key === 'employee' ? `${sectionName}-section` : `${sectionName}-section-${key}`;
+        const toggleId = key === 'employee' ? `${sectionName}-toggle` : `${sectionName}-toggle-${key}`;
+        const section = document.getElementById(sectionId) || panel?.querySelector('#' + sectionId);
+        const toggleBtn = document.getElementById(toggleId) || panel?.querySelector('#' + toggleId);
+        if (!section || !toggleBtn) return;
+
+        const isCollapsed = section.classList.toggle('collapsed');
+        toggleBtn.textContent = isCollapsed ? '展开' : '收起';
+    }
+
+    function collapseTopSections(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const key = getPanelKey(p);
+        ['work-tips'].forEach((sectionName) => {
+            const sectionId = key === 'employee' ? `${sectionName}-section` : `${sectionName}-section-${key}`;
+            const toggleId = key === 'employee' ? `${sectionName}-toggle` : `${sectionName}-toggle-${key}`;
+            const section = document.getElementById(sectionId) || p?.querySelector('#' + sectionId);
+            const toggleBtn = document.getElementById(toggleId) || p?.querySelector('#' + toggleId);
+            if (!section) return;
+            section.classList.add('collapsed');
+            if (toggleBtn) toggleBtn.textContent = '展开';
+        });
+    }
+
+    window.collapseTopSections = collapseTopSections;
+    window.getWorkbenchChatScrollEl = getWorkbenchChatScrollEl;
+    window.scrollLastChatCardIntoView = scrollLastChatCardIntoView;
+
+    function selectAssistant(index, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const state = getPanelState(p);
+        if (index === state.currentCardIndex) return;
+
+        state.currentCardIndex = index;
+        updateMiniAvatarActive(index, p);
+        if (getPanelKey(p) === 'employee') {
+            collapseTopSections(p);
+        }
+        appendAssistantConversation(index, p);
+    }
+
+    function updateMiniAvatarActive(index, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        p.querySelectorAll('.ai-mini-avatar').forEach((avatar) => {
+            avatar.classList.toggle('active', parseInt(avatar.dataset.index) === index);
+        });
+    }
+
+    function getEmployeeAssistant(index) {
+        return aiAssistants[index] || aiAssistants[0];
+    }
+
+    function buildEmployeeChatAvatarHtml(index) {
+        const assistant = getEmployeeAssistant(index);
+        return `<div class="chat-avatar employee-chat-avatar ${assistant.avatarClass}" title="${assistant.name}"><span>${assistant.emoji}</span></div>`;
+    }
+
+    function appendAssistantConversation(index, panel, options = {}) {
+        const p = panel || getActiveWorkbenchPanel();
+        const assistant = aiAssistants[index];
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (!messagesEl) return;
+
+        const blockId = `chat-block-${Date.now()}`;
+        if (EmployeeModelGuide.usesIbModelGuide(index)) {
+            EmployeeModelGuide.reset(p, index);
+        }
+
+        const block = document.createElement('div');
+        block.className = 'chat-conversation-block';
+        block.id = blockId;
+        block.dataset.assistantIndex = index;
+
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'chat-row chat-row-assistant';
+        const contentHtml = EmployeeModelGuide.getWelcomeHtml(blockId, index);
+        aiMsg.innerHTML = `
+            ${buildEmployeeChatAvatarHtml(index)}
+            <div class="chat-bubble chat-bubble-assistant">${contentHtml}</div>
+        `;
+        block.appendChild(aiMsg);
+
+        messagesEl.appendChild(block);
+        scrollLastChatCardIntoView(p, {
+            card: block.querySelector('.chat-row-assistant') || block,
+            padding: 8
+        });
+
+        if (getPanelKey(p) === 'employee' && !options.skipPersist) {
+            recordEmployeeChatMessage(p, {
+                role: 'assistant',
+                type: 'welcome',
+                assistantIndex: index,
+                text: assistant?.name || '助手'
+            });
+        }
+    }
+
+    function appendChatMessage(text, role, panel, options = {}) {
+        const p = panel || getActiveWorkbenchPanel();
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (!messagesEl) return;
+
+        const row = document.createElement('div');
+        row.className = role === 'user' ? 'chat-row chat-row-user' : 'chat-row chat-row-assistant';
+
+        if (role === 'user') {
+            row.innerHTML = `<div class="chat-bubble chat-bubble-user">${escapeHtml(text)}</div>`;
+            if (getPanelKey(p) === 'employee') {
+                collapseTopSections(p);
+            }
+        } else {
+            const index = options.assistantIndex ?? getPanelState(p).currentCardIndex ?? 0;
+            row.innerHTML = `
+                ${buildEmployeeChatAvatarHtml(index)}
+                <div class="chat-bubble chat-bubble-assistant">${markdownToHtml(text)}</div>
+            `;
+        }
+
+        const lastBlock = messagesEl.querySelector('.chat-conversation-block:last-of-type');
+        (lastBlock || messagesEl).appendChild(row);
+        scrollWorkbenchChatToBottom(p);
+
+        if (getPanelKey(p) === 'employee' && !options.skipPersist) {
+            recordEmployeeChatMessage(p, {
+                role,
+                text,
+                assistantIndex: role === 'assistant' ? (options.assistantIndex ?? getPanelState(p).currentCardIndex ?? 0) : undefined
+            });
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function getAssistantReply(message, index) {
+        const assistant = aiAssistants[index];
+        const lowerMsg = message.toLowerCase();
+
+        if (index === 0) {
+            if (lowerMsg.includes('分析') || lowerMsg.includes('客户') || lowerMsg.includes('分层') || lowerMsg.includes('资产')) {
+                return `**客户分析助手**\n\n任务：对「${message}」执行客户多维分析。\n\n补充：资产规模、交易行为、合作记录、风险测评结果等维度。`;
+            }
+            return `**客户分析助手**\n\n从资产、行为、交易、合作记录等维度分析客户价值与风险。\n\n输入：客户名称、客户类型或分析维度。`;
+        }
+        if (index === 1) {
+            return `**业务分析助手**\n\n任务：处理「${message}」。\n\n操作：选择业务类型，按业务分析模型继续。`;
+        }
+        if (index === 2) {
+            return `**方案生成助手**\n\n任务：处理「${message}」。\n\n操作：选择业务类型，按方案设计模型继续。`;
+        }
+        if (index === 3) {
+            return `**交叉验证助手**\n\n任务：对「${message}」执行交叉验证。\n\n补充：方案文档或数据来源。`;
+        }
+        if (index === 4) {
+            return `**客户服务助手**\n\n任务：处理「${message}」。\n\n操作：选择买方分析、信披判断或临时公告生成模型。`;
+        }
+
+        return `**${assistant.name}**\n\n任务：处理「${message}」。`;
+    }
+
+    function cancelSolutionSelect(blockId) {
+        appendChatMessage('**方案生成助手**\n\n操作：方案类型选择已取消。', 'assistant');
+    }
+
+    function confirmSolutionSelect(blockId) {
+        const selected = document.querySelector(`input[name="solution-type-${blockId}"]:checked`);
+        if (!selected) {
+            alert('请先选择方案类型');
+            return;
+        }
+        const labels = { bankruptcy: '破产重整', placement: '定增', bond: '债券', asset: '资管产品' };
+        appendChatMessage(`**方案生成助手**\n\n已选：${labels[selected.value]}。\n\n补充：项目背景与客户信息。`, 'assistant');
+    }
+
+    function bringToFront(clickedCard) {
+        const panel = clickedCard.closest('.workbench-panel');
+        if (getPanelKey(panel) === 'employee') {
+            collapseTopSections(panel);
+        }
+        const state = getPanelState(panel);
+        const clickedIndex = parseInt(clickedCard.dataset.index);
+        const allCards = panel.querySelectorAll('.ai-card-fan');
+        const indicators = panel.querySelectorAll('.indicator');
+
+        allCards.forEach(card => card.classList.remove('active'));
+        indicators.forEach(ind => ind.classList.remove('active'));
+
+        clickedCard.classList.add('active');
+        if (indicators[clickedIndex]) indicators[clickedIndex].classList.add('active');
+
+        if (!state.chatModeActive) {
+            setTimeout(() => enterChatMode(clickedIndex, panel), 150);
+        } else {
+            selectAssistant(clickedIndex, panel);
+        }
+    }
+
+    // 根据卡片索引打开对应的详情页面（保留供关键词路由使用）
+    function openCardDetailPage(index) {
+        const panel = getActiveWorkbenchPanel();
+        const state = getPanelState(panel);
+        if (!state.chatModeActive) {
+            enterChatMode(index, panel);
+            return;
+        }
+        selectAssistant(index, panel);
+    }
+    
+    // ========== 军师方案设计功能 ==========
+    
+    // 打开军师方案设计页面
+    function openJunshiDetail() {
+        const junshiPage = document.getElementById('junshi-page');
+        junshiPage.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // ========== 智能工作台输入功能 ==========
+    
+    // AI助手关键词映射
+    const aiAssistantKeywords = {
+        junshi: {
+            keywords: ['方案设计', '方案设计模型', '方案生成', '重整方案', '定增方案', '债券发行', '发行方案', '融资方案', '出方案', '发行规模', '发行价格'],
+            name: '方案生成助手',
+            action: () => {
+                enterChatMode(2);
+            }
+        },
+        tanma: {
+            keywords: ['业务分析', '业务分析模型', '找目标', '基本标准', '公司标准', '股东与实控人'],
+            name: '业务分析助手',
+            action: () => {
+                enterChatMode(1);
+            }
+        },
+        canmou: {
+            keywords: ['客户分析', '客户需求', '客户价值', '客户关系', '客户风险', '潜在客户', '客户跟进', '客户分层', '企业客户', '个人客户', '交易行为', '合作记录', '资产规模'],
+            name: '客户分析助手',
+            action: () => {
+                enterChatMode(0);
+            }
+        },
+        tianyan: {
+            keywords: ['客户服务', '买方分析', '信披判断', '临时公告', '公告生成', '识信披', '写公告', '找买方'],
+            name: '客户服务助手',
+            action: () => {
+                enterChatMode(4);
+            }
+        },
+        jiaocha: {
+            keywords: ['交叉验证', '交叉验证模型', '核异常', '验证', '复核', '比对', '核验', '财务数据异常', '治理结构'],
+            name: '交叉验证助手',
+            action: () => {
+                enterChatMode(3);
+            }
+        }
+    };
+    
+    const employeeAssistantIndexByKey = {
+        canmou: 0,
+        tanma: 1,
+        junshi: 2,
+        jiaocha: 3,
+        tianyan: 4
+    };
+
+    function resolveEmployeeAssistantIndexFromMessage(message) {
+        const lowerMessage = message.toLowerCase();
+        for (const [key, assistant] of Object.entries(aiAssistantKeywords)) {
+            for (const keyword of assistant.keywords) {
+                if (lowerMessage.includes(keyword.toLowerCase())) {
+                    return employeeAssistantIndexByKey[key] ?? 0;
+                }
+            }
+        }
+        const guideIndex = EmployeeModelGuide.matchAssistantFromMessage(message);
+        if (guideIndex != null) return guideIndex;
+        if (EmployeeModelGuide.matchBusinessFromMessage(message)) return 1;
+        return 0;
+    }
+
+    function shouldShowEmployeeRoutingToast(message) {
+        return !!recognizeIntent(message)
+            || EmployeeModelGuide.matchAssistantFromMessage(message) != null
+            || !!EmployeeModelGuide.matchBusinessFromMessage(message);
+    }
+
+    function startEmployeeChatFromMainInput(message, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const targetIndex = resolveEmployeeAssistantIndexFromMessage(message);
+        const assistantName = aiAssistants[targetIndex]?.name || '客户分析助手';
+
+        if (shouldShowEmployeeRoutingToast(message)) {
+            showRecognitionToast(assistantName, message);
+        }
+
+        applyEmployeeChatModeUI(p, {
+            index: targetIndex,
+            showWelcome: true,
+            createHistory: true,
+            sessionTitle: message.length > 30 ? `${message.slice(0, 30)}…` : message
+        });
+        appendChatMessage(message, 'user', p);
+        EmployeeModelGuide.handleUserMessage(message, p);
+    }
+
+    // 处理主输入框回车键
+    function handleMainInput(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendMainMessage();
+        }
+    }
+    
+    // 发送消息并智能路由
+    function sendMainMessage() {
+        const panel = getActiveWorkbenchPanel();
+        const input = getPanelEl('main-chat-input', panel);
+        const message = input?.value.trim();
+        
+        if (!message) {
+            return;
+        }
+        
+        input.value = '';
+
+        if (getPanelKey(panel) === 'org') {
+            appendOrgChatMessage(message, 'user', panel);
+            setTimeout(() => {
+                const agentId = getPanelState(panel).currentOrgAgent;
+                const reply = agentId
+                    ? getOrgAgentReply(message, agentId)
+                    : getOrgDefaultPromptReply(message);
+                appendOrgChatMessage(reply, 'assistant', panel);
+            }, 400);
+            return;
+        }
+
+        if (getPanelKey(panel) === 'support') {
+            const supportState = getPanelState(panel);
+            enterSupportChatMode(panel);
+            appendSupportChatMessage(message, 'user', panel);
+            setTimeout(() => {
+                appendSupportAssistantReply(message, getSupportInputReplyAgentId(supportState), panel);
+            }, 400);
+            return;
+        }
+
+        if (getPanelState(panel).chatModeActive) {
+            appendChatMessage(message, 'user', panel);
+            if (getPanelKey(panel) === 'employee') {
+                EmployeeModelGuide.handleUserMessage(message, panel);
+            } else {
+                setTimeout(() => {
+                    appendChatMessage(getAssistantReply(message, getPanelState(panel).currentCardIndex), 'assistant', panel);
+                }, 400);
+            }
+            return;
+        }
+        
+        startEmployeeChatFromMainInput(message, panel);
+    }
+    
+    // 语音识别输入
+    function getInputContainer(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        return p?.querySelector('.input-container');
+    }
+
+    function startMainFileUpload() {
+        const panel = getActiveWorkbenchPanel();
+        const fileInput = getPanelEl('main-chat-file-input', panel);
+        fileInput?.click();
+    }
+
+    function handleMainFileUpload(input) {
+        const file = input.files?.[0];
+        if (!file) return;
+        input.value = '';
+
+        const panel = getActiveWorkbenchPanel();
+        const message = `📎 ${file.name}`;
+        const key = getPanelKey(panel);
+
+        if (key === 'org') {
+            appendOrgChatMessage(message, 'user', panel);
+            setTimeout(() => {
+                const agentId = getPanelState(panel).currentOrgAgent;
+                const reply = agentId
+                    ? `已收到文件「${file.name}」，我将结合${getOrgAgent(agentId).name}能力为您提取关键信息并协助处理。`
+                    : `已收到文件「${file.name}」，我将为您提取关键信息并协助后续处理。`;
+                appendOrgChatMessage(reply, 'assistant', panel);
+            }, 400);
+            return;
+        }
+
+        if (key === 'support') {
+            const supportState = getPanelState(panel);
+            enterSupportChatMode(panel);
+            appendSupportChatMessage(message, 'user', panel);
+            setTimeout(() => {
+                appendSupportAssistantReply(`已收到文件「${file.name}」，我将结合当前任务为您解析内容。`, getSupportInputReplyAgentId(supportState), panel);
+            }, 400);
+            return;
+        }
+
+        if (getPanelState(panel).chatModeActive) {
+            appendChatMessage(message, 'user');
+            setTimeout(() => {
+                const idx = getPanelState(panel).currentCardIndex ?? 0;
+                const name = getEmployeeAssistant(idx).name;
+                appendChatMessage(`**${name}**\n\n文件：${file.name}\n\n操作：提取关键信息并继续处理。`, 'assistant');
+            }, 400);
+            return;
+        }
+
+        startEmployeeChatFromMainInput(message, panel);
+    }
+
+    function startMainVoiceInput() {
+        const panel = getActiveWorkbenchPanel();
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            
+            recognition.lang = 'zh-CN';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            recognition.onstart = function() {
+                getInputContainer(panel)?.classList.add('is-recording');
+                const input = getPanelEl('main-chat-input', panel);
+                input.placeholder = '正在聆听...';
+            };
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                const input = getPanelEl('main-chat-input', panel);
+                input.value = transcript;
+                input.placeholder = getMainInputDefaultPlaceholder(panel);
+                
+                // 自动发送
+                setTimeout(() => {
+                    sendMainMessage();
+                }, 500);
+            };
+            
+            recognition.onerror = function() {
+                getInputContainer(panel)?.classList.remove('is-recording');
+                const input = getPanelEl('main-chat-input', panel);
+                if (input) input.placeholder = getMainInputDefaultPlaceholder(panel);
+                alert('语音识别出错，请手动输入');
+            };
+            
+            recognition.onend = function() {
+                getInputContainer(panel)?.classList.remove('is-recording');
+                const input = getPanelEl('main-chat-input', panel);
+                if (input) input.placeholder = getMainInputDefaultPlaceholder(panel);
+            };
+            
+            recognition.start();
+        } else {
+            alert('您的浏览器不支持语音输入');
+        }
+    }
+    
+    // 识别用户意图
+    function recognizeIntent(message) {
+        const lowerMessage = message.toLowerCase();
+        
+        // 遍历所有AI助手，检查关键词匹配
+        for (const [key, assistant] of Object.entries(aiAssistantKeywords)) {
+            for (const keyword of assistant.keywords) {
+                if (lowerMessage.includes(keyword.toLowerCase())) {
+                    return assistant;
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    // 显示识别提示
+    function showRecognitionToast(assistantName, message) {
+        // 创建提示元素
+        const toast = document.createElement('div');
+        toast.className = 'ai-recognition-toast';
+        toast.innerHTML = `
+            <div class="toast-content">
+                <span class="toast-icon">🤖</span>
+                <div class="toast-text">
+                    <p class="toast-title">已识别您的需求</p>
+                    <p class="toast-detail">"${message.substring(0, 30)}${message.length > 30 ? '...' : ''}"</p>
+                    <p class="toast-assistant">路由至 <strong>${assistantName}</strong></p>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // 动画显示
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 100);
+        
+        // 3秒后移除
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 300);
+        }, 2500);
+    }
+    
+    // 显示通用帮助
+    function showGeneralHelp() {
+        const helpText = `💡 助手与模型清单对应关系：
+
+🐎 业务分析助手 → 业务分析模型（找目标）
+📋 方案生成助手 → 方案设计模型（出方案）
+🔍 交叉验证助手 → 交叉验证模型（核异常）
+👁️ 客户服务助手 → 客户服务（买方分析 / 信披判断 / 临时公告生成）
+
+🧠 客户分析助手 → 客户多维分析（不走投行模型清单）
+
+示例：
+• "分析某企业客户合作价值" → 客户分析助手
+• "定增业务分析" → 业务分析助手
+• "设计IPO发行方案" → 方案生成助手
+• "交叉验证财务异常" → 交叉验证助手
+• "生成临时公告" → 客户服务助手`;
+        
+        alert(helpText);
+    }
+    
+    // 初始化拖拽功能
+    function initDragAndDrop() {
+        const draggables = document.querySelectorAll('.center-item.draggable');
+        const seats = document.querySelectorAll('.seat.empty-seat');
+        
+        // 为可拖拽元素添加事件
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', handleDragStart);
+            draggable.addEventListener('dragend', handleDragEnd);
+        });
+        
+        // 为座椅添加拖放事件
+        seats.forEach(seat => {
+            seat.addEventListener('dragover', handleDragOver);
+            seat.addEventListener('dragenter', handleDragEnter);
+            seat.addEventListener('dragleave', handleDragLeave);
+            seat.addEventListener('drop', handleDrop);
+            
+            // 触摸设备支持
+            seat.addEventListener('click', function() {
+                if (selectedCenter) {
+                    placeCenterInSeat(seat, selectedCenter);
+                }
+            });
+        });
+    }
+    
+    let selectedCenter = null;
+    let draggedElement = null;
+    
+    function handleDragStart(e) {
+        draggedElement = this;
+        selectedCenter = this.dataset.centerType;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', this.dataset.centerType);
+    }
+    
+    function handleDragEnd(e) {
+        this.classList.remove('dragging');
+        draggedElement = null;
+        
+        // 移除所有高亮
+        document.querySelectorAll('.seat').forEach(seat => {
+            seat.classList.remove('drag-over');
+        });
+    }
+    
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    }
+    
+    function handleDragEnter(e) {
+        e.preventDefault();
+        if (!this.classList.contains('occupied')) {
+            this.classList.add('drag-over');
+        }
+    }
+    
+    function handleDragLeave(e) {
+        this.classList.remove('drag-over');
+    }
+    
+    function handleDrop(e) {
+        e.preventDefault();
+        this.classList.remove('drag-over');
+        
+        const centerType = e.dataTransfer.getData('text/plain');
+        const centerElement = document.querySelector(`[data-center-type="${centerType}"]`);
+        
+        if (centerElement && !this.classList.contains('occupied')) {
+            placeCenterInSeat(this, centerElement);
+        }
+    }
+    
+    // 放置支持中心到座椅
+    function placeCenterInSeat(seat, centerElement) {
+        const seatId = seat.dataset.seatId;
+        const centerType = centerElement.dataset.centerType;
+        const centerInfo = roundTableState.centers[centerElement.id];
+        
+        // 检查该座椅是否已有占用
+        if (roundTableState.seats[seat.id]) {
+            return;
+        }
+        
+        // 检查该中心是否已被放置
+        const existingSeat = Object.keys(roundTableState.seats).find(
+            key => roundTableState.seats[key] === centerType
+        );
+        if (existingSeat) {
+            // 从原位置移除
+            const oldSeat = document.getElementById(existingSeat);
+            resetSeat(oldSeat);
+        }
+        
+        // 更新状态
+        roundTableState.seats[seat.id] = centerType;
+        
+        // 更新UI
+        seat.classList.remove('empty-seat');
+        seat.classList.add('occupied');
+        seat.innerHTML = `
+            <div class="seat-icon">${centerInfo.icon}</div>
+            <div class="center-name-small">${centerInfo.name.replace('业务支持中心', '').replace('支持中心', '')}</div>
+        `;
+        
+        // 标记中心项为已使用
+        centerElement.classList.add('dragged');
+        centerElement.draggable = false;
+        
+        // 更新启动会议按钮
+        updateStartMeetingButton();
+        
+        // 播放音效（可选）
+        playDropSound();
+    }
+    
+    // 重置座椅
+    function resetSeat(seat) {
+        seat.classList.remove('occupied');
+        seat.classList.add('empty-seat');
+        seat.innerHTML = '<div class="seat-placeholder">+</div>';
+        roundTableState.seats[seat.id] = null;
+    }
+    
+    // 重置圆桌
+    function resetRoundTable() {
+        // 重置所有座椅
+        Object.keys(roundTableState.seats).forEach(seatId => {
+            const seat = document.getElementById(seatId);
+            if (seat) {
+                resetSeat(seat);
+            }
+        });
+        
+        // 重置所有中心项
+        document.querySelectorAll('.center-item').forEach(item => {
+            item.classList.remove('dragged');
+            item.draggable = true;
+        });
+        
+        // 更新按钮
+        updateStartMeetingButton();
+    }
+    
+    // 更新启动会议按钮状态
+    function updateStartMeetingButton() {
+        const startBtn = document.getElementById('meeting-start-btn');
+        const hintText = document.getElementById('meeting-hint');
+        const occupiedSeats = Object.values(roundTableState.seats).filter(s => s !== null).length;
+        
+        if (occupiedSeats > 0) {
+            startBtn.disabled = false;
+            startBtn.classList.add('ready');
+            hintText.innerHTML = `${occupiedSeats}个业务中心已就位，点击开始会议 ▶`;
+            hintText.classList.add('ready');
+        } else {
+            startBtn.disabled = true;
+            startBtn.classList.remove('ready');
+            hintText.innerHTML = '拖拽业务支持中心到圆桌上，点击开始会议';
+            hintText.classList.remove('ready');
+        }
+    }
+    
+    // 播放放置音效（可选）
+    function playDropSound() {
+        // 创建简单的音效
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
+    }
+    
+    // 启动会议
+    function startMeeting() {
+        const occupiedSeats = Object.entries(roundTableState.seats)
+            .filter(([key, value]) => value !== null)
+            .map(([key, value]) => roundTableState.centers[`${value}-center`]?.name)
+            .filter(name => name);
+        
+        if (occupiedSeats.length === 0) {
+            alert('请至少拖拽一个业务支持中心到圆桌上！');
+            return;
+        }
+        
+        const centerList = occupiedSeats.join('、');
+        
+        alert(`🎉 圆桌会议已启动！\n\n参会成员：\n👤 我（主持人）\n📦 ${centerList}\n\n会议环境已建立，各业务支持中心已就位！`);
+        
+        // 这里可以添加进入实际会议界面的逻辑
+        console.log('圆桌会议已启动，参会中心：', occupiedSeats);
+    }
+    
+    // 关闭军师方案设计页面
+    function closeJunshiDetail() {
+        const junshiPage = document.getElementById('junshi-page');
+        junshiPage.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    
+    // ========== 天眼资讯功能 ==========
+    
+    // 打开天眼资讯页面
+    function openTianyanDetail() {
+        const tianyanPage = document.getElementById('tianyan-page');
+        tianyanPage.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // 关闭天眼资讯页面
+    function closeTianyanDetail() {
+        const tianyanPage = document.getElementById('tianyan-page');
+        tianyanPage.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    
+    // 切换天眼资讯标签页
+    function switchTianyanTab(tabName) {
+        // 移除所有标签页的active状态
+        const tabs = document.querySelectorAll('.client-tab');
+        tabs.forEach(tab => tab.classList.remove('active'));
+        
+        // 隐藏所有内容区域
+        const contents = document.querySelectorAll('.tianyan-tab-content');
+        contents.forEach(content => content.classList.remove('active'));
+        
+        // 激活选中的标签页
+        const selectedTab = document.querySelector(`.client-tab[data-tab="${tabName}"]`);
+        if (selectedTab) selectedTab.classList.add('active');
+        
+        // 显示对应的内容区域
+        const selectedContent = document.getElementById(`tab-${tabName}`);
+        if (selectedContent) selectedContent.classList.add('active');
+    }
+    
+    // 调整资讯内容
+    function adjustNews(customerType) {
+        const typeNames = {
+            'personal': '个人客户',
+            'bank': '银行客户',
+            'enterprise': '企业客户'
+        };
+        alert(`正在调整${typeNames[customerType]}的资讯内容...\n\n您可以：\n1. 选择/取消选择特定资讯\n2. 编辑资讯内容\n3. 添加自定义资讯\n\n调整完成后点击"发送"按钮推送至客户。`);
+    }
+    
+    // 个人客户列表（用于发送资讯）
+    const PERSONAL_CUSTOMER_LIST = [
+        { id: 'c1', name: '王斌', info: '账户资产分层A档' },
+        { id: 'c2', name: '孙海燕', info: '优博科财务总监' },
+        { id: 'c3', name: '高巍', info: 'VIP客户' },
+        { id: 'c4', name: '张大为', info: '专业投资者' },
+        { id: 'c5', name: '董欣', info: '专业投资者' }
+    ];
+    
+    // 发送资讯给对应类型客户
+    function sendNews(customerType) {
+        const typeNames = {
+            'personal': '个人客户',
+            'bank': '银行客户',
+            'enterprise': '企业客户'
+        };
+        
+        // 获取当前标签页下的所有资讯标题
+        const contentDiv = document.getElementById(`tab-${customerType}`);
+        const newsTitles = [];
+        contentDiv.querySelectorAll('.news-title').forEach((title, index) => {
+            if (index < 3) { // 只取前3条
+                newsTitles.push(title.textContent);
+            }
+        });
+        
+        if (newsTitles.length === 0) {
+            alert(`暂无资讯内容可发送给${typeNames[customerType]}`);
+            return;
+        }
+        
+        // 个人客户特殊处理：显示客户选择弹窗
+        if (customerType === 'personal') {
+            openPersonalCustomerSelector(newsTitles);
+        } else {
+            // 其他类型直接发送
+            alert(`📤 正在发送资讯给${typeNames[customerType]}...\n\n发送内容：\n${newsTitles.map((t, i) => `${i+1}. ${t}`).join('\n')}\n\n✅ 发送成功！`);
+        }
+    }
+    
+    // 打开个人客户选择弹窗
+    let selectedPersonalCustomers = new Set();
+    
+    function openPersonalCustomerSelector(newsTitles) {
+        selectedPersonalCustomers.clear();
+        
+        // 创建弹窗HTML
+        const modalHtml = `
+            <div id="personal-customer-modal" class="modal" style="display: block;">
+                <div class="modal-overlay" onclick="closePersonalCustomerModal()"></div>
+                <div class="modal-container" style="max-width: 400px;">
+                    <div class="modal-header">
+                        <h4>📤 选择发送对象</h4>
+                        <button class="close-modal-btn" onclick="closePersonalCustomerModal()">✕</button>
+                    </div>
+                    <div class="modal-content">
+                        <div style="margin-bottom: 10px; font-size: 14px; font-weight: 500; color: #333;">👤 个人客户列表（可多选）</div>
+                        
+                        <div class="personal-customer-list" style="max-height: 250px; overflow-y: auto;">
+                            ${PERSONAL_CUSTOMER_LIST.map(customer => `
+                                <div class="personal-customer-item" data-customer-id="${customer.id}" 
+                                     onclick="togglePersonalCustomer('${customer.id}')"
+                                     style="display: flex; align-items: center; padding: 12px; margin-bottom: 8px; 
+                                            border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; 
+                                            transition: all 0.2s; background: white;">
+                                    <input type="checkbox" style="margin-right: 12px; width: 18px; height: 18px; cursor: pointer;"
+                                           onclick="event.stopPropagation(); togglePersonalCustomer('${customer.id}')">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 500; color: #333; font-size: 15px;">${customer.name}</div>
+                                        <div style="font-size: 12px; color: #999; margin-top: 2px;">${customer.info}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="selected-customers" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #e0e0e0;">
+                            <span class="label" style="color: #666;">已选择：</span>
+                            <span id="personal-selected-count" style="font-weight: 600; color: #4a6cf7;">0</span>
+                            <span style="color: #666;">人</span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="cancel-btn" onclick="closePersonalCustomerModal()">取消</button>
+                        <button class="confirm-btn" id="personal-confirm-btn" onclick="sendToPersonalCustomers()" disabled>确认发送</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 添加弹窗到页面
+        const modalDiv = document.createElement('div');
+        modalDiv.innerHTML = modalHtml;
+        document.body.appendChild(modalDiv.firstElementChild);
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // 关闭个人客户选择弹窗
+    function closePersonalCustomerModal() {
+        const modal = document.getElementById('personal-customer-modal');
+        if (modal) {
+            modal.remove();
+        }
+        document.body.style.overflow = '';
+        selectedPersonalCustomers.clear();
+    }
+    
+    // 切换个人客户选择状态
+    function togglePersonalCustomer(customerId) {
+        if (selectedPersonalCustomers.has(customerId)) {
+            selectedPersonalCustomers.delete(customerId);
+        } else {
+            selectedPersonalCustomers.add(customerId);
+        }
+        
+        // 更新UI
+        const item = document.querySelector(`.personal-customer-item[data-customer-id="${customerId}"]`);
+        if (item) {
+            const isSelected = selectedPersonalCustomers.has(customerId);
+            item.style.background = isSelected ? '#f0f4ff' : 'white';
+            item.style.borderColor = isSelected ? '#4a6cf7' : '#e0e0e0';
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            if (checkbox) checkbox.checked = isSelected;
+        }
+        
+        updatePersonalSelectedCount();
+    }
+    
+    // 更新已选择的个人客户数量
+    function updatePersonalSelectedCount() {
+        const countEl = document.getElementById('personal-selected-count');
+        const confirmBtn = document.getElementById('personal-confirm-btn');
+        
+        if (countEl) {
+            countEl.textContent = selectedPersonalCustomers.size;
+        }
+        
+        if (confirmBtn) {
+            confirmBtn.disabled = selectedPersonalCustomers.size === 0;
+            confirmBtn.style.opacity = selectedPersonalCustomers.size === 0 ? '0.5' : '1';
+        }
+    }
+    
+    // 发送资讯给选中的个人客户
+    function sendToPersonalCustomers() {
+        if (selectedPersonalCustomers.size === 0) {
+            alert('请至少选择一个客户');
+            return;
+        }
+        
+        // 获取选中的客户名称
+        const selectedNames = Array.from(selectedPersonalCustomers)
+            .map(id => PERSONAL_CUSTOMER_LIST.find(c => c.id === id)?.name)
+            .filter(Boolean);
+        
+        if (window.ContextPanel) {
+            selectedNames.forEach((name) => window.ContextPanel.addCustomer(name, '个人客户'));
+        }
+        
+        // 关闭弹窗
+        closePersonalCustomerModal();
+        
+        // 显示发送成功提示
+        alert(`✅ 发送成功！\n\n资讯已发送给以下客户：\n${selectedNames.join('、')}`);
+    }
+    
+    // ========== 客户选择弹窗功能 ==========
+    
+    // 客户数据
+    const CUSTOMER_DATA = [
+        { id: 'p1', name: '王斌', type: 'personal', info: '股票账户客户', phone: '13800138001' },
+        { id: 'p2', name: '孙海燕', type: 'personal', info: '优博科公司财务总监', phone: '13932157387' },
+        { id: 'p3', name: '赵宇', type: 'personal', info: '协和医院主任', phone: '13600136001' },
+        { id: 'p4', name: '李明', type: 'personal', info: '账户资产分层A档', phone: '13500135001' },
+        { id: 'p5', name: '张华', type: 'personal', info: 'VIP客户', phone: '13700137001' },
+        { id: 'b1', name: '晋商银行', type: 'bank', info: '金融市场部', phone: '0351-5550101' },
+        { id: 'b2', name: '海南农商行', type: 'bank', info: '黄亮副行长', phone: '0898-6655101' },
+        { id: 'b3', name: '徽商银行', type: 'bank', info: '孔庆龙行长', phone: '0551-6266101' },
+        { id: 'b4', name: '工商银行', type: 'bank', info: '同业部', phone: '010-66106101' },
+        { id: 'b5', name: '建设银行', type: 'bank', info: '资金运营部', phone: '010-6620101' },
+        { id: 'e1', name: '东方新能', type: 'enterprise', info: '购买创金宝5000万', phone: '010-8888101' },
+        { id: 'e2', name: '行云科技', type: 'enterprise', info: '拟购买资管产品', phone: '021-6666101' },
+        { id: 'e3', name: '优博科', type: 'enterprise', info: '财务总监孙海燕', phone: '0755-8888102' },
+        { id: 'e4', name: '亿晶光电', type: 'enterprise', info: '已被申请预重整', phone: '0519-8888103' },
+        { id: 'e5', name: '棒杰股份', type: 'enterprise', info: '法院受理重整申请', phone: '0579-8888104' },
+        { id: 'e6', name: 'ST沐邦', type: 'enterprise', info: '共益债方案', phone: '0755-8888105' },
+        { id: 'e7', name: '声通科技', type: 'enterprise', info: '财务分析需求', phone: '021-8888106' }
+    ];
+    
+    // 当前选中的资讯
+    let currentNewsId = null;
+    let currentNewsTitle = null;
+    let selectedCustomers = new Set();
+    let currentFilter = 'all';
+    
+    // 打开客户选择弹窗
+    function openCustomerSelector(newsId, newsTitle) {
+        currentNewsId = newsId;
+        currentNewsTitle = newsTitle;
+        selectedCustomers.clear();
+        
+        // 更新弹窗标题
+        document.getElementById('selected-news-title').textContent = newsTitle;
+        
+        // 重置筛选
+        currentFilter = 'all';
+        document.getElementById('customer-search-input').value = '';
+        updateFilterButtons();
+        
+        // 渲染客户列表
+        renderCustomerList();
+        updateSelectedCount();
+        
+        // 显示弹窗
+        document.getElementById('customer-selector-modal').style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // 关闭客户选择弹窗
+    function closeCustomerSelector() {
+        document.getElementById('customer-selector-modal').style.display = 'none';
+        document.body.style.overflow = '';
+        currentNewsId = null;
+        currentNewsTitle = null;
+        selectedCustomers.clear();
+    }
+    
+    // 渲染客户列表
+    function renderCustomerList(searchText = '') {
+        const listContainer = document.getElementById('customer-list');
+        listContainer.innerHTML = '';
+        
+        // 筛选客户
+        let filteredCustomers = CUSTOMER_DATA;
+        
+        // 按类型筛选
+        if (currentFilter !== 'all') {
+            filteredCustomers = filteredCustomers.filter(c => c.type === currentFilter);
+        }
+        
+        // 按搜索文本筛选
+        if (searchText) {
+            const lowerSearch = searchText.toLowerCase();
+            filteredCustomers = filteredCustomers.filter(c => 
+                c.name.toLowerCase().includes(lowerSearch) ||
+                c.info.toLowerCase().includes(lowerSearch)
+            );
+        }
+        
+        // 按类型分组
+        const groupedCustomers = {
+            personal: filteredCustomers.filter(c => c.type === 'personal'),
+            bank: filteredCustomers.filter(c => c.type === 'bank'),
+            enterprise: filteredCustomers.filter(c => c.type === 'enterprise')
+        };
+        
+        // 渲染各组
+        const typeLabels = {
+            personal: '👤 个人客户',
+            bank: '🏦 银行客户',
+            enterprise: '🏢 企业客户'
+        };
+        
+        let hasAnyCustomer = false;
+        
+        Object.keys(groupedCustomers).forEach(type => {
+            const customers = groupedCustomers[type];
+            if (customers.length === 0) return;
+            
+            hasAnyCustomer = true;
+            
+            // 分组标题
+            const groupHeader = document.createElement('div');
+            groupHeader.className = 'customer-group-header';
+            groupHeader.textContent = typeLabels[type];
+            listContainer.appendChild(groupHeader);
+            
+            // 客户项
+            customers.forEach(customer => {
+                const item = document.createElement('div');
+                item.className = `customer-item ${selectedCustomers.has(customer.id) ? 'selected' : ''}`;
+                item.dataset.customerId = customer.id;
+                item.onclick = () => toggleCustomer(customer.id);
+                
+                const typeIcons = {
+                    personal: '👤',
+                    bank: '🏦',
+                    enterprise: '🏢'
+                };
+                
+                item.innerHTML = `
+                    <div class="customer-checkbox">
+                        <input type="checkbox" ${selectedCustomers.has(customer.id) ? 'checked' : ''}>
+                    </div>
+                    <div class="customer-avatar">${typeIcons[customer.type]}</div>
+                    <div class="customer-info">
+                        <div class="customer-name">${customer.name}</div>
+                        <div class="customer-detail">${customer.info} · ${customer.phone}</div>
+                    </div>
+                `;
+                
+                listContainer.appendChild(item);
+            });
+        });
+        
+        if (!hasAnyCustomer) {
+            listContainer.innerHTML = `
+                <div class="empty-customers">
+                    <div class="empty-icon">🔍</div>
+                    <div class="empty-text">未找到匹配的客户</div>
+                </div>
+            `;
+        }
+    }
+    
+    // 切换客户选择状态
+    function toggleCustomer(customerId) {
+        if (selectedCustomers.has(customerId)) {
+            selectedCustomers.delete(customerId);
+        } else {
+            selectedCustomers.add(customerId);
+        }
+        
+        // 更新UI
+        const item = document.querySelector(`.customer-item[data-customer-id="${customerId}"]`);
+        if (item) {
+            item.classList.toggle('selected', selectedCustomers.has(customerId));
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            if (checkbox) checkbox.checked = selectedCustomers.has(customerId);
+        }
+        
+        updateSelectedCount();
+    }
+    
+    // 更新已选择数量
+    function updateSelectedCount() {
+        document.getElementById('selected-count').textContent = selectedCustomers.size;
+        
+        // 更新确认按钮状态
+        const confirmBtn = document.querySelector('.confirm-btn');
+        confirmBtn.disabled = selectedCustomers.size === 0;
+        confirmBtn.style.opacity = selectedCustomers.size === 0 ? '0.5' : '1';
+    }
+    
+    // 筛选客户
+    function filterCustomers(searchText) {
+        renderCustomerList(searchText);
+    }
+    
+    // 按类型筛选
+    function filterByType(type) {
+        currentFilter = type;
+        updateFilterButtons();
+        renderCustomerList(document.getElementById('customer-search-input').value);
+    }
+    
+    // 更新筛选按钮状态
+    function updateFilterButtons() {
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.filter === currentFilter);
+        });
+    }
+    
+    // 发送资讯给客户
+    function sendToCustomers() {
+        if (selectedCustomers.size === 0) {
+            alert('请至少选择一个客户');
+            return;
+        }
+        
+        // 获取选中的客户名称
+        const selectedNames = Array.from(selectedCustomers)
+            .map(id => CUSTOMER_DATA.find(c => c.id === id)?.name)
+            .filter(Boolean);
+        
+        // 模拟发送
+        console.log(`发送资讯 "${currentNewsTitle}" 给客户:`, selectedNames);
+        
+        // 关闭弹窗
+        closeCustomerSelector();
+        
+        // 显示成功提示
+        showSendSuccessToast();
+    }
+    
+    // 显示发送成功提示
+    function showSendSuccessToast() {
+        const toast = document.getElementById('send-success-toast');
+        toast.style.display = 'block';
+        
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 2000);
+    }
+    
+    // 打开破产重整方案设计页面
+    function openBankruptcySolution() {
+        const bankruptcyPage = document.getElementById('bankruptcy-solution-page');
+        bankruptcyPage.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        
+        // 重置表单
+        resetBankruptcyForm();
+        
+        // 初始化填充步骤计数器
+        window.bankruptcyFillStep = 0;
+    }
+    
+    // 关闭破产重整方案设计页面
+    function closeBankruptcySolution() {
+        const bankruptcyPage = document.getElementById('bankruptcy-solution-page');
+        bankruptcyPage.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    
+    // 打开定增方案设计页面（待开发）
+    function openPlacementSolution() {
+        alert('定增方案设计功能开发中，敬请期待！');
+    }
+    
+    // 打开债券发行方案设计页面（待开发）
+    function openBondSolution() {
+        alert('债券发行方案设计功能开发中，敬请期待！');
+    }
+    
+    // 打开资管产品方案设计页面（待开发）
+    function openAssetSolution() {
+        alert('资管产品方案设计功能开发中，敬请期待！');
+    }
+    
+    // 重置破产重整表单
+    function resetBankruptcyForm() {
+        document.getElementById('bankruptcy-form').reset();
+        document.getElementById('bankruptcy-result').style.display = 'none';
+        document.getElementById('bankruptcy-form').style.display = 'block';
+        // 重置填充步骤
+        window.bankruptcyFillStep = 0;
+    }
+    
+    // 破产重整表单逐步填充数据
+    const bankruptcyFillData = [
+        { id: 'company-name', value: 'ST沐邦', label: '公司名称' },
+        { id: 'stock-code', value: '603398', label: '股票代码' },
+        { id: 'calc-date', value: '2026-03-26', label: '测算日期' },
+        { id: 'total-shares', value: '34200', label: '公司股本总额' },
+        { id: 'current-price', value: '10.99', label: '测算日股票收盘价' },
+        { id: 'price-20d', value: '10.68', label: '前20日股票收盘价均价' },
+        { id: 'price-60d', value: '9.42', label: '前60日股票收盘价均价' },
+        { id: 'price-120d', value: '9.25', label: '前120日股票收盘价均价' },
+        { id: 'debt-principal', value: '270000', label: '债权本金' },
+        { id: 'repayment-ratio', value: '100', label: '偿债比例' },
+        { id: 'price-multiple', value: '3', label: '偿债股价倍数' },
+        { id: 'cash-repayment', value: '0', label: '现金清偿金额' },
+        { id: 'strategic-discount', value: '0.5', label: '产业投资人价格折扣' },
+        { id: 'financial-discount', value: '0.55', label: '财务投资人价格折扣' },
+        { id: 'capitalization-ratio', value: '1.5', label: '公积金转增比例' },
+        { id: 'strategic-holding-ratio', value: '20', label: '产业投资人转增后持股比例' }
+    ];
+    
+    // 填充下一个字段
+    function fillNextBankruptcyField() {
+        if (window.bankruptcyFillStep < bankruptcyFillData.length) {
+            const data = bankruptcyFillData[window.bankruptcyFillStep];
+            const element = document.getElementById(data.id);
+            if (element) {
+                element.value = data.value;
+                // 添加高亮效果
+                element.style.backgroundColor = '#fffacd';
+                element.style.transition = 'background-color 0.3s';
+                setTimeout(() => {
+                    element.style.backgroundColor = '';
+                }, 600);
+            }
+            window.bankruptcyFillStep++;
+            
+            // 如果所有字段都填充完成，不弹出提示，直接让用户点击生成按钮
+        }
+    }
+    
+    // 破产重整表单区域点击事件处理
+    function handleBankruptcyFormClick(event) {
+        // 如果点击的是输入框、标签或表单区域，填充下一个字段
+        fillNextBankruptcyField();
+    }
+    
+    // 编辑破产重整表单
+    function editBankruptcyForm() {
+        document.getElementById('bankruptcy-result').style.display = 'none';
+        document.getElementById('bankruptcy-form').style.display = 'block';
+    }
+    
+    // 生成破产重整方案
+    function generateBankruptcySolution(event) {
+        event.preventDefault();
+        
+        // 获取表单数据
+        const formData = {
+            companyName: document.getElementById('company-name').value,
+            stockCode: document.getElementById('stock-code').value,
+            calcDate: document.getElementById('calc-date').value,
+            totalShares: parseFloat(document.getElementById('total-shares').value),
+            currentPrice: parseFloat(document.getElementById('current-price').value),
+            price20d: parseFloat(document.getElementById('price-20d').value),
+            price60d: parseFloat(document.getElementById('price-60d').value),
+            price120d: parseFloat(document.getElementById('price-120d').value),
+            debtPrincipal: parseFloat(document.getElementById('debt-principal').value),
+            repaymentRatio: parseFloat(document.getElementById('repayment-ratio').value) / 100, // 转换为小数
+            priceMultiple: parseFloat(document.getElementById('price-multiple').value),
+            cashRepayment: parseFloat(document.getElementById('cash-repayment').value),
+            strategicDiscount: parseFloat(document.getElementById('strategic-discount').value),
+            financialDiscount: parseFloat(document.getElementById('financial-discount').value),
+            capitalizationRatio: parseFloat(document.getElementById('capitalization-ratio').value),
+            strategicHoldingRatio: parseFloat(document.getElementById('strategic-holding-ratio').value) / 100 // 转换为小数
+        };
+        
+        // 按照文档公式进行计算
+        // 1. 产业投资人投资价格 = 测算日股票收盘价 × 产业投资人价格折扣
+        const strategicPrice = formData.currentPrice * formData.strategicDiscount;
+        
+        // 2. 财务投资人投资价格 = 测算日前20日、60日、120日股票收盘价均价中的较低者 × 财务投资人价格折扣
+        const minHistoricalPrice = Math.min(formData.price20d, formData.price60d, formData.price120d);
+        const financialPrice = minHistoricalPrice * formData.financialDiscount;
+        
+        // 3. 转增后总股本 = 原股本 × (1 + 转增比例)
+        const totalSharesAfter = formData.totalShares * (1 + formData.capitalizationRatio);
+        
+        // 4. 公积金转增股本数量 = 转增后总股本 - 转增前总股本
+        const capitalizationShares = totalSharesAfter - formData.totalShares;
+        
+        // 5. 产业投资人获取的股份 = 转增后总股本 × 产业投资人转增后持股比例
+        const strategicShares = totalSharesAfter * formData.strategicHoldingRatio;
+        
+        // 6. 产业投资人要拿出的资金 = 产业投资人获取的股份 × 产业投资人投资价格
+        const strategicInvestment = strategicShares * strategicPrice;
+        
+        // 7. 债权人能拿到的权益价值 = 债权本金 × 偿债比例
+        const creditorEquityValue = formData.debtPrincipal * formData.repaymentRatio;
+        
+        // 8. 债权人获得的股份 = 【（债权本金×偿债比例）-现金清偿金额】/（测算日股票收盘价×偿债股价倍数）
+        const creditorShares = (creditorEquityValue - formData.cashRepayment) / (formData.currentPrice * formData.priceMultiple);
+        
+        // 9. 财务投资人获取的股份 = 公积金转增股本数量 - 债权人获得的股份 - 产业投资人获取的股份
+        const financialShares = capitalizationShares - creditorShares - strategicShares;
+        
+        // 10. 财务投资人要拿出的资金 = 财务投资人获取的股份 × 财务投资人投资价格
+        const financialInvestment = financialShares * financialPrice;
+        
+        // 11. 留在上市公司的现金 = 产业投资人拿出的现金 + 财务投资人拿出的现金 - 现金清偿的债务
+        const remainingFunds = strategicInvestment + financialInvestment - formData.cashRepayment;
+
+        // 12. 债权人要豁免的金额 = 债权本金 - 债权本金 × 偿债比例
+        const forgivenAmount = formData.debtPrincipal - creditorEquityValue;
+        
+        // 计算结果对象
+        const calculationResults = {
+            strategicPrice,
+            financialPrice,
+            totalSharesAfter,
+            capitalizationShares,
+            strategicShares,
+            strategicInvestment,
+            financialShares,
+            financialInvestment,
+            creditorEquityValue,
+            creditorShares,
+            remainingFunds,
+            forgivenAmount,
+            minHistoricalPrice
+        };
+        
+        // 生成方案内容
+        const solutionHTML = generateBankruptcySolutionHTML(formData, calculationResults);
+        
+        // 显示结果
+        document.getElementById('bankruptcy-result-content').innerHTML = solutionHTML;
+        document.getElementById('bankruptcy-form').style.display = 'none';
+        document.getElementById('bankruptcy-result').style.display = 'block';
+    }
+    
+    // 生成破产重整方案HTML
+    function generateBankruptcySolutionHTML(data, results) {
+        const formatCurrency = (num) => {
+            return (num / 10000).toFixed(2) + '亿元';
+        };
+        
+        const formatNumber = (num) => {
+            return num.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+        };
+        
+        return `
+            <div class="solution-doc">
+                <div class="doc-header">
+                    <h2>${data.companyName}（${data.stockCode}）破产重整方案</h2>
+                    <p class="doc-date">测算日期：${data.calcDate} | 生成时间：${new Date().toLocaleString()}</p>
+                </div>
+                
+                <!-- 五大核心决定因素 -->
+                <div class="doc-section highlight-section">
+                    <h3>📊 五大核心决定因素</h3>
+                    <div class="key-factors">
+                        <div class="factor-card">
+                            <div class="factor-label">产业投资人要拿出的资金</div>
+                            <div class="factor-value">${formatCurrency(results.strategicInvestment)}</div>
+                            <div class="factor-detail">${formatNumber(results.strategicInvestment)}万元（${formatNumber(results.strategicShares)}万股）</div>
+                        </div>
+                        <div class="factor-card">
+                            <div class="factor-label">财务投资人要拿出的资金</div>
+                            <div class="factor-value">${formatCurrency(results.financialInvestment)}</div>
+                            <div class="factor-detail">${formatNumber(results.financialInvestment)}万元（${formatNumber(results.financialShares)}万股）</div>
+                        </div>
+                        <div class="factor-card">
+                            <div class="factor-label">债权人要豁免的金额</div>
+                            <div class="factor-value">${formatCurrency(results.forgivenAmount)}</div>
+                            <div class="factor-detail">${formatNumber(results.forgivenAmount)}万元</div>
+                        </div>
+                        <div class="factor-card">
+                            <div class="factor-label">债权人能拿到的权益</div>
+                            <div class="factor-value">${formatNumber(results.creditorShares)}万股</div>
+                            <div class="factor-detail">价值${formatNumber(results.creditorEquityValue)}万元</div>
+                        </div>
+                        <div class="factor-card">
+                            <div class="factor-label">留在上市公司的现金</div>
+                            <div class="factor-value">${formatCurrency(results.remainingFunds)}</div>
+                            <div class="factor-detail">${formatNumber(results.remainingFunds)}万元</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="doc-section">
+                    <h3>一、输入要素汇总</h3>
+                    <table class="info-table">
+                        <tr><td>公司名称</td><td>${data.companyName}</td></tr>
+                        <tr><td>股票代码</td><td>${data.stockCode}</td></tr>
+                        <tr><td>测算日期</td><td>${data.calcDate}</td></tr>
+                        <tr><td>公司股本总额</td><td>${formatNumber(data.totalShares)}万股</td></tr>
+                        <tr><td>测算日股票收盘价</td><td>${data.currentPrice}元/股</td></tr>
+                        <tr><td>前20日均价</td><td>${data.price20d}元/股</td></tr>
+                        <tr><td>前60日均价</td><td>${data.price60d}元/股</td></tr>
+                        <tr><td>前120日均价</td><td>${data.price120d}元/股</td></tr>
+                        <tr><td>债权本金</td><td>${formatNumber(data.debtPrincipal)}万元</td></tr>
+                        <tr><td>偿债比例</td><td>${(data.repaymentRatio * 100).toFixed(2)}%</td></tr>
+                        <tr><td>现金清偿金额</td><td>${formatNumber(data.cashRepayment)}万元</td></tr>
+                    </table>
+                </div>
+                
+                <div class="doc-section">
+                    <h3>二、投资人方案</h3>
+                    <table class="info-table">
+                        <tr><td>产业投资人价格折扣</td><td>${(data.strategicDiscount * 100).toFixed(0)}%</td></tr>
+                        <tr><td>产业投资人投资价格</td><td>${results.strategicPrice.toFixed(2)}元/股</td></tr>
+                        <tr><td>财务投资人价格折扣</td><td>${(data.financialDiscount * 100).toFixed(0)}%</td></tr>
+                        <tr><td>财务投资人投资价格</td><td>${results.financialPrice.toFixed(2)}元/股</td></tr>
+                        <tr><td>公积金转增比例</td><td>${(data.capitalizationRatio * 100).toFixed(0)}%</td></tr>
+                        <tr><td>转增前总股本</td><td>${formatNumber(data.totalShares)}万股</td></tr>
+                        <tr><td>转增后总股本</td><td>${formatNumber(results.totalSharesAfter)}万股</td></tr>
+                        <tr><td>公积金转增股本数量</td><td>${formatNumber(results.capitalizationShares)}万股</td></tr>
+                        <tr><td>产业投资人转增后持股比例</td><td>${(data.strategicHoldingRatio * 100).toFixed(2)}%</td></tr>
+                    </table>
+                </div>
+                
+                <div class="doc-section">
+                    <h3>三、股份分配明细</h3>
+                    <table class="info-table">
+                        <tr><td>产业投资人获取的股份</td><td>${formatNumber(results.strategicShares)}万股（${(data.strategicHoldingRatio * 100).toFixed(2)}%）</td></tr>
+                        <tr><td>债权人获得的股份</td><td>${formatNumber(results.creditorShares)}万股</td></tr>
+                        <tr><td>财务投资人获取的股份</td><td>${formatNumber(results.financialShares)}万股（转增股本剩余部分）</td></tr>
+                        <tr><td>合计</td><td>${formatNumber(results.capitalizationShares)}万股</td></tr>
+                    </table>
+                </div>
+                
+                <div class="doc-section">
+                    <h3>四、资金测算明细</h3>
+                    <div class="fund-calculation">
+                        <div class="calc-item">
+                            <span class="calc-label">产业投资人投入资金：</span>
+                            <span class="calc-value">${formatNumber(results.strategicInvestment)}万元（${formatNumber(results.strategicShares)}万股 × ${results.strategicPrice.toFixed(2)}元）</span>
+                        </div>
+                        <div class="calc-item">
+                            <span class="calc-label">财务投资人投入资金：</span>
+                            <span class="calc-value">${formatNumber(results.financialInvestment)}万元（${formatNumber(results.financialShares)}万股 × ${results.financialPrice.toFixed(2)}元）</span>
+                        </div>
+                        <div class="calc-item">
+                            <span class="calc-label">现金清偿金额：</span>
+                            <span class="calc-value">-${formatNumber(data.cashRepayment)}万元</span>
+                        </div>
+                        <div class="calc-item total">
+                            <span class="calc-label">留在上市公司的现金：</span>
+                            <span class="calc-value">${formatNumber(results.remainingFunds)}万元</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="doc-section">
+                    <h3>四、债权清偿方案</h3>
+                    <div class="repayment-plan">
+                        <div class="plan-item">
+                            <h4>债权本金</h4>
+                            <p>${formatNumber(data.debtPrincipal)}万元</p>
+                        </div>
+                        <div class="plan-item">
+                            <h4>偿债比例</h4>
+                            <p>${(data.repaymentRatio * 100).toFixed(2)}%</p>
+                        </div>
+                        <div class="plan-item">
+                            <h4>债权人获得权益</h4>
+                            <p>${formatNumber(results.creditorShares)}万股（按${data.currentPrice} × ${data.priceMultiple} = ${(data.currentPrice * data.priceMultiple).toFixed(2)}元/股计算）</p>
+                        </div>
+                        <div class="plan-item">
+                            <h4>债权人豁免金额</h4>
+                            <p>${formatNumber(results.forgivenAmount)}万元</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="doc-section">
+                    <h3>五、计算公式说明</h3>
+                    <div class="formula-list">
+                        <p><strong>1. 产业投资人投资价格</strong> = ${data.currentPrice} × ${data.strategicDiscount} = ${results.strategicPrice.toFixed(2)}元/股</p>
+                        <p><strong>2. 财务投资人投资价格</strong> = MIN(${data.price20d}, ${data.price60d}, ${data.price120d}) × ${data.financialDiscount} = ${results.minHistoricalPrice.toFixed(2)} × ${data.financialDiscount} = ${results.financialPrice.toFixed(2)}元/股</p>
+                        <p><strong>3. 转增后总股本</strong> = ${formatNumber(data.totalShares)} × (1 + ${data.capitalizationRatio}) = ${formatNumber(results.totalSharesAfter)}万股</p>
+                        <p><strong>4. 公积金转增股本数量</strong> = ${formatNumber(results.totalSharesAfter)} - ${formatNumber(data.totalShares)} = ${formatNumber(results.capitalizationShares)}万股</p>
+                        <p><strong>5. 产业投资人获取股份</strong> = ${formatNumber(results.totalSharesAfter)} × ${(data.strategicHoldingRatio * 100).toFixed(2)}% = ${formatNumber(results.strategicShares)}万股</p>
+                        <p><strong>6. 产业投资人资金</strong> = ${formatNumber(results.strategicShares)} × ${results.strategicPrice.toFixed(2)} = ${formatNumber(results.strategicInvestment)}万元</p>
+                        <p><strong>7. 债权人获得股份</strong> = 【(${formatNumber(data.debtPrincipal)} × ${(data.repaymentRatio * 100).toFixed(2)}%) - ${formatNumber(data.cashRepayment)}】/ (${data.currentPrice} × ${data.priceMultiple}) = ${formatNumber(results.creditorShares)}万股</p>
+                        <p><strong>8. 财务投资人获取股份</strong> = ${formatNumber(results.capitalizationShares)} - ${formatNumber(results.creditorShares)} - ${formatNumber(results.strategicShares)} = ${formatNumber(results.financialShares)}万股</p>
+                        <p><strong>9. 财务投资人资金</strong> = ${formatNumber(results.financialShares)} × ${results.financialPrice.toFixed(2)} = ${formatNumber(results.financialInvestment)}万元</p>
+                        <p><strong>10. 留在上市公司现金</strong> = ${formatNumber(results.strategicInvestment)} + ${formatNumber(results.financialInvestment)} - ${formatNumber(data.cashRepayment)} = ${formatNumber(results.remainingFunds)}万元</p>
+                    </div>
+                </div>
+                
+                <div class="doc-section">
+                    <h3>六、风险提示</h3>
+                    <div class="risk-notice">
+                        <p>1. 本方案根据录入要素自动计算生成，最终方案以法院裁定批准的重整计划为准；</p>
+                        <p>2. 股票价格波动可能影响投资人实际成本和债权人权益价值；</p>
+                        <p>3. 投资人引入存在不确定性，需进一步谈判确定；</p>
+                        <p>4. 本方案仅供参考，建议由专业律师、会计师审核后提交管理人。</p>
+                    </div>
+                </div>
+                
+                <div class="doc-footer">
+                    <p>本方案由方案生成助手智能体根据录入要素自动生成，仅供参考。</p>
+                    <p>生成时间：${new Date().toLocaleString()}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // 导出破产重整方案
+    function exportBankruptcySolution() {
+        const content = document.getElementById('bankruptcy-result-content').innerText;
+        const companyName = document.getElementById('company-name').value || '企业';
+        
+        // 创建并下载文本文件
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${companyName}破产重整方案.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert('方案已导出！');
+    }
+    
+    // 平铺布局：清除堆叠卡片遗留的内联样式
+    function updateCardPositionsForPanel(activeIndex, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        p.querySelectorAll('.ai-card-fan').forEach((card) => {
+            card.classList.remove('card-center', 'card-side-1', 'card-side-2', 'card-side-far');
+            card.style.transform = '';
+            card.style.zIndex = '';
+            card.style.opacity = '';
+            card.style.left = '';
+            card.style.top = '';
+            card.style.pointerEvents = '';
+        });
+    }
+
+    function updateCardPositions(activeIndex) {
+        updateCardPositionsForPanel(activeIndex, getActiveWorkbenchPanel());
+    }
+
+    // 初始化指示器点击
+    function initIndicatorsForPanel(panel) {
+        panel.querySelectorAll('.indicator').forEach((indicator, index) => {
+            indicator.addEventListener('click', () => {
+                const targetCard = panel.querySelector(`.ai-card-fan[data-index="${index}"]`);
+                if (targetCard) bringToFront(targetCard);
+            });
+        });
+    }
+
+    function initIndicators() {
+        document.querySelectorAll('.workbench-panel').forEach(panel => {
+            if (panel.dataset.initialized === 'true') {
+                initIndicatorsForPanel(panel);
+            }
+        });
+    }
+
+    // 点击指示器切换卡片
+    // ========== 探马详情功能 ==========
+    
+    // 打开探马详情页面
+    function openTanmaDetail() {
+        const tanmaPage = document.getElementById('tanma-page');
+        tanmaPage.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // 关闭探马详情页面
+    function closeTanmaDetail() {
+        const tanmaPage = document.getElementById('tanma-page');
+        tanmaPage.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    
+    // 呼叫业务支持中心
+    function callSupportCenter(centerType, customerName) {
+        const centerNames = {
+            'wealth': '财富管理业务支持中心',
+            'asset': '资管业务支持中心',
+            'ib': '投行业务支持中心'
+        };
+
+        const centerName = centerNames[centerType] || '业务支持中心';
+
+        // 如果是徽商银行，打开资管业务支持中心对话页面
+        if (centerType === 'asset' && customerName === '徽商银行') {
+            openAssetSupportDetail(customerName);
+            return;
+        }
+
+        // 其他客户显示呼叫提示
+        alert(`📞 正在呼叫${centerName}...\n\n客户：${customerName}\n\n已通知相关支持人员，稍后将有专人与您对接！`);
+
+        // 这里可以添加实际的通知逻辑，比如发送消息给后台
+        console.log(`呼叫${centerName}，客户：${customerName}`);
+    }
+
+    // 打开资管业务支持中心对话页面
+    function openAssetSupportDetail(customerName) {
+        const assetSupportPage = document.getElementById('asset-support-page');
+        const customerNameEl = document.getElementById('asset-support-customer');
+
+        if (customerNameEl && customerName) {
+            customerNameEl.textContent = customerName;
+        }
+
+        assetSupportPage.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    // 关闭资管业务支持中心对话页面
+    function closeAssetSupportDetail() {
+        const assetSupportPage = document.getElementById('asset-support-page');
+        assetSupportPage.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    
+    // 预设问题文本
+    const ASSET_SUPPORT_QUESTION = '我了解到徽商银行代销了200亿券商资管产品，但还未与我司建立合作关系，我想了解华创证券的资管产品目前在股份制商业银行和城商行代销的情况，目前这个阶段向徽商银行推荐什么策略的代销产品最好？';
+    
+    // 填充资管业务助理问题
+    function fillAssetSupportQuestion() {
+        const input = document.getElementById('asset-support-input');
+        if (input && !input.value.trim()) {
+            input.value = ASSET_SUPPORT_QUESTION;
+            autoResizeTextarea(input);
+        }
+    }
+    
+    // textarea自动调整高度
+    function autoResizeTextarea(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+    
+    // 选择提示问题
+    function selectPrompt(promptText) {
+        const input = document.getElementById('asset-support-input');
+        if (input) {
+            input.value = promptText;
+            // 自动调整高度
+            autoResizeTextarea(input);
+            // 自动发送消息
+            sendAssetSupportMessage();
+        }
+    }
+    
+    // 发送资管业务助理消息
+    function sendAssetSupportMessage() {
+        const input = document.getElementById('asset-support-input');
+        const dialogueArea = document.getElementById('asset-dialogue-area');
+        
+        if (!input || !dialogueArea) return;
+        
+        const message = input.value.trim();
+        if (!message) {
+            alert('请输入问题内容');
+            return;
+        }
+        
+        // 添加用户问题到对话区域（无头像，靠右显示，左边留空）
+        const userQuestionHtml = `
+            <div class="dialogue-item user-question" style="opacity: 0; animation: fadeInUp 0.5s ease forwards;">
+                <div class="dialogue-content">
+                    <div class="dialogue-text">${message}</div>
+                </div>
+            </div>
+        `;
+        dialogueArea.insertAdjacentHTML('beforeend', userQuestionHtml);
+        
+        // 清空输入框并恢复高度
+        input.value = '';
+        input.style.height = 'auto';
+        input.rows = 1;
+        
+        // 滚动到底部
+        dialogueArea.scrollTop = dialogueArea.scrollHeight;
+        
+        // 模拟系统回复（延迟1秒）
+        setTimeout(() => {
+            const systemReplyHtml = `
+                <div class="dialogue-item system-answer" style="opacity: 0; animation: fadeInUp 0.5s ease forwards;">
+                    <div class="dialogue-content">
+                        <div class="dialogue-text">
+                            <p>这是介绍华创证券资管产品在股份制商业银行和城商行代销情况的报告，供您参考：</p>
+                        </div>
+                        <!-- 文档标识 -->
+                        <div class="document-indicator">
+                            <span class="doc-icon">📊</span>
+                            <span class="doc-name">华创证券资管产品代销情况报告.pdf</span>
+                        </div>
+                        <div class="dialogue-text follow-up">
+                            <p>现阶段建议向徽商银行推荐<strong>"固收+"</strong>的资管产品，我司现在主要的"固收+"产品策略的业绩表现可在下方文档中查看：</p>
+                        </div>
+                        <!-- 第二个文档 -->
+                        <div class="document-card">
+                            <div class="document-icon">📊</div>
+                            <div class="document-info">
+                                <div class="document-title">华创证券"固收+"产品策略业绩表现</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            dialogueArea.insertAdjacentHTML('beforeend', systemReplyHtml);
+            
+            // 滚动到底部
+            dialogueArea.scrollTop = dialogueArea.scrollHeight;
+        }, 1000);
+    }
+    
+    // ========== 探马模型功能 ==========
+    
+    // 打开探马模型页面
+    function openTanmaModel() {
+        const tanmaModelPage = document.getElementById('tanma-model-page');
+        tanmaModelPage.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        
+        // 从localStorage加载保存的模型内容
+        loadModelsFromStorage();
+    }
+    
+    // 关闭探马模型页面
+    function closeTanmaModel() {
+        const tanmaModelPage = document.getElementById('tanma-model-page');
+        tanmaModelPage.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    
+    // 进入编辑模式
+    function editModel(modelType) {
+        const displayEl = document.getElementById(`${modelType}-model-display`);
+        const editEl = document.getElementById(`${modelType}-model-edit`);
+        
+        displayEl.style.display = 'none';
+        editEl.style.display = 'block';
+    }
+    
+    // 取消编辑
+    function cancelModelEdit(modelType) {
+        const displayEl = document.getElementById(`${modelType}-model-display`);
+        const editEl = document.getElementById(`${modelType}-model-edit`);
+        
+        displayEl.style.display = 'block';
+        editEl.style.display = 'none';
+    }
+    
+    // 保存模型
+    function saveModel(modelType) {
+        const textarea = document.getElementById(`${modelType}-textarea`);
+        const content = textarea.value;
+        
+        // 保存到localStorage
+        localStorage.setItem(`tanma-model-${modelType}`, content);
+        
+        // 更新显示内容
+        updateModelDisplay(modelType, content);
+        
+        // 退出编辑模式
+        cancelModelEdit(modelType);
+        
+        alert('模型已保存！');
+    }
+    
+    // 更新模型显示
+    function updateModelDisplay(modelType, content) {
+        const displayEl = document.getElementById(`${modelType}-model-display`);
+        const lines = content.split('\n').filter(line => line.trim());
+        
+        let html = '';
+        lines.forEach((line, index) => {
+            // 解析格式 "1. 标题：内容" 或 "1.标题：内容"
+            const match = line.match(/^\d+\.\s*(.+?)[:：](.+)$/);
+            if (match) {
+                html += `
+                    <div class="model-item">
+                        <span class="model-step">${index + 1}</span>
+                        <div class="model-text">
+                            <strong>${match[1]}：</strong>${match[2]}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        displayEl.innerHTML = html;
+    }
+    
+    // 从localStorage加载模型
+    function loadModelsFromStorage() {
+        const modelTypes = ['broker', 'asset', 'investment'];
+        
+        modelTypes.forEach(type => {
+            const saved = localStorage.getItem(`tanma-model-${type}`);
+            if (saved) {
+                // 更新textarea
+                document.getElementById(`${type}-textarea`).value = saved;
+                // 更新显示
+                updateModelDisplay(type, saved);
+            }
+        });
+    }
+    
+    // ========== 参谋分析功能 ==========
+    
+    // 打开参谋分析页面
+    function openCanmouDetail() {
+        const canmouPage = document.getElementById('canmou-page');
+        canmouPage.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // 填充分析示例文本
+    function fillAnalysisExample() {
+        const textarea = document.getElementById('analysis-input');
+        if (!textarea.value.trim()) {
+            textarea.value = '请帮我分析某企业客户的合作历史、资金规模、已购产品/持仓结构与待确认需求项';
+        }
+    }
+    
+    // 关闭参谋分析页面
+    function closeCanmouDetail() {
+        const canmouPage = document.getElementById('canmou-page');
+        canmouPage.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    
+    // 使用示例文本
+    function useExample() {
+        document.getElementById('analysis-input').value = '请分析客户张某的业务合作情况与跟进建议';
+    }
+    
+    // 语音输入功能
+    function startVoiceInput() {
+        // 检查浏览器是否支持语音识别
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            
+            recognition.lang = 'zh-CN';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            recognition.onstart = function() {
+                alert('请开始说话...');
+            };
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('analysis-input').value = transcript;
+            };
+            
+            recognition.onerror = function(event) {
+                alert('语音识别出错，请重试或使用文字输入');
+            };
+            
+            recognition.start();
+        } else {
+            alert('您的浏览器不支持语音输入，请使用文字输入');
+        }
+    }
+    
+    // ========== AI大模型分析配置 ==========
+    // 【重要】配置说明：
+    // 1. 如需使用真实大模型，请将 useMock 改为 false，并填入您的API密钥
+    // 2. 支持的提供商：doubao（豆包）、openai（GPT）、claude、wenxin（文心一言）、tongyi（通义千问）
+    // 3. API密钥获取方式：
+    //    - 豆包：https://www.volcengine.com/product/doubao
+    //    - OpenAI：https://platform.openai.com
+    //    - 百度文心：https://cloud.baidu.com/product/wenxinworkshop
+    //    - 阿里通义：https://dashscope.aliyun.com
+    
+    const AI_CONFIG = {
+        // ==================== 配置区域开始 ====================
+        
+        // 【选项1】豆包大模型（字节跳动，推荐，中文能力强）
+        provider: 'doubao',
+        apiKey: 'api-key-20260319101617',  // 已配置API密钥
+        apiEndpoint: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',  // 豆包API地址
+        model: 'doubao-pro-32k',  // 可选：doubao-pro-32k, doubao-lite-4k, doubao-1.5-pro
+
+        // ==================== 配置区域结束 ====================
+        
+        useMock: true,  // 演示模式：使用本地模拟数据（无需代理服务器）
+        
+        // 超时设置（毫秒）
+        timeout: 60000,
+        
+        // 重试次数
+        retryCount: 2
+    };
+    
+    // 提交分析请求
+    async function submitAnalysis() {
+        const input = document.getElementById('analysis-input').value.trim();
+        if (!input) {
+            alert('请输入要分析的内容');
+            return;
+        }
+        
+        // 显示分析进度
+        showAnalysisProgress();
+        document.getElementById('analysis-result').style.display = 'block';
+        
+        // 检测是否为声通科技分析请求（仅用于模拟模式）
+        const isShengTong = input.includes('声通') || input.includes('声通科技');
+        // 检测是否为中联数据与润泽科技对比分析
+        const isComparison = input.includes('中联数据') && input.includes('润泽科技');
+        
+        try {
+            if (AI_CONFIG.useMock) {
+                // 模拟模式：使用本地模拟数据
+                if (isComparison) {
+                    await mockComparisonAnalysis();
+                } else {
+                    await mockAIAnalysis(input, isShengTong);
+                }
+            } else {
+                // 真实API模式：调用大模型
+                await callAIAPI(input);
+            }
+        } catch (error) {
+            document.getElementById('result-content').innerHTML = `
+                <div class="analysis-error">
+                    <p>❌ 分析出错：${error.message}</p>
+                    <p>请检查网络连接或API配置</p>
+                    <p style="margin-top: 10px; font-size: 12px; color: #888;">
+                        提示：如果还没有API密钥，可以在AI_CONFIG中将 useMock 设为 true 使用演示模式
+                    </p>
+                </div>
+            `;
+        }
+    }
+    
+    // 显示分析进度动画
+    function showAnalysisProgress() {
+        const progressHTML = `
+            <div class="analysis-progress">
+                <div class="progress-step active">
+                    <span class="step-icon">🔗</span>
+                    <span class="step-text">正在连接AI参谋...</span>
+                </div>
+                <div class="progress-step">
+                    <span class="step-icon">🧠</span>
+                    <span class="step-text">正在分析财务数据...</span>
+                </div>
+                <div class="progress-step">
+                    <span class="step-icon">📊</span>
+                    <span class="step-text">正在生成分析报告...</span>
+                </div>
+                <div class="progress-loading">
+                    <div class="loading-bar"></div>
+                </div>
+            </div>
+        `;
+        document.getElementById('result-content').innerHTML = progressHTML;
+        
+        // 模拟进度动画
+        setTimeout(() => {
+            const steps = document.querySelectorAll('.progress-step');
+            if (steps[1]) steps[1].classList.add('active');
+        }, 800);
+        setTimeout(() => {
+            const steps = document.querySelectorAll('.progress-step');
+            if (steps[2]) steps[2].classList.add('active');
+        }, 1600);
+    }
+    
+    // 模拟中联数据与润泽科技对比分析
+    async function mockComparisonAnalysis() {
+        // 模拟API调用延迟
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        const comparisonReportHTML = generateComparisonReport();
+        document.getElementById('result-content').innerHTML = comparisonReportHTML;
+    }
+    
+    // 生成中联数据与润泽科技对比分析报告
+    function generateComparisonReport() {
+        return `
+            <div class="analysis-section ai-summary">
+                <h5>🤖 AI参谋分析摘要</h5>
+                <div class="ai-thinking-box">
+                    <p class="ai-thinking-text">基于中联数据与润泽科技最新财报数据，完成五维度对比：中联数据营收45.6亿元（+28.5%），润泽科技营收38.2亿元（+35.2%）；润泽科技净利率21.5%高于中联数据14.9%，PUE 1.35低于中联数据1.45。</p>
+                </div>
+            </div>
+            <div class="analysis-section">
+                <h5>📝 分析主题</h5>
+                <p>中联数据 vs 润泽科技 - IDC服务商五维度对比分析</p>
+            </div>
+            <div class="analysis-section">
+                <h5>📊 五维度对比分析</h5>
+                <div class="data-grid">
+                    <div class="data-card highlight">
+                        <div class="data-label">中联数据营收</div>
+                        <div class="data-value">45.6亿元</div>
+                        <div class="data-compare">同比+28.5%</div>
+                    </div>
+                    <div class="data-card highlight">
+                        <div class="data-label">润泽科技营收</div>
+                        <div class="data-value">38.2亿元</div>
+                        <div class="data-compare">同比+35.2%</div>
+                    </div>
+                </div>
+                <div class="data-grid">
+                    <div class="data-card">
+                        <div class="data-label">中联数据净利润</div>
+                        <div class="data-value">6.8亿元</div>
+                        <div class="data-compare">净利率14.9%</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">润泽科技净利润</div>
+                        <div class="data-value">8.2亿元</div>
+                        <div class="data-compare">净利率21.5%</div>
+                    </div>
+                </div>
+                <div class="viewpoint-box">
+                    <p class="viewpoint-title">1. 营业收入对比</p>
+                    <ul class="key-list">
+                        <li><strong>中联数据：</strong>营收规模45.6亿元，行业排名第二，主要受益于字节跳动等大客户订单增长</li>
+                        <li><strong>润泽科技：</strong>营收规模38.2亿元，增速35.2%高于中联数据，AI算力订单占比提升至40%</li>
+                        <li><strong>结论：</strong>中联数据营收45.6亿高于润泽科技38.2亿；润泽科技收入增速35.2%高于中联数据28.5%</li>
+                    </ul>
+                </div>
+                <div class="viewpoint-box">
+                    <p class="viewpoint-title">2. 净利润对比</p>
+                    <ul class="key-list">
+                        <li><strong>中联数据：</strong>净利润6.8亿元，净利率14.9%，受上游硬件成本上涨影响</li>
+                        <li><strong>润泽科技：</strong>净利润8.2亿元，净利率21.5%，自建园区模式降低运营成本</li>
+                        <li><strong>结论：</strong>润泽科技净利率21.5%，高于中联数据14.9%，差值6.6个百分点</li>
+                    </ul>
+                </div>
+                <div class="viewpoint-box">
+                    <p class="viewpoint-title">3. 用电量与能效对比</p>
+                    <ul class="key-list">
+                        <li><strong>中联数据：</strong>年度用电量15.2亿度，PUE值1.45，绿色数据中心占比60%</li>
+                        <li><strong>润泽科技：</strong>年度用电量11.8亿度，PUE值1.35，液冷技术大规模应用</li>
+                        <li><strong>结论：</strong>润泽科技PUE 1.35，低于中联数据1.45，差值0.10</li>
+                    </ul>
+                </div>
+                <div class="viewpoint-box">
+                    <p class="viewpoint-title">4. 收入增速对比</p>
+                    <ul class="key-list">
+                        <li><strong>中联数据：</strong>近三年CAGR 25.3%，传统云计算业务增速放缓至15%</li>
+                        <li><strong>润泽科技：</strong>近三年CAGR 32.8%，AI智算中心业务贡献主要增量</li>
+                        <li><strong>结论：</strong>润泽科技近三年CAGR 32.8%，高于中联数据25.3%</li>
+                    </ul>
+                </div>
+                <div class="viewpoint-box">
+                    <p class="viewpoint-title">5. 客户结构对比</p>
+                    <ul class="key-list">
+                        <li><strong>中联数据：</strong>字节跳动占比55%，美团、京东等占比30%，前两大客户合计占比85%</li>
+                        <li><strong>润泽科技：</strong>字节跳动占比35%，华为、浪潮等AI厂商占比40%，前两大客户合计占比75%</li>
+                        <li><strong>结论：</strong>中联数据前两大客户合计占比85%，高于润泽科技75%</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="analysis-section">
+                <h5>💡 投资策略建议</h5>
+                <div class="strategy-box">
+                    <div class="strategy-item short-term">
+                        <div class="strategy-title">短期关注（3-6个月）</div>
+                        <div class="strategy-content">关注Q3财报数据中心上架率变化，润泽科技液冷数据中心投产进度，以及AI大客户订单落地情况</div>
+                    </div>
+                    <div class="strategy-item mid-term">
+                        <div class="strategy-title">中期布局（6-12个月）</div>
+                        <div class="strategy-content">中联数据建议关注客户多元化进展，润泽科技关注产能扩张与订单匹配度，两家均受益于AI算力需求爆发</div>
+                    </div>
+                    <div class="strategy-item key-points">
+                        <div class="strategy-title">核心观察指标</div>
+                        <div class="strategy-content">月度用电量增速、PUE值变化、头部客户合同续签情况、AI算力业务占比提升进度</div>
+                    </div>
+                </div>
+            </div>
+            <div class="analysis-section">
+                <h5>⚠️ 风险提示</h5>
+                <div class="risk-warning-box">
+                    <ul class="warning-list">
+                        <li><strong>客户集中风险：</strong>两家公司均存在大客户依赖，字节跳动订单占营收35%–55%</li>
+                        <li><strong>行业竞争风险：</strong>光环新网、数据港等同行加速AI数据中心布局，同业产能扩张速度与市场份额对比需持续跟踪</li>
+                        <li><strong>政策风险：</strong>数据中心能耗双控政策趋严，电价上涨可能压缩利润空间</li>
+                        <li><strong>技术迭代风险：</strong>液冷、储能等新技术投入成本高，技术路线选择错误可能导致竞争劣势</li>
+                        <li><strong>免责声明：</strong>本分析仅供参考，不构成任何投资建议。投资有风险，决策需谨慎。</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+    }
+    
+    // 模拟AI分析（测试模式）
+    async function mockAIAnalysis(input, isShengTong) {
+        // 模拟API调用延迟
+        await new Promise(resolve => setTimeout(resolve, 2500));
+        
+        if (isShengTong) {
+            // 声通科技AI分析报告
+            const aiReportHTML = generateShengTongAIReport();
+            document.getElementById('result-content').innerHTML = aiReportHTML;
+        } else {
+            // 通用AI分析
+            const genericReportHTML = generateGenericAIReport(input);
+            document.getElementById('result-content').innerHTML = genericReportHTML;
+        }
+    }
+    
+    // 生成声通科技AI分析报告
+    function generateShengTongAIReport() {
+        return `
+            <div class="analysis-section ai-summary">
+                <h5>🤖 AI参谋分析摘要</h5>
+                <div class="ai-thinking-box">
+                    <p class="ai-thinking-text">基于声通科技最新财报及公开信息：流动比率1.2（行业均值1.8），资产负债率68.5%（行业均值55%），毛利率32.6%（行业均值28%）；当前PE 15.2倍（行业均值22倍）。建议跟踪应收账款周转天数（95天）及下季度财报。</p>
+                </div>
+            </div>
+            <div class="analysis-section">
+                <h5>📝 分析主题</h5>
+                <p>声通科技财务风险与股价分析</p>
+            </div>
+            <div class="analysis-section">
+                <h5>🔍 核心观点</h5>
+                <div class="viewpoint-box">
+                    <p class="viewpoint-title">1. 财务风险识别</p>
+                    <ul class="risk-list">
+                        <li><span class="risk-tag high">高风险</span> 资产负债率68.5%，高于行业均值55%，高出13.5个百分点</li>
+                        <li><span class="risk-tag medium">中风险</span> 流动比率1.2，低于行业均值1.8，差值0.6</li>
+                        <li><span class="risk-tag medium">中风险</span> 应收账款周转天数95天，需核对同比变动天数</li>
+                        <li><span class="risk-tag low">低风险</span> 存货周转率下降15%，存在轻微库存积压</li>
+                    </ul>
+                </div>
+                <div class="viewpoint-box">
+                    <p class="viewpoint-title">2. 市场价格对比</p>
+                    <ul class="trend-list">
+                        <li><span class="trend-tag">PE低于同业</span> 当前股价¥12.85，PE 15.2倍，低于行业均值22倍</li>
+                        <li><span class="trend-tag">持仓下降</span> 机构持仓比例下降（请核对最新季报%）</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="analysis-section">
+                <h5>📊 数据支撑</h5>
+                <div class="data-grid">
+                    <div class="data-card">
+                        <p class="data-label">资产负债率</p>
+                        <p class="data-value warning">68.5%</p>
+                        <p class="data-compare">行业均值: 55%</p>
+                    </div>
+                    <div class="data-card">
+                        <p class="data-label">流动比率</p>
+                        <p class="data-value warning">1.2</p>
+                        <p class="data-compare">行业均值: 1.8</p>
+                    </div>
+                    <div class="data-card">
+                        <p class="data-label">净资产收益率</p>
+                        <p class="data-value">8.3%</p>
+                        <p class="data-compare">行业均值: 12%</p>
+                    </div>
+                    <div class="data-card highlight">
+                        <p class="data-label">毛利率</p>
+                        <p class="data-value good">32.6%</p>
+                        <p class="data-compare">行业均值: 28% ✓</p>
+                    </div>
+                </div>
+                <div class="price-data-box">
+                    <p class="box-title">📈 股价数据（截至最新交易日）</p>
+                    <div class="price-row">
+                        <span class="price-item">当前股价：<strong>¥12.85</strong></span>
+                        <span class="price-item">52周高点：<strong class="high-price">¥18.60</strong></span>
+                        <span class="price-item">52周低点：<strong class="low-price">¥9.20</strong></span>
+                        <span class="price-item">当前PE：<strong>15.2倍</strong>（行业均值22倍）</span>
+                    </div>
+                </div>
+            </div>
+            <div class="analysis-section">
+                <h5>✅ 投资建议</h5>
+                <div class="strategy-box">
+                    <div class="strategy-item short-term">
+                        <p class="strategy-title">📌 短期策略（1-3个月）</p>
+                        <p class="strategy-content">建议观望，暂不建仓。等待Q2财报发布，重点关注应收账款改善情况。如业绩企稳，可考虑小仓位试探性介入。</p>
+                    </div>
+                    <div class="strategy-item mid-term">
+                        <p class="strategy-title">📌 中期策略（3-12个月）</p>
+                        <p class="strategy-content">如股价回调至¥11.00-11.50区间，可考虑分批建仓。目标价¥15.00，止损位¥9.50。建议仓位控制在总资产的5-10%。</p>
+                    </div>
+                    <div class="strategy-item key-points">
+                        <p class="strategy-title">📌 关键关注要点</p>
+                        <ul class="key-list">
+                            <li>下季度财报应收账款周转天数变化</li>
+                            <li>存货去化进度及毛利率稳定性</li>
+                            <li>重大合同签订及客户回款情况</li>
+                            <li>行业政策变化及同业对比维度变化</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="analysis-section">
+                <h5>⚠️ 风险提示</h5>
+                <div class="risk-warning-box">
+                    <ul class="warning-list">
+                        <li><strong>市场风险：</strong>宏观经济波动可能影响下游需求，导致业绩不及预期</li>
+                        <li><strong>竞争风险：</strong>行业毛利率同比变动待核对（请补充%）</li>
+                        <li><strong>流动性风险：</strong>资产负债率68.5%，高于行业均值55%</li>
+                        <li><strong>模型局限：</strong>本分析基于历史数据和公开信息，无法预测突发事件影响</li>
+                        <li><strong>免责声明：</strong>本分析仅供参考，不构成任何投资建议。投资有风险，决策需谨慎。</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="analysis-section document-reference">
+                <p><strong>📄 参考文档：</strong>《声通科技财务风险与股价分析.pdf》</p>
+                <p class="document-hint">💡 提示：完整的分析报告见此文档</p>
+            </div>
+        `;
+    }
+    
+    // 生成通用AI分析报告
+    function generateGenericAIReport(input) {
+        return `
+            <div class="analysis-section ai-summary">
+                <h5>🤖 AI参谋分析摘要</h5>
+                <div class="ai-thinking-box">
+                    <p class="ai-thinking-text">收到您的分析请求：「${input}」。我已启动多维度分析引擎，对该标的进行全面评估。以下是基于当前市场数据和历史趋势的初步分析结果。</p>
+                </div>
+            </div>
+            <div class="analysis-section">
+                <h5>📝 分析主题</h5>
+                <p>${input}</p>
+            </div>
+            <div class="analysis-section">
+                <h5>🔍 核心观点</h5>
+                <div class="viewpoint-box">
+                    <p class="viewpoint-title">初步评估</p>
+                    <p>基于资产负债、现金流及同业对比，建议关注以下关键因素：</p>
+                    <ul class="risk-list">
+                        <li>宏观经济环境对行业的影响</li>
+                        <li>公司核心竞争力与市场地位</li>
+                        <li>财务健康状况与盈利质量</li>
+                        <li>资产负债率、现金流与同业对比</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="analysis-section">
+                <h5>📊 分析框架</h5>
+                <div class="framework-box">
+                    <p>AI参谋将从以下维度进行深入分析：</p>
+                    <ul class="framework-list">
+                        <li>📈 财务指标分析（盈利能力、偿债能力、运营效率）</li>
+                        <li>🏭 同业对比分析（对比对象、比较维度、市场份额）</li>
+                        <li>📉 历史趋势分析（股价走势、资产负债变化、量价关系）</li>
+                        <li>🔮 未来展望（业绩预测、催化剂、风险因素）</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="analysis-section">
+                <h5>⚠️ 风险提示</h5>
+                <div class="risk-warning-box">
+                    <p>投资决策需综合考虑以下风险因素：</p>
+                    <ul class="warning-list">
+                        <li>市场风险：宏观经济波动、政策变化等系统性风险</li>
+                        <li>个股风险：公司经营、同业对比维度变化、技术变革等特异性风险</li>
+                        <li>模型风险：AI分析基于历史数据，无法完全预测未来</li>
+                        <li>信息风险：分析结果仅供参考，不构成投资建议</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+    }
+    
+    // 调用大模型API（演示模式仅使用模拟数据）
+    async function callAIAPI(input) {
+        // 演示模式下此函数不会被调用（由submitAnalysis中的useMock判断）
+        // 如需接入真实API，请配置AI_CONFIG并设置useMock为false
+        throw new Error('演示模式不支持真实API调用，请在AI_CONFIG中配置API密钥并设置useMock: false');
+    }
+    
+    // 将AI文本响应转换为HTML格式
+    function convertAIResponseToHTML(responseText) {
+        // 简单的Markdown转HTML处理
+        let html = responseText
+            .replace(/#{5}\s+(.+)/g, '<h5>$1</h5>')
+            .replace(/#{4}\s+(.+)/g, '<h4>$1</h4>')
+            .replace(/#{3}\s+(.+)/g, '<h3>$1</h3>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>');
+        
+        return `<div class="analysis-section"><p>${html}</p></div>`;
+    }
+    
+    // 处理文档上传
+    function handleAnalysisDocument(input) {
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const content = e.target.result;
+                
+                // 显示文档内容作为分析结果
+                document.getElementById('result-content').innerHTML = `
+                    <div class="analysis-section">
+                        <h5>📄 文档内容：${file.name}</h5>
+                        <div class="document-preview">${content.substring(0, 1000)}${content.length > 1000 ? '...' : ''}</div>
+                    </div>
+                `;
+                document.getElementById('analysis-result').style.display = 'block';
+                
+                alert('文档已上传，内容已展示在下方');
+            };
+            
+            if (file.type === 'text/plain') {
+                reader.readAsText(file);
+            } else {
+                // 对于非文本文件（PDF、Word等），显示分析中的状态
+                document.getElementById('result-content').innerHTML = `
+                    <div class="analysis-section">
+                        <h5>📄 文档信息</h5>
+                        <p><strong>文件名：</strong>${file.name}</p>
+                        <p><strong>文件大小：</strong>${(file.size / 1024).toFixed(2)} KB</p>
+                        <p><strong>文件类型：</strong>${file.type || '未知'}</p>
+                        <p class="document-note">📋 文档已接收，AI参谋正在分析中...</p>
+                    </div>
+                `;
+                document.getElementById('analysis-result').style.display = 'block';
+                
+                // 模拟AI分析过程
+                setTimeout(() => {
+                    // 根据文件名判断是否为声通科技文档
+                    const isShengTong = file.name.includes('声通科技') || file.name.includes('声通');
+                    
+                    if (isShengTong) {
+                        // 声通科技财务分析结果
+                        const analysisResultHTML = `
+                            <div class="analysis-section">
+                                <h5>📝 分析主题</h5>
+                                <p>声通科技财务风险与股价分析</p>
+                            </div>
+                            <div class="analysis-section">
+                                <h5>🔍 核心观点</h5>
+                                <p><strong>1. 财务风险识别：</strong></p>
+                                <p>• 资产负债率68.5%（行业均值55%）<br>
+                                • 应收账款周转天数95天，需核对同比变动<br>
+                                • 存货周转率同比下降15%</p>
+                                <p style="margin-top: 12px;"><strong>2. 市场价格对比：</strong></p>
+                                <p>• 当前股价¥12.85，PE 15.2倍（行业均值22倍）<br>
+                                • 52周区间¥9.20–¥18.60，当前价位于区间中下部<br>
+                                • 近20日成交量较60日均量下降18%（请核对最新数据）</p>
+                            </div>
+                            <div class="analysis-section">
+                                <h5>📊 数据支撑</h5>
+                                <p><strong>财务指标对比：</strong></p>
+                                <p>• 资产负债率：68.5%（行业均值：55%）⚠️<br>
+                                • 流动比率：1.2（行业均值：1.8）⚠️<br>
+                                • 净资产收益率(ROE)：8.3%（行业均值：12%）<br>
+                                • 毛利率：32.6%（行业均值：28%）✓</p>
+                                <p style="margin-top: 12px;"><strong>股价数据：</strong></p>
+                                <p>• 当前股价：¥12.85<br>
+                                • 52周高点：¥18.60<br>
+                                • 52周低点：¥9.20<br>
+                                • 当前市盈率：15.2倍（行业均值：22倍）</p>
+                            </div>
+                            <div class="analysis-section">
+                                <h5>✅ 投资建议</h5>
+                                <p>• <strong>短期策略：</strong>建议观望，等待业绩企稳信号<br>
+                                • <strong>中期策略：</strong>如股价回调至11元附近可考虑分批建仓<br>
+                                • <strong>关注要点：</strong>下季度财报应收账款改善情况、存货去化进度</p>
+                            </div>
+                            <div class="analysis-section">
+                                <h5>⚠️ 风险提示</h5>
+                                <p>• 行业毛利率同比变动待核对（请补充%）<br>
+                                • 资产负债率68.5%，高于行业均值55%<br>
+                                • 本分析仅供参考，不构成投资建议</p>
+                            </div>
+                            <div class="analysis-section document-reference">
+                                <p><strong>📄 参考文档：</strong>《声通科技财务风险与股价分析.pdf》</p>
+                                <p class="document-hint">💡 提示：完整的分析报告见此文档</p>
+                            </div>
+                        `;
+                        document.getElementById('result-content').innerHTML = analysisResultHTML;
+                    } else {
+                        // 通用文档分析结果
+                        const analysisResultHTML = `
+                            <div class="analysis-section">
+                                <h5>📄 文档来源</h5>
+                                <p><strong>文件名：</strong>${file.name}</p>
+                                <p><strong>分析时间：</strong>${new Date().toLocaleString()}</p>
+                            </div>
+                            <div class="analysis-section">
+                                <h5>🔍 核心观点</h5>
+                                <p>基于文档内容进行深度分析，该标的具有以下特征...</p>
+                            </div>
+                            <div class="analysis-section">
+                                <h5>📊 数据支撑</h5>
+                                <p>• 财务指标分析<br>• 行业对比数据<br>• 历史趋势分析</p>
+                            </div>
+                            <div class="analysis-section">
+                                <h5>⚠️ 风险提示</h5>
+                                <p>投资决策需综合考虑市场风险、政策风险等因素...</p>
+                            </div>
+                        `;
+                        document.getElementById('result-content').innerHTML = analysisResultHTML;
+                    }
+                }, 2500);
+            }
+        }
+        input.value = '';
+    }
+    
+    // 清除分析结果
+    function clearAnalysis() {
+        document.getElementById('analysis-input').value = '';
+        document.getElementById('analysis-result').style.display = 'none';
+        document.getElementById('result-content').innerHTML = '';
+    }
+    
+    // 保存分析结果
+    function saveAnalysis() {
+        const content = document.getElementById('result-content').innerHTML;
+        const timestamp = new Date().toLocaleString();
+        
+        // 保存到localStorage
+        let savedAnalyses = JSON.parse(localStorage.getItem('canmouAnalyses') || '[]');
+        savedAnalyses.push({
+            id: Date.now(),
+            timestamp: timestamp,
+            content: content
+        });
+        localStorage.setItem('canmouAnalyses', JSON.stringify(savedAnalyses));
+        
+        alert('分析结果已保存！');
+    }
+    
+    // ========== 今日任务 / 工作日志功能 ==========
+    const EMPLOYEE_DAILY_TASKS_KEY = 'employeeDailyTasks';
+    const EMPLOYEE_DAILY_TASKS_SEED_VERSION = 6;
+    let pendingDeleteEmployeeTaskId = null;
+    let selectedEmployeeTaskId = null;
+
+    const TAO_LANGUAGE_REPLACEMENTS = [
+        [/\[高净值\]\s*/g, ''],
+        [/高净值客户/g, '客户（账户资产待补录万元）'],
+        [/高净值/g, ''],
+        [/客户画像/g, '客户分析'],
+        [/需求偏好/g, '待确认需求项'],
+        [/产品偏好/g, '已购产品/持仓结构'],
+        [/风险偏好/g, '风险测评结果'],
+        [/竞争格局/g, '同业对比维度'],
+        [/行业景气度/g, '可验证行业指标'],
+        [/景气度/g, '可验证指标'],
+        [/企业基本面/g, '资产负债与现金流'],
+        [/基本面/g, '资产负债与现金流'],
+        [/行业研究/g, '对比分析'],
+        [/估值水平/g, '资产负债与现金流对比'],
+        [/估值偏低/g, 'PE低于同业均值'],
+        [/商业模式/g, '资产负债与资产配置'],
+        [/行业龙头/g, '可比公司客观数据'],
+        [/区域龙头/g, '可比公司客观数据'],
+        [/资产波动较大/g, '资产变动约15%'],
+        [/近3月资产波动较大/g, '近3月资产变动约15%'],
+        [/波动较大/g, '变动幅度约15%'],
+        [/持仓中权益类占比偏高/g, '权益类占比62%（超C2建议上限40%）'],
+        [/权益类占比偏高/g, '权益类占比超阈值（请核对%）'],
+        [/占比偏高/g, '占比超阈值（请核对%与基准）'],
+        [/账户资产规模较高客户/g, '账户资产500万以上客户'],
+        [/账户资产规模较高的/g, '账户资产500万以上的'],
+        [/账户资产规模较高/g, '账户资产500万以上'],
+        [/杠杆水平偏高/g, '资产负债率高于行业均值（请核对%）'],
+        [/债务水平偏高/g, '资产负债率高于行业均值（请核对%）'],
+        [/资产负债率偏高/g, '资产负债率高于行业均值（请核对%）'],
+        [/概率较高/g, '近6个月同类签约率28%'],
+        [/概率较大/g, '概率待测算（请补充%）'],
+        [/已有一定认知/g, '近12个月有权益类交易记录'],
+        [/重点维护客户/g, '营业部清单客户'],
+        [/活跃客户/g, '近30日有交易记录客户'],
+        [/客户集中度较高/g, '单一客户占比超50%'],
+        [/相对低位/g, 'PE低于行业均值'],
+        [/一定的流动性压力/g, '流动比率低于行业均值'],
+        [/压力增大/g, '周转天数同比增加（请核对天）'],
+        [/市场情绪偏向谨慎/g, '机构持仓比例下降（请核对%）'],
+        [/情绪谨慎/g, '机构持仓比例下降'],
+        [/需主动触达/g, '待外呼确认'],
+        [/合格投资者认定/g, '投资者准入认定（金融资产≥300万元）'],
+        [/合格投资者/g, '投资者准入（金融资产≥300万元）'],
+        [/偏股型持仓客户/g, '权益类持仓≥60%且未开通定投客户'],
+        [/持仓偏股型客户/g, '权益类持仓≥60%客户'],
+        [/偏股型基金/g, '权益仓位≥60%的基金'],
+        [/偏股型/g, '权益仓位≥60%'],
+        [/适当性匹配异常/g, '风险测评等级与持仓产品风险等级不匹配（如C1持有R4）'],
+        [/适当性异常/g, '风险测评C1且持仓产品≥R4'],
+        [/大额资金到账/g, '单笔银证转入≥100万元到账'],
+        [/大额资金/g, '单笔银证转入≥100万元'],
+        [/短期理财产品/g, '期限≤90天且风险等级R1–R2的理财产品'],
+        [/短期理财/g, '期限≤90天理财（R1–R2）'],
+        [/重点触达/g, '待外呼']
+    ];
+
+    function sanitizeTaoLanguageText(text) {
+        if (typeof text !== 'string') return text;
+        let out = text;
+        TAO_LANGUAGE_REPLACEMENTS.forEach(([pattern, replacement]) => {
+            out = out.replace(pattern, replacement);
+        });
+        return out;
+    }
+
+    function sanitizeEmployeeDailyTask(task) {
+        if (!task || typeof task !== 'object') return task;
+        return {
+            ...task,
+            title: sanitizeTaoLanguageText(task.title),
+            summary: sanitizeTaoLanguageText(task.summary),
+            content: sanitizeTaoLanguageText(task.content)
+        };
+    }
+
+    const defaultEmployeeDailyTasks = [
+        {
+            id: 'seed-1',
+            title: '客户张某（账户资产888万）季度回访待完成，近3月资产变动约15%，待外呼确认',
+            summary: '张三（资产规模888万），近3月资产变动约15%，需了解持仓变动原因并推荐固收类产品进行仓位调整',
+            content: '该客户为营业部清单客户，账户资产规模888万元，近三个月账户资产变动约15%，主要系持仓的权益类产品净值调整所致。客户此前风险测评为稳健型（C2），目前权益类持仓占比62%（超C2建议上限40%），需在本次回访中核对客户对近期市场波动的反馈、风险测评结果是否有变化，并根据客户反馈推荐合适的固收类或固收+产品进行仓位再平衡，回访记录需在CRM系统中完整留痕。',
+            source: '投资业务助理',
+            sourceType: 'agent',
+            date: '2026-06-16',
+            time: '09:00',
+            timestamp: new Date('2026-06-16T09:00:00').getTime()
+        },
+        {
+            id: 'seed-2',
+            title: '机构客户"测试科技有限公司"开户资料补件待跟进，营业执照及法人证件需重新上传',
+            summary: '测试科技有限公司开户申请，营业执照复印件不清晰需重新上传，法人身份证即将过期需提醒更新',
+            content: '测试科技有限公司为营业部新拓展的机构客户，拟开通证券账户用于闲置资金理财。该客户开户申请已提交至柜台系统，目前因营业执照印件扫描件清晰度不足被退回，且法人身份证有效期将于下月到期，需提醒客户同步更新证件。客户表示有资金使用计划，希望尽快完成开户，已申请绿色通道加急处理，需持续跟进资料补齐进度。',
+            source: '投行业务助理',
+            sourceType: 'agent',
+            date: '2026-06-16',
+            time: '09:45',
+            timestamp: new Date('2026-06-16T09:45:00').getTime()
+        },
+        {
+            id: 'seed-3',
+            title: '私募基金双录视频待完成，客户已签署风险揭示书',
+            summary: '李四（投资者准入已认定，金融资产≥300万元）已签署"测试一号"私募基金风险揭示书，需在系统中完成双录视频上传及合规提交',
+            content: '客户李四已完成投资者准入认定（金融资产≥300万元），风险测评结果为进取型（C5），符合"测试一号"私募基金（R4风险等级）的适当性匹配规则。客户已线下签署基金合同及风险揭示书，根据监管要求，需在签约过程中完成录音录像双录。目前双录视频尚未上传至合规系统，需尽快预约客户完成双录环节，确保签约流程符合合规要求并归档备查。',
+            source: '资管业务助理',
+            sourceType: 'agent',
+            date: '2026-06-16',
+            time: '10:30',
+            timestamp: new Date('2026-06-16T10:30:00').getTime()
+        },
+        {
+            id: 'seed-4',
+            title: '基金定投缺口8户，待外呼权益类持仓≥60%且未开定投客户35人',
+            summary: '完成率73%（22/30户），筛选条件：权益类持仓≥60%、未开通定投',
+            content: '本月营业部基金定投新增签约目标30户，已完成22户，缺口8户，完成率73%。筛选存量客户：持有权益仓位≥60%的基金且未开通定投功能，共35人；该群体近12个月有权益类交易记录，近6个月同类客户定投签约率28%。建议按名单外呼，说明定投规则与操作步骤，于本月20日前补齐缺口8户。',
+            source: '业务团队工作台',
+            sourceType: 'workbench',
+            date: '2026-06-16',
+            time: '11:15',
+            timestamp: new Date('2026-06-16T11:15:00').getTime()
+        },
+        {
+            id: 'seed-5',
+            title: '客户周八（风险测评C1）持有R4产品，待出具不匹配警示书',
+            summary: '不匹配规则：C1客户持仓R4产品；需重测并出具警示书、系统留痕',
+            content: '客户周八两年前风险测评结果为保守型（C1），期间未更新测评。系统监测：当前持仓含「测试一号」私募基金（产品风险等级R4），触发规则「客户风险等级C1–C2不得持有R4及以上产品」。处理步骤：1）重新测评；2）若仍为C1，出具风险不匹配警示书并客户签字；3）扫描上传CRM留痕。',
+            source: '交叉验证助理',
+            sourceType: 'agent',
+            date: '2026-06-16',
+            time: '14:00',
+            timestamp: new Date('2026-06-16T14:00:00').getTime()
+        },
+        {
+            id: 'seed-6',
+            title: '单笔银证转入≥100万且3日零持仓变动，待推荐期限≤90天产品',
+            summary: '客户吴九转入566万，6/12–6/15持仓变动0笔，待确认资金用途',
+            content: '客户吴九近30日交易8笔，账户日均资产120万元。6月12日银证转账转入566万元（触发阈值：单笔≥100万元）。截至6月15日连续3个交易日持仓变动0笔，转入资金未配置。处理：外呼确认资金用途；若选择理财，仅推荐期限≤90天、风险等级R1–R2的货币基金或银行理财产品，并记录CRM。',
+            source: '投资业务助理',
+            sourceType: 'agent',
+            date: '2026-06-16',
+            time: '15:30',
+            timestamp: new Date('2026-06-16T15:30:00').getTime()
+        }
+    ];
+
+    function getEmployeeDailyTasks() {
+        try {
+            const raw = localStorage.getItem(EMPLOYEE_DAILY_TASKS_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) return null;
+            return parsed.map(sanitizeEmployeeDailyTask);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function saveEmployeeDailyTasks(tasks) {
+        localStorage.setItem(EMPLOYEE_DAILY_TASKS_KEY, JSON.stringify(tasks));
+    }
+
+    function initEmployeeDailyTasks() {
+        const seedVersion = localStorage.getItem(EMPLOYEE_DAILY_TASKS_KEY + '_seed');
+        const needsReseed = seedVersion !== String(EMPLOYEE_DAILY_TASKS_SEED_VERSION);
+        const existing = getEmployeeDailyTasks();
+
+        if (!existing || needsReseed) {
+            saveEmployeeDailyTasks(defaultEmployeeDailyTasks);
+            localStorage.setItem(EMPLOYEE_DAILY_TASKS_KEY + '_seed', String(EMPLOYEE_DAILY_TASKS_SEED_VERSION));
+        } else {
+            const sanitized = existing.map(sanitizeEmployeeDailyTask);
+            if (JSON.stringify(existing) !== JSON.stringify(sanitized)) {
+                saveEmployeeDailyTasks(sanitized);
+            }
+        }
+        bindOverlayScrollbar(document.getElementById('employee-daily-tasks-scroll'));
+        renderEmployeeDailyTasks();
+        bindEmployeeDailyTaskEvents();
+        document.getElementById('new-task-btn')?.addEventListener('click', openWorkLog);
+    }
+
+    function canDeleteEmployeeTask(task) {
+        return task?.sourceType === 'workbench' || task?.source === '业务团队工作台' || task?.source === '员工工作台';
+    }
+
+    function bindEmployeeDailyTaskEvents() {
+        if (document.body.dataset.employeeTaskEventsBound === 'true') return;
+        document.body.dataset.employeeTaskEventsBound = 'true';
+
+        document.getElementById('employee-daily-tasks-list')?.addEventListener('click', (event) => {
+            const sendBtn = event.target.closest('.employee-task-send-btn');
+            if (sendBtn) {
+                event.stopPropagation();
+                sendEmployeeTaskToChat(sendBtn.dataset.taskId);
+                return;
+            }
+            const deleteBtn = event.target.closest('.employee-task-delete-btn');
+            if (deleteBtn) {
+                event.stopPropagation();
+                openEmployeeTaskDeleteModal(deleteBtn.dataset.taskId);
+                return;
+            }
+            const item = event.target.closest('.tip-item[data-task-id]');
+            if (item) {
+                openEmployeeTaskDetail(item.dataset.taskId);
+            }
+        });
+
+        document.getElementById('employee-task-detail-close')?.addEventListener('click', closeEmployeeTaskDetail);
+        document.getElementById('employee-task-agent-btn')?.addEventListener('click', () => {
+            if (selectedEmployeeTaskId) {
+                sendEmployeeTaskToChat(selectedEmployeeTaskId);
+                closeEmployeeTaskDetail();
+            }
+        });
+    }
+
+    function renderEmployeeDailyTasks() {
+        const listEl = document.getElementById('employee-daily-tasks-list');
+        const countEl = document.getElementById('sidebar-tasks-count');
+        const tasks = (getEmployeeDailyTasks() || []).slice().sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        if (!listEl) return;
+
+        const countText = String(tasks.length);
+        if (countEl) countEl.textContent = countText;
+
+        if (!tasks.length) {
+            listEl.innerHTML = '<li class="employee-task-empty">暂无今日任务，点击「新建任务」添加</li>';
+            closeEmployeeTaskDetail();
+            return;
+        }
+
+        listEl.innerHTML = tasks.map((task, index) => `
+            <li class="tip-item${selectedEmployeeTaskId === task.id ? ' is-active' : ''}" data-task-id="${escapeHtmlAttr(task.id)}">
+                <span class="tip-number">${index + 1}</span>
+                <p class="tip-content tip-content-title">${escapeHtmlText(task.title)}</p>
+                <div class="employee-task-item-actions">
+                    ${canDeleteEmployeeTask(task) ? `<button type="button" class="employee-task-delete-btn" data-task-id="${escapeHtmlAttr(task.id)}" aria-label="删除" title="删除">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    </button>` : ''}
+                    <button type="button" class="employee-task-send-btn" data-task-id="${escapeHtmlAttr(task.id)}" aria-label="发送到对话" title="发送到对话">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </div>
+            </li>
+        `).join('');
+    }
+
+    function formatEmployeeTaskDateTime(task) {
+        const date = task.date || '';
+        const time = (task.time || '').slice(0, 5);
+        return `${date} ${time}`.trim();
+    }
+
+    function openEmployeeTaskDetail(taskId) {
+        const tasks = getEmployeeDailyTasks() || [];
+        const task = tasks.find(item => item.id === taskId);
+        if (!task) return;
+
+        selectedEmployeeTaskId = taskId;
+        const drawer = document.getElementById('employee-task-detail-drawer');
+        if (!drawer) return;
+
+        document.getElementById('employee-task-detail-title').textContent = task.title;
+        document.getElementById('employee-task-detail-summary').textContent = task.summary || '暂无摘要';
+        document.getElementById('employee-task-detail-content').textContent = task.content || '暂无事项内容';
+        document.getElementById('employee-task-detail-source').textContent = `来源：${task.source || '业务团队工作台'}`;
+        document.getElementById('employee-task-detail-time').textContent = `创建时间：${formatEmployeeTaskDateTime(task)}`;
+
+        drawer.hidden = false;
+        document.body.style.overflow = 'hidden';
+        renderEmployeeDailyTasks();
+    }
+
+    function closeEmployeeTaskDetail() {
+        selectedEmployeeTaskId = null;
+        const drawer = document.getElementById('employee-task-detail-drawer');
+        if (drawer) drawer.hidden = true;
+        document.body.style.overflow = '';
+        renderEmployeeDailyTasks();
+    }
+
+    function openEmployeeTaskDeleteModal(taskId) {
+        const tasks = getEmployeeDailyTasks() || [];
+        const task = tasks.find(item => item.id === taskId);
+        if (!task || !canDeleteEmployeeTask(task)) return;
+
+        pendingDeleteEmployeeTaskId = taskId;
+        const modal = document.getElementById('employee-task-delete-modal');
+        if (modal) modal.hidden = false;
+    }
+
+    function closeEmployeeTaskDeleteModal() {
+        pendingDeleteEmployeeTaskId = null;
+        const modal = document.getElementById('employee-task-delete-modal');
+        if (modal) modal.hidden = true;
+    }
+
+    function confirmDeleteEmployeeTask() {
+        if (!pendingDeleteEmployeeTaskId) return;
+        const tasks = getEmployeeDailyTasks() || [];
+        const task = tasks.find(item => item.id === pendingDeleteEmployeeTaskId);
+        if (!task || !canDeleteEmployeeTask(task)) {
+            closeEmployeeTaskDeleteModal();
+            return;
+        }
+        const nextTasks = tasks.filter(item => item.id !== pendingDeleteEmployeeTaskId);
+        saveEmployeeDailyTasks(nextTasks);
+        if (selectedEmployeeTaskId === pendingDeleteEmployeeTaskId) {
+            closeEmployeeTaskDetail();
+        }
+        closeEmployeeTaskDeleteModal();
+        renderEmployeeDailyTasks();
+    }
+
+    function ensureEmployeeChatMode(panel) {
+        const state = getPanelState(panel);
+        if (state.chatModeActive) return state.currentCardIndex ?? 0;
+
+        const assistantIndex = state.currentCardIndex ?? 0;
+        applyEmployeeChatModeUI(panel, {
+            index: assistantIndex,
+            showWelcome: false,
+            createHistory: !state.currentSessionId
+        });
+        return assistantIndex;
+    }
+
+    function getTaskAssistantReply(task, index) {
+        const assistant = aiAssistants[index] || aiAssistants[0];
+        return `**${assistant.name}**\n\n任务：${task.title}\n\n梳理背景与节点、生成执行建议、跟进进展。\n\n输入：指定起始步骤或补充材料。`;
+    }
+
+    function sendEmployeeTaskToChat(taskId) {
+        const tasks = getEmployeeDailyTasks() || [];
+        const task = tasks.find(item => item.id === taskId);
+        if (!task) return;
+
+        const panel = document.getElementById('workbench-panel-employee');
+        if (!panel) return;
+
+        const assistantIndex = ensureEmployeeChatMode(panel);
+        appendChatMessage(task.title, 'user', panel);
+        setTimeout(() => {
+            appendChatMessage(getTaskAssistantReply(task, getPanelState(panel).currentCardIndex ?? assistantIndex), 'assistant', panel);
+        }, 400);
+
+        syncEmployeeChatModeLayout();
+    }
+
+    function updateEmployeeTaskCharCount(inputId, countId, max) {
+        const input = document.getElementById(inputId);
+        const counter = document.getElementById(countId);
+        if (!input || !counter) return;
+        counter.textContent = `${input.value.length}/${max}`;
+    }
+
+    function resetEmployeeTaskFormCounters() {
+        ['log-title', 'log-summary', 'log-content'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.dispatchEvent(new Event('input'));
+        });
+    }
+
+    function openWorkLog() {
+        const workLogPage = document.getElementById('work-log-page');
+        const now = new Date();
+
+        document.getElementById('log-date').value = now.toISOString().split('T')[0];
+        document.getElementById('log-time').value = now.toTimeString().slice(0, 5);
+        document.getElementById('log-title').value = '';
+        document.getElementById('log-summary').value = '';
+        document.getElementById('log-content').value = '';
+        resetEmployeeTaskFormCounters();
+
+        workLogPage.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeWorkLog() {
+        const workLogPage = document.getElementById('work-log-page');
+        workLogPage.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    function saveWorkLog(event) {
+        event.preventDefault();
+
+        const date = document.getElementById('log-date').value;
+        const time = document.getElementById('log-time').value;
+        const title = document.getElementById('log-title').value.trim();
+        const summary = document.getElementById('log-summary').value.trim();
+        const content = document.getElementById('log-content').value.trim();
+
+        if (!date || !time || !title || !content) {
+            alert('请填写时间、标题和事项');
+            return;
+        }
+
+        const task = {
+            id: `task-${Date.now()}`,
+            title,
+            summary,
+            content,
+            source: '业务团队工作台',
+            sourceType: 'workbench',
+            date,
+            time,
+            timestamp: new Date(`${date}T${time}`).getTime() || Date.now()
+        };
+
+        const tasks = getEmployeeDailyTasks() || [];
+        tasks.unshift(task);
+        tasks.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        saveEmployeeDailyTasks(tasks);
+        renderEmployeeDailyTasks();
+
+        alert('保存成功！');
+        closeWorkLog();
+    }
+
+    function pushEmployeeDailyTaskFromAgent(taskData) {
+        const tasks = getEmployeeDailyTasks() || [];
+        tasks.unshift({
+            id: taskData.id || `task-${Date.now()}`,
+            title: taskData.title,
+            summary: taskData.summary || '',
+            content: taskData.content || taskData.title,
+            source: taskData.source || '智能体',
+            sourceType: 'agent',
+            date: taskData.date || new Date().toISOString().split('T')[0],
+            time: taskData.time || new Date().toTimeString().slice(0, 5),
+            timestamp: Date.now()
+        });
+        tasks.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        saveEmployeeDailyTasks(tasks);
+        renderEmployeeDailyTasks();
+    }
+    
+    function measureCenterAgentsOverflow(scrollContainer, avatarsEl, threshold) {
+        if (!scrollContainer || !avatarsEl) return false;
+        return scrollContainer.scrollWidth - scrollContainer.clientWidth > threshold;
+    }
+
+    function updateDigitalAvatarsScrollButtonsForWrap(wrap) {
+        const scrollContainer = wrap?.querySelector('.digital-avatars-scroll');
+        const btnLeft = wrap?.querySelector('.digital-avatars-scroll-left');
+        const btnRight = wrap?.querySelector('.digital-avatars-scroll-right');
+        if (!scrollContainer || !btnLeft || !btnRight) return;
+
+        const wrapRect = wrap.getBoundingClientRect();
+        if (wrapRect.width <= 0 || wrapRect.height <= 0) {
+            btnLeft.hidden = true;
+            btnRight.hidden = true;
+            wrap.classList.remove('is-scroll-overflow');
+            return;
+        }
+
+        const overflowThreshold = 8;
+        const avatarsEl = scrollContainer.querySelector('.digital-avatars');
+        const isCenterBar = wrap.classList.contains('center-agents-scroll-wrap');
+        let hasOverflow;
+
+        if (isCenterBar) {
+            wrap.classList.add('is-scroll-overflow');
+            hasOverflow = measureCenterAgentsOverflow(scrollContainer, avatarsEl, overflowThreshold);
+            if (!hasOverflow) {
+                wrap.classList.remove('is-scroll-overflow');
+                scrollContainer.scrollLeft = 0;
+            }
+        } else {
+            const overflow = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+            hasOverflow = overflow > overflowThreshold;
+            wrap.classList.toggle('is-scroll-overflow', hasOverflow);
+        }
+
+        if (!hasOverflow) {
+            scrollContainer.scrollLeft = 0;
+            btnLeft.hidden = true;
+            btnRight.hidden = true;
+            return;
+        }
+
+        const tolerance = 4;
+        const scrollOverflow = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+        const canScrollLeft = scrollContainer.scrollLeft > tolerance;
+        const canScrollRight = scrollContainer.scrollLeft < scrollOverflow - tolerance;
+
+        btnLeft.hidden = !canScrollLeft;
+        btnRight.hidden = !canScrollRight;
+    }
+
+    function updateDigitalAvatarsScrollButtons() {
+        document.querySelectorAll('.digital-avatars-scroll-wrap').forEach(updateDigitalAvatarsScrollButtonsForWrap);
+    }
+
+    window.updateDigitalAvatarsScrollButtons = updateDigitalAvatarsScrollButtons;
+
+    function scrollDigitalAvatars(wrap, direction) {
+        const scrollContainer = wrap?.querySelector('.digital-avatars-scroll');
+        if (!scrollContainer) return;
+        const isCenterBar = wrap.classList.contains('center-agents-scroll-wrap');
+        let step;
+        if (isCenterBar) {
+            const items = scrollContainer.querySelectorAll('.avatar-item');
+            const firstVisible = Array.from(items).find((item) => {
+                const rect = item.getBoundingClientRect();
+                const containerRect = scrollContainer.getBoundingClientRect();
+                return rect.right > containerRect.left + 2 && rect.left < containerRect.right - 2;
+            }) || items[0];
+            const avatarsEl = scrollContainer.querySelector('.digital-avatars');
+            const gap = avatarsEl ? parseFloat(getComputedStyle(avatarsEl).columnGap || getComputedStyle(avatarsEl).gap || '0') || 0 : 0;
+            step = firstVisible ? firstVisible.getBoundingClientRect().width + gap : 120;
+        } else {
+            step = Math.max(180, Math.round(scrollContainer.clientWidth * 0.65));
+        }
+        scrollContainer.scrollBy({ left: direction * step, behavior: 'smooth' });
+    }
+
+    function initDigitalAvatarsScrollControls() {
+        document.querySelectorAll('.digital-avatars-scroll-wrap').forEach((wrap) => {
+        const scrollContainer = wrap.querySelector('.digital-avatars-scroll');
+        const btnLeft = wrap.querySelector('.digital-avatars-scroll-left');
+        const btnRight = wrap.querySelector('.digital-avatars-scroll-right');
+        if (!scrollContainer || !btnLeft || !btnRight) return;
+
+        if (wrap.dataset.scrollBound !== 'true') {
+            wrap.dataset.scrollBound = 'true';
+
+            btnLeft.addEventListener('click', (e) => {
+                e.stopPropagation();
+                scrollDigitalAvatars(wrap, -1);
+                setTimeout(() => updateDigitalAvatarsScrollButtonsForWrap(wrap), 320);
+            });
+
+            btnRight.addEventListener('click', (e) => {
+                e.stopPropagation();
+                scrollDigitalAvatars(wrap, 1);
+                setTimeout(() => updateDigitalAvatarsScrollButtonsForWrap(wrap), 320);
+            });
+
+            scrollContainer.addEventListener('scroll', () => {
+                updateDigitalAvatarsScrollButtonsForWrap(wrap);
+            }, { passive: true });
+
+            if (typeof ResizeObserver !== 'undefined' && wrap.dataset.resizeObserved !== 'true') {
+                wrap.dataset.resizeObserved = 'true';
+                const ro = new ResizeObserver(() => updateDigitalAvatarsScrollButtonsForWrap(wrap));
+                ro.observe(scrollContainer);
+                if (wrap.classList.contains('center-agents-scroll-wrap')) {
+                    ro.observe(wrap);
+                }
+            }
+
+            window.addEventListener('resize', () => {
+                updateDigitalAvatarsScrollButtons();
+            });
+
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            scrollContainer.addEventListener('mousedown', (e) => {
+                isDown = true;
+                scrollContainer.classList.add('active');
+                startX = e.pageX - scrollContainer.offsetLeft;
+                scrollLeft = scrollContainer.scrollLeft;
+            });
+
+            scrollContainer.addEventListener('mouseleave', () => {
+                isDown = false;
+                scrollContainer.classList.remove('active');
+            });
+
+            scrollContainer.addEventListener('mouseup', () => {
+                isDown = false;
+                scrollContainer.classList.remove('active');
+                updateDigitalAvatarsScrollButtonsForWrap(wrap);
+            });
+
+            scrollContainer.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - scrollContainer.offsetLeft;
+                const walk = (x - startX) * 2;
+                scrollContainer.scrollLeft = scrollLeft - walk;
+            });
+
+            let touchStartX;
+            let touchScrollLeft;
+
+            scrollContainer.addEventListener('touchstart', (e) => {
+                touchStartX = e.touches[0].pageX - scrollContainer.offsetLeft;
+                touchScrollLeft = scrollContainer.scrollLeft;
+            }, { passive: true });
+
+            scrollContainer.addEventListener('touchmove', (e) => {
+                const x = e.touches[0].pageX - scrollContainer.offsetLeft;
+                const walk = (x - touchStartX) * 2;
+                scrollContainer.scrollLeft = touchScrollLeft - walk;
+            }, { passive: true });
+
+            scrollContainer.addEventListener('touchend', () => {
+                updateDigitalAvatarsScrollButtonsForWrap(wrap);
+            }, { passive: true });
+        }
+
+        updateDigitalAvatarsScrollButtonsForWrap(wrap);
+        });
+        requestAnimationFrame(updateDigitalAvatarsScrollButtons);
+    }
+
+    window.openEmployeeSession = function (session) {
+        const panel = document.getElementById('workbench-panel-employee');
+        if (!panel || !session) return;
+
+        applyEmployeeChatModeUI(panel, {
+            index: session.assistantIndex ?? 0,
+            showWelcome: false,
+            createHistory: false,
+            sessionId: session.id
+        });
+        restoreChatFromSession(panel, session);
+        syncEmployeeChatModeLayout();
+    };
+
+    window.resetEmployeeChat = function () {
+        const panel = document.getElementById('workbench-panel-employee');
+        if (!panel) return;
+        const state = getPanelState(panel);
+        state.chatModeActive = false;
+        state.currentCardIndex = 0;
+        state.currentSessionId = null;
+        state.chatMessages = [];
+        window.AppShell?.setCurrentSessionId?.(null);
+
+        const hero = document.getElementById('center-hero');
+        const carousel = getPanelEl('ai-carousel-view', panel);
+        const chatView = getPanelEl('ai-chat-view', panel);
+        const miniAvatars = getPanelEl('ai-mini-avatars', panel);
+        const workbench = panel.querySelector('.ai-workbench-section');
+        const inputSection = panel.querySelector('.input-section');
+        const sessionScroll = document.getElementById('session-scroll');
+        const messagesEl = getPanelEl('ai-chat-messages', panel);
+
+        if (hero) hero.classList.remove('is-hidden');
+        if (carousel) carousel.style.display = '';
+        if (chatView) {
+            chatView.style.display = 'none';
+            chatView.classList.remove('is-visible');
+        }
+        if (miniAvatars) miniAvatars.style.display = 'none';
+        if (workbench) workbench.classList.remove('chat-mode');
+        if (inputSection) inputSection.classList.remove('chat-mode');
+        if (sessionScroll) sessionScroll.classList.remove('is-chat-active');
+        if (messagesEl) messagesEl.innerHTML = '';
+
+        panel.querySelectorAll('.ai-card-fan').forEach((card, i) => {
+            card.classList.toggle('active', i === 0);
+        });
+        panel.querySelectorAll('.indicator').forEach((ind, i) => {
+            ind.classList.toggle('active', i === 0);
+        });
+
+        document.getElementById('session-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
+        syncEmployeeChatModeLayout();
+    };
+
+    window.showLoginPage = showLoginPage;
+    window.logoutWorkbench = logoutWorkbench;
+    window.enterWorkbench = enterWorkbench;
+    window.handleLoginSubmit = handleLoginSubmit;
+    window.toggleLoginAccountMode = toggleLoginAccountMode;
+    window.returnToSupportMainPage = returnToSupportMainPage;
+    window.resetSupportChatView = resetSupportChatView;
+    window.startSupportNewSession = function () {
+        const panel = document.getElementById('workbench-panel-support');
+        if (!panel) return;
+        const state = getPanelState(panel);
+        state.currentSessionId = null;
+        state.supportChatMessages = [];
+        highlightSupportSessionInSidebar(null);
+        resetSupportChatView(panel);
+        if (window.ContextPanel?.reset) {
+            window.ContextPanel.reset();
+        }
+        window.AppShell?.returnToMainSessionView?.();
+        window.AppShell?.switchSupportSidebarTab?.('sessions');
+    };
+    window.openSupportSession = function (sessionId) {
+        const session = getSupportSessions().find((s) => s.id === sessionId);
+        if (!session) return;
+        window.AppShell?.returnToMainSessionView?.();
+        restoreSupportChatFromSession(document.getElementById('workbench-panel-support'), session);
+    };
+    window.openSupportExceptionDetail = function (agentId) {
+        const agent = getSupportAgent(agentId);
+        if (!agent) return;
+        window.AppShell?.returnToMainSessionView?.();
+        const panel = document.getElementById('workbench-panel-support');
+        const message = `请帮我查看${agent.name}相关异常提醒详情`;
+        appendSupportChatMessage(message, 'user', panel);
+        setTimeout(() => {
+            appendSupportAssistantReply(message, agentId, panel);
+        }, 400);
+    };
+    window.openExceptionAlertDetail = function (title) {
+        window.AppShell?.returnToMainSessionView?.();
+        sendSupportExceptionQuick(title);
+    };
+    window.sendSupportExceptionQuick = sendSupportExceptionQuick;
+    window.openSupportHomeCardInChat = openSupportHomeCardInChat;
+    window.renderSupportSessionHistory = renderSupportSessionHistory;
+
+    // 页面加载时初始化（app-shell.js 也会初始化，此处保留兼容）
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof initAppShell === 'function') initAppShell();
+        else showLoginPage();
+        initDigitalAvatarsScrollControls();
+    });

@@ -1,0 +1,1111 @@
+    <!-- 二级页面：探马详情 - 潜在客户与业务线索 -->
+    <div id="tanma-page" class="detail-page" style="display: none;">
+        <div class="detail-page-overlay" onclick="closeTanmaDetail()"></div>
+        <div class="detail-page-container tanma-container">
+            <div class="detail-page-header">
+                <button class="back-btn" onclick="closeTanmaDetail()">
+                    <span class="back-icon">‹</span>
+                    <span>返回</span>
+                </button>
+                <h3>🐎 业务分析助手 - 潜在客户与业务线索</h3>
+                <button class="model-btn" onclick="openTanmaModel()">
+                    <span class="model-icon">🎯</span>
+                    <span>业务分析模型</span>
+                </button>
+            </div>
+            <div class="detail-page-content tanma-content">
+                <!-- 经纪业务潜在客户 -->
+                <div class="client-section">
+                    <h4 class="client-type">经纪业务潜在客户</h4>
+                    <div class="client-card">
+                        <div class="client-header">
+                            <span class="client-name">孙海燕</span>
+                        </div>
+                        <div class="client-body">
+                            <div class="client-info-row">
+                                <span class="info-label">联系电话：</span>
+                                <span class="info-value">13932157387</span>
+                            </div>
+                            <div class="client-info-row">
+                                <span class="info-label">业务线索：</span>
+                                <span class="info-value">在国信证券有股票账户及两融账户</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 资管业务潜在客户 -->
+                <div class="client-section">
+                    <h4 class="client-type">资管业务潜在客户</h4>
+                    <div class="client-card">
+                        <div class="client-header">
+                            <span class="client-name">行云科技有限公司</span>
+                        </div>
+                        <div class="client-body">
+                            <div class="client-info-row">
+                                <span class="info-label">业务线索：</span>
+                                <span class="info-value">2026年3月公告购买广发证券天天红1号资产管理产品3亿元</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="client-card">
+                        <div class="client-header">
+                            <span class="client-name">徽商银行</span>
+                        </div>
+                        <div class="client-body">
+                            <div class="client-info-row">
+                                <span class="info-label">关键人：</span>
+                                <span class="info-value">行长孔庆龙（前同事）</span>
+                            </div>
+                            <div class="client-info-row">
+                                <span class="info-label">业务线索：</span>
+                                <span class="info-value">代销券商资管产品200亿元</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 投行业务潜在客户 -->
+                <div class="client-section">
+                    <h4 class="client-type">投行业务潜在客户</h4>
+                    <div class="client-card">
+                        <div class="client-header">
+                            <span class="client-name">亿晶光电</span>
+                        </div>
+                        <div class="client-body">
+                            <div class="client-info-row">
+                                <span class="info-label">业务线索：</span>
+                                <span class="info-value">已被债权人申请预重整</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="client-card">
+                        <div class="client-header">
+                            <span class="client-name">棒杰股份</span>
+                        </div>
+                        <div class="client-body">
+                            <div class="client-info-row">
+                                <span class="info-label">业务线索：</span>
+                                <span class="info-value">2026年2月28日法院受理重整申请</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 三级页面：探马模型 -->
+    <div id="tanma-model-page" class="detail-page" style="display: none;">
+        <div class="detail-page-overlay" onclick="closeTanmaModel()"></div>
+        <div class="detail-page-container tanma-model-container">
+            <div class="detail-page-header">
+                <button class="back-btn" onclick="closeTanmaModel()">
+                    <span class="back-icon">‹</span>
+                    <span>返回</span>
+                </button>
+                <h3>🎯 业务分析模型</h3>
+                <div class="header-spacer"></div>
+            </div>
+            <div class="detail-page-content tanma-model-content">
+                <!-- 经纪业务客户发掘模型 -->
+                <div class="model-section">
+                    <div class="model-header">
+                        <h4 class="model-title">📊 经纪业务客户发掘模型</h4>
+                        <button class="edit-model-btn" onclick="editModel('broker')">修改模型</button>
+                    </div>
+                    <div class="model-content" id="broker-model-display">
+                        <div class="model-item">
+                            <span class="model-step">1</span>
+                            <div class="model-text">
+                                <strong>潜在客户要素1：</strong>手机通讯录或微信通讯录导入名单
+                            </div>
+                        </div>
+                        <div class="model-item">
+                            <span class="model-step">2</span>
+                            <div class="model-text">
+                                <strong>潜在客户要素2：</strong>识别通讯录名单中在其他券商已开立股票账户且活跃交易的个人或企业
+                            </div>
+                        </div>
+                        <div class="model-item">
+                            <span class="model-step">3</span>
+                            <div class="model-text">
+                                <strong>潜在客户要素3：</strong>识别通讯录名单中已在华创证券开立股票账户但未开立两融账户的个人或企业
+                            </div>
+                        </div>
+                        <div class="model-item">
+                            <span class="model-step">4</span>
+                            <div class="model-text">
+                                <strong>潜在客户要素4：</strong>识别通讯录名单中已在华创证券开立股票账户但月均交易额低于1万元的个人或企业
+                            </div>
+                        </div>
+                    </div>
+                    <div class="model-edit-form" id="broker-model-edit" style="display: none;">
+                        <textarea class="model-textarea" id="broker-textarea" rows="8">1. 潜在客户要素1：手机通讯录或微信通讯录导入名单
+2. 潜在客户要素2：识别通讯录名单中在其他券商已开立股票账户且活跃交易的个人或企业
+3. 潜在客户要素3：识别通讯录名单中已在华创证券开立股票账户但未开立两融账户的个人或企业
+4. 潜在客户要素4：识别通讯录名单中已在华创证券开立股票账户但月均交易额低于1万元的个人或企业</textarea>
+                        <div class="model-edit-actions">
+                            <button class="secondary-btn" onclick="cancelModelEdit('broker')">取消</button>
+                            <button class="primary-btn" onclick="saveModel('broker')">保存</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 资管业务客户发掘模型 -->
+                <div class="model-section">
+                    <div class="model-header">
+                        <h4 class="model-title">💼 资管业务客户发掘模型</h4>
+                        <button class="edit-model-btn" onclick="editModel('asset')">修改模型</button>
+                    </div>
+                    <div class="model-content" id="asset-model-display">
+                        <div class="model-item">
+                            <span class="model-step">1</span>
+                            <div class="model-text">
+                                <strong>潜在客户要素1：</strong>手机通讯录或微信通讯录导入名单
+                            </div>
+                        </div>
+                        <div class="model-item">
+                            <span class="model-step">2</span>
+                            <div class="model-text">
+                                <strong>潜在客户要素2：</strong>识别通讯录名单中的银行，搜索公开信息中包含这些银行代销资管产品的信息
+                            </div>
+                        </div>
+                        <div class="model-item">
+                            <span class="model-step">3</span>
+                            <div class="model-text">
+                                <strong>潜在客户要素3：</strong>识别通讯录名单中的银行、保险、信托，搜索公开信息中包含这些机构委外理财的信息
+                            </div>
+                        </div>
+                        <div class="model-item">
+                            <span class="model-step">4</span>
+                            <div class="model-text">
+                                <strong>潜在客户要素4：</strong>识别通讯录名单中的私募机构，搜索公开信息中包含这些私募机构的产品被FOF产品投资的信息
+                            </div>
+                        </div>
+                        <div class="model-item">
+                            <span class="model-step">5</span>
+                            <div class="model-text">
+                                <strong>潜在客户要素5：</strong>识别通讯录名单中的企业（公司），搜索公开信息中包含这些企业（公司）购买理财产品的信息
+                            </div>
+                        </div>
+                    </div>
+                    <div class="model-edit-form" id="asset-model-edit" style="display: none;">
+                        <textarea class="model-textarea" id="asset-textarea" rows="10">1. 潜在客户要素1：手机通讯录或微信通讯录导入名单
+2. 潜在客户要素2：识别通讯录名单中的银行，搜索公开信息中包含这些银行代销资管产品的信息
+3. 潜在客户要素3：识别通讯录名单中的银行、保险、信托，搜索公开信息中包含这些机构委外理财的信息
+4. 潜在客户要素4：识别通讯录名单中的私募机构，搜索公开信息中包含这些私募机构的产品被FOF产品投资的信息
+5. 潜在客户要素5：识别通讯录名单中的企业（公司），搜索公开信息中包含这些企业（公司）购买理财产品的信息</textarea>
+                        <div class="model-edit-actions">
+                            <button class="secondary-btn" onclick="cancelModelEdit('asset')">取消</button>
+                            <button class="primary-btn" onclick="saveModel('asset')">保存</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 投行业务客户发掘模型 -->
+                <div class="model-section">
+                    <div class="model-header">
+                        <h4 class="model-title">🏛️ 投行业务客户发掘模型</h4>
+                        <button class="edit-model-btn" onclick="editModel('investment')">修改模型</button>
+                    </div>
+                    <div class="model-content" id="investment-model-display">
+                        <div class="model-item">
+                            <span class="model-step">1</span>
+                            <div class="model-text">
+                                <strong>潜在客户要素1：</strong>手机通讯录或微信通讯录导入名单
+                            </div>
+                        </div>
+                        <div class="model-item">
+                            <span class="model-step">2</span>
+                            <div class="model-text">
+                                <strong>潜在客户要素2：</strong>识别通讯录名单中已经被实施退市风险警示或其他风险警示的上市公司
+                            </div>
+                        </div>
+                        <div class="model-item">
+                            <span class="model-step">3</span>
+                            <div class="model-text">
+                                <strong>潜在客户要素3：</strong>识别通讯录名单中资产负债表资产总额小于负债总额的上市公司
+                            </div>
+                        </div>
+                        <div class="model-item">
+                            <span class="model-step">4</span>
+                            <div class="model-text">
+                                <strong>潜在客户要素4：</strong>识别通讯录名单中被监管部门下发处罚通知书有可能触发重大违法行为退市的上市公司
+                            </div>
+                        </div>
+                    </div>
+                    <div class="model-edit-form" id="investment-model-edit" style="display: none;">
+                        <textarea class="model-textarea" id="investment-textarea" rows="8">1. 潜在客户要素1：手机通讯录或微信通讯录导入名单
+2. 潜在客户要素2：识别通讯录名单中已经被实施退市风险警示或其他风险警示的上市公司
+3. 潜在客户要素3：识别通讯录名单中资产负债表资产总额小于负债总额的上市公司
+4. 潜在客户要素4：识别通讯录名单中被监管部门下发处罚通知书有可能触发重大违法行为退市的上市公司</textarea>
+                        <div class="model-edit-actions">
+                            <button class="secondary-btn" onclick="cancelModelEdit('investment')">取消</button>
+                            <button class="primary-btn" onclick="saveModel('investment')">保存</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 二级页面：客户服务助手 - 专业高效做服务 -->
+    <div id="tianyan-page" class="detail-page" style="display: none;">
+        <div class="detail-page-overlay" onclick="closeTianyanDetail()"></div>
+        <div class="detail-page-container tianyan-container">
+            <div class="detail-page-header">
+                <button class="back-btn" onclick="closeTianyanDetail()">
+                    <span class="back-icon">‹</span>
+                    <span>返回</span>
+                </button>
+                <h3>👁️ 客户服务助手 - 专业高效做服务</h3>
+                <div class="header-spacer"></div>
+            </div>
+            <div class="detail-page-content tianyan-content">
+                <!-- 客户类型标签页 -->
+                <div class="client-tabs">
+                    <div class="client-tab active" data-tab="personal" onclick="switchTianyanTab('personal')">
+                        <span class="tab-icon">👤</span>
+                        <span class="tab-text">个人客户</span>
+                    </div>
+                    <div class="client-tab" data-tab="bank" onclick="switchTianyanTab('bank')">
+                        <span class="tab-icon">🏦</span>
+                        <span class="tab-text">银行客户</span>
+                    </div>
+                    <div class="client-tab" data-tab="enterprise" onclick="switchTianyanTab('enterprise')">
+                        <span class="tab-icon">🏢</span>
+                        <span class="tab-text">企业客户</span>
+                    </div>
+                </div>
+
+                <!-- 个人客户资讯 -->
+                <div id="tab-personal" class="tianyan-tab-content active">
+                    <div class="news-section">
+                        <h4 class="news-category">📈 市场热点</h4>
+                        <div class="news-card" data-news-id="personal-1">
+                            <div class="news-title">A股三大指数集体收涨，新能源板块领涨</div>
+                            <div class="news-summary">今日上证指数收涨0.85%，深证成指涨1.28%，创业板指涨1.56%。新能源、半导体板块表现强势，建议关注相关投资机会。</div>
+                            <div class="news-meta">
+                                <span class="news-time">2026-03-19 15:30</span>
+                                <span class="news-source">市场快讯</span>
+                            </div>
+                        </div>
+                        <div class="news-card" data-news-id="personal-2">
+                            <div class="news-title">央行宣布下调存款准备金率0.5个百分点</div>
+                            <div class="news-summary">为支持实体经济发展，央行决定于2026年3月25日下调金融机构存款准备金率0.5个百分点，释放长期资金约1万亿元。</div>
+                            <div class="news-meta">
+                                <span class="news-time">2026-03-19 09:15</span>
+                                <span class="news-source">央行公告</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="news-section">
+                        <h4 class="news-category">💡 理财建议</h4>
+                        <div class="news-card" data-news-id="personal-3">
+                            <div class="news-title">当前市场环境下，如何做好资产配置？</div>
+                            <div class="news-summary">建议采取"核心+卫星"策略：60%配置低风险的债券基金和货币基金，30%配置宽基指数基金，10%用于主题投资机会。</div>
+                            <div class="news-meta">
+                                <span class="news-time">2026-03-19 14:00</span>
+                                <span class="news-source">投顾观点</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="news-section">
+                        <h4 class="news-category">⚠️ 风险提示</h4>
+                        <div class="news-card warning" data-news-id="personal-4">
+                            <div class="news-title">警惕"高收益保本"理财产品骗局</div>
+                            <div class="news-summary">近期出现多起以"保本高收益"为诱饵的非法集资案件，请投资者提高警惕，选择正规金融机构产品。</div>
+                            <div class="news-meta">
+                                <span class="news-time">2026-03-19 10:00</span>
+                                <span class="news-source">投资者教育</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-actions">
+                        <button class="secondary-btn" onclick="adjustNews('personal')">调整</button>
+                        <button class="primary-btn" onclick="sendNews('personal')">发送</button>
+                    </div>
+                </div>
+
+                <!-- 银行客户资讯 -->
+                <div id="tab-bank" class="tianyan-tab-content">
+                    <div class="news-section">
+                        <h4 class="news-category">🏦 监管政策</h4>
+                        <div class="news-card" data-news-id="bank-1">
+                            <div class="news-title">银保监会发布商业银行金融资产风险分类新规</div>
+                            <div class="news-summary">新规要求商业银行对承担信用风险的全部金融资产进行风险分类，包括贷款、债券、同业资产等，进一步提升资产质量透明度。</div>
+                            <div class="news-meta">
+                                <span class="news-time">2026-03-18 16:00</span>
+                                <span class="news-source">监管动态</span>
+                            </div>
+                        </div>
+                        <div class="news-card" data-news-id="bank-2">
+                            <div class="news-title">央行开展1000亿元MLF操作，利率维持不变</div>
+                            <div class="news-summary">为维护银行体系流动性合理充裕，央行开展1000亿元中期借贷便利(MLF)操作，中标利率维持2.5%不变。</div>
+                            <div class="news-meta">
+                                <span class="news-time">2026-03-18 09:30</span>
+                                <span class="news-source">央行公告</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="news-section">
+                        <h4 class="news-category">📊 同业动态</h4>
+                        <div class="news-card" data-news-id="bank-3">
+                            <div class="news-title">多家银行调整同业存单发行计划</div>
+                            <div class="news-summary">近期工商银行、建设银行等大型银行调整2026年同业存单发行额度，整体规模较去年有所增加，以满足流动性管理需求。</div>
+                            <div class="news-meta">
+                                <span class="news-time">2026-03-17 11:20</span>
+                                <span class="news-source">同业市场</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="news-section">
+                        <h4 class="news-category">💰 业务机会</h4>
+                        <div class="news-card opportunity" data-news-id="bank-4">
+                            <div class="news-title">城商行同业合作需求增加</div>
+                            <div class="news-summary">近期多家城商行表示有同业存放、债券分销、资管产品代销等合作需求，可重点关注。</div>
+                            <div class="news-meta">
+                                <span class="news-time">2026-03-17 09:00</span>
+                                <span class="news-source">业务线索</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-actions">
+                        <button class="secondary-btn" onclick="adjustNews('bank')">调整</button>
+                        <button class="primary-btn" onclick="sendNews('bank')">发送</button>
+                    </div>
+                </div>
+
+                <!-- 企业客户资讯 -->
+                <div id="tab-enterprise" class="tianyan-tab-content">
+                    <div class="news-section">
+                        <h4 class="news-category">🏭 行业动态</h4>
+                        <div class="news-card" data-news-id="enterprise-1">
+                            <div class="news-title">新能源汽车产业链销量同比增幅扩大</div>
+                            <div class="news-summary">2月新能源汽车产销分别完成54.3万辆和52.5万辆，同比分别增长48.8%和49.6%。上游锂电池、中游零部件企业订单饱满。</div>
+                            <div class="news-meta">
+                                <span class="news-time">2026-03-18 16:30</span>
+                                <span class="news-source">公开数据</span>
+                            </div>
+                        </div>
+                        <div class="news-card" data-news-id="enterprise-2">
+                            <div class="news-title">半导体行业周期底部已现，复苏在即</div>
+                            <div class="news-summary">存储芯片价格连续三个月反弹，晶圆厂产能利用率回升，行业有望于Q2进入上行周期。</div>
+                            <div class="news-meta">
+                                <span class="news-time">2026-03-18 10:45</span>
+                                <span class="news-source">产业研究</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="news-section">
+                        <h4 class="news-category">📋 资本市场</h4>
+                        <div class="news-card" data-news-id="enterprise-3">
+                            <div class="news-title">证监会：优化IPO审核流程，支持科技创新企业上市</div>
+                            <div class="news-summary">证监会表示将进一步优化科创板、创业板IPO审核流程，对符合条件的高新技术企业提供"绿色通道"服务。</div>
+                            <div class="news-meta">
+                                <span class="news-time">2026-03-17 14:20</span>
+                                <span class="news-source">政策解读</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="news-section">
+                        <h4 class="news-category">💡 融资服务</h4>
+                        <div class="news-card opportunity" data-news-id="enterprise-4">
+                            <div class="news-title">债券发行利率持续下行，融资窗口期显现</div>
+                            <div class="news-summary">近期AAA级企业债发行利率降至3%以下，建议优质企业把握低利率窗口期，通过发行公司债、中期票据等工具进行融资。</div>
+                            <div class="news-meta">
+                                <span class="news-time">2026-03-16 11:00</span>
+                                <span class="news-source">融资建议</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-actions">
+                        <button class="secondary-btn" onclick="adjustNews('enterprise')">调整</button>
+                        <button class="primary-btn" onclick="sendNews('enterprise')">发送</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 客户选择弹窗 - 用于发送资讯 -->
+    <div id="customer-selector-modal" class="modal" style="display: none;">
+        <div class="modal-overlay" onclick="closeCustomerSelector()"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h4>📤 选择发送对象</h4>
+                <button class="close-modal-btn" onclick="closeCustomerSelector()">✕</button>
+            </div>
+            <div class="modal-content">
+                <div class="selected-news-info">
+                    <span class="label">发送资讯：</span>
+                    <span id="selected-news-title" class="title"></span>
+                </div>
+                
+                <!-- 搜索框 -->
+                <div class="customer-search">
+                    <input type="text" id="customer-search-input" placeholder="🔍 搜索客户姓名或企业名称..." oninput="filterCustomers(this.value)">
+                </div>
+                
+                <!-- 客户类型筛选 -->
+                <div class="customer-filter">
+                    <button class="filter-btn active" data-filter="all" onclick="filterByType('all')">全部</button>
+                    <button class="filter-btn" data-filter="personal" onclick="filterByType('personal')">👤 个人</button>
+                    <button class="filter-btn" data-filter="bank" onclick="filterByType('bank')">🏦 银行</button>
+                    <button class="filter-btn" data-filter="enterprise" onclick="filterByType('enterprise')">🏢 企业</button>
+                </div>
+                
+                <!-- 客户列表 -->
+                <div class="customer-list-container">
+                    <div id="customer-list" class="customer-list">
+                        <!-- 客户列表将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+                
+                <!-- 已选择客户 -->
+                <div class="selected-customers">
+                    <span class="label">已选择：</span>
+                    <span id="selected-count">0</span>
+                    <span>人</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="cancel-btn" onclick="closeCustomerSelector()">取消</button>
+                <button class="confirm-btn" onclick="sendToCustomers()">确认发送</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 发送成功提示 -->
+    <div id="send-success-toast" class="toast" style="display: none;">
+        <div class="toast-content">
+            <span class="toast-icon">✅</span>
+            <span class="toast-message">发送成功！</span>
+        </div>
+    </div>
+
+    <!-- 二级页面：资管业务支持中心对话 -->
+    <div id="asset-support-page" class="detail-page" style="display: none;">
+        <div class="detail-page-overlay" onclick="closeAssetSupportDetail()"></div>
+        <div class="detail-page-container asset-support-container">
+            <div class="detail-page-header">
+                <button class="back-btn" onclick="closeAssetSupportDetail()">
+                    <span class="back-icon">‹</span>
+                    <span>返回</span>
+                </button>
+                <h3>💼 资管业务助理</h3>
+                <div class="header-spacer"></div>
+            </div>
+            <div class="detail-page-content asset-support-content">
+                <!-- 对话消息区域（可滚动） -->
+                <div class="support-dialogue" id="asset-dialogue-area">
+                    <!-- 消息内容将动态插入这里 -->
+                </div>
+
+                <!-- 预设提示词区域（固定在底部） -->
+                <div class="initial-prompts" id="initial-prompts-area">
+                    <div class="prompt-item" onclick="selectPrompt('需要我为您提供华创证券资管业务整体情况介绍么？')">
+                        <span class="prompt-text">需要我为您提供华创证券资管业务整体情况介绍么？</span>
+                    </div>
+                    <div class="prompt-item" onclick="selectPrompt('您想看一下华创证券资管产品近五年业绩报告及同业对比分析么？')">
+                        <span class="prompt-text">您想看一下华创证券资管产品近五年业绩报告及同业对比分析么？</span>
+                    </div>
+                    <div class="prompt-item" onclick="selectPrompt('您需要生成一份三个月期纯债策略的产品设计方案么？')">
+                        <span class="prompt-text">您需要生成一份三个月期纯债策略的产品设计方案么？</span>
+                    </div>
+                </div>
+
+                <!-- 底部输入框 -->
+                <div class="support-input-area">
+                    <div class="support-input-box">
+                        <textarea id="asset-support-input" class="support-input textarea-input" placeholder="点击输入框开始提问..." onclick="fillAssetSupportQuestion()" oninput="autoResizeTextarea(this)" rows="1"></textarea>
+                        <button class="support-send-btn" onclick="sendAssetSupportMessage()">发送</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 二级页面：参谋分析 -->
+    <div id="canmou-page" class="detail-page" style="display: none;">
+        <div class="detail-page-overlay" onclick="closeCanmouDetail()"></div>
+        <div class="detail-page-container canmou-container">
+            <div class="detail-page-header">
+                <button class="back-btn" onclick="closeCanmouDetail()">
+                    <span class="back-icon">‹</span>
+                    <span>返回</span>
+                </button>
+                <h3>🧠 客户分析助手 - 多维分析看客户</h3>
+                <div class="header-spacer"></div>
+            </div>
+            <div class="detail-page-content canmou-content">
+                <!-- 分析输入区域 -->
+                <div class="analysis-input-section">
+                    <div class="analysis-prompt">
+                        <span class="prompt-icon">💬</span>
+                        <span class="prompt-text">请输入客户名称或分析维度</span>
+                    </div>
+                    
+                    <!-- 输入框 -->
+                    <div class="analysis-input-box">
+                        <textarea id="analysis-input" class="analysis-textarea" placeholder="例如：分析某企业客户的合作历史、资金规模与潜在需求..." rows="4" onclick="fillAnalysisExample()"></textarea>
+                        <div class="analysis-input-actions">
+                            <button class="voice-input-btn" onclick="startVoiceInput()">
+                                <span class="voice-icon">🎙️</span>
+                                <span>语音输入</span>
+                            </button>
+                            <button class="analysis-submit-btn" onclick="submitAnalysis()">
+                                <span>开始分析</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 示例提示 -->
+                    <div class="analysis-example">
+                        <span class="example-label">💡 提示：</span>
+                        <span class="example-text">输入客户名称或分析需求，生成多维客户分析</span>
+                    </div>
+                </div>
+
+                <!-- 文档上传区域 -->
+                <div class="document-upload-section compact">
+                    <div class="upload-area compact" onclick="document.getElementById('analysis-document-input').click()">
+                        <span class="upload-icon">📁</span>
+                        <span class="upload-text">上传文档分析</span>
+                    </div>
+                    <input type="file" id="analysis-document-input" accept=".doc,.docx,.pdf,.txt,.xls,.xlsx" style="display: none;" onchange="handleAnalysisDocument(this)">
+                </div>
+
+                <!-- 分析结果展示区域 -->
+                <div id="analysis-result" class="analysis-result" style="display: none;">
+                    <h4 class="section-subtitle">📊 分析结果</h4>
+                    <div class="result-content" id="result-content">
+                        <!-- 分析结果将在这里展示 -->
+                    </div>
+                    <div class="result-actions">
+                        <button class="secondary-btn" onclick="clearAnalysis()">清除</button>
+                        <button class="primary-btn" onclick="saveAnalysis()">保存分析</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 二级页面：军师方案设计 -->
+    <div id="junshi-page" class="detail-page" style="display: none;">
+        <div class="detail-page-overlay" onclick="closeJunshiDetail()"></div>
+        <div class="detail-page-container junshi-container">
+            <div class="detail-page-header">
+                <button class="back-btn" onclick="closeJunshiDetail()">
+                    <span class="back-icon">‹</span>
+                    <span>返回</span>
+                </button>
+                <h3>📋 方案生成助手 - 生成方案显韬略</h3>
+                <div class="header-spacer"></div>
+            </div>
+            <div class="detail-page-content junshi-content">
+                <!-- 方案设计模块网格 - 田字形2x2布局 -->
+                <div class="solution-modules-grid">
+                    <!-- 第一排左：破产重整方案设计 -->
+                    <div class="solution-module-card" onclick="openBankruptcySolution()">
+                        <div class="module-icon bankruptcy">🏗️</div>
+                        <div class="module-title">破产重整方案</div>
+                        <div class="module-desc">企业破产重整全流程解决方案</div>
+                        <div class="module-arrow">›</div>
+                    </div>
+                    
+                    <!-- 第一排右：定增方案设计 -->
+                    <div class="solution-module-card" onclick="openPlacementSolution()">
+                        <div class="module-icon placement">📈</div>
+                        <div class="module-title">定增方案</div>
+                        <div class="module-desc">定向增发融资方案设计</div>
+                        <div class="module-arrow">›</div>
+                    </div>
+                    
+                    <!-- 第二排左：债券发行方案设计 -->
+                    <div class="solution-module-card" onclick="openBondSolution()">
+                        <div class="module-icon bond">📜</div>
+                        <div class="module-title">债券发行方案</div>
+                        <div class="module-desc">公司债、企业债发行方案</div>
+                        <div class="module-arrow">›</div>
+                    </div>
+                    
+                    <!-- 第二排右：资管产品方案设计 -->
+                    <div class="solution-module-card" onclick="openAssetSolution()">
+                        <div class="module-icon asset">💼</div>
+                        <div class="module-title">资管产品方案</div>
+                        <div class="module-desc">资产管理计划方案设计</div>
+                        <div class="module-arrow">›</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 三级页面：破产重整方案设计 -->
+    <div id="bankruptcy-solution-page" class="detail-page" style="display: none;">
+        <div class="detail-page-overlay" onclick="closeBankruptcySolution()"></div>
+        <div class="detail-page-container bankruptcy-container">
+            <div class="detail-page-header">
+                <button class="back-btn" onclick="closeBankruptcySolution()">
+                    <span class="back-icon">‹</span>
+                    <span>返回</span>
+                </button>
+                <h3>🏗️ 破产重整方案设计</h3>
+                <div class="header-spacer"></div>
+            </div>
+            <div class="detail-page-content bankruptcy-content">
+                <!-- 方案要素输入表单 -->
+                <form id="bankruptcy-form" class="solution-form" onsubmit="generateBankruptcySolution(event)" onclick="handleBankruptcyFormClick(event)">
+                    <!-- 基本信息 -->
+                    <div class="form-section">
+                        <h4 class="form-section-title">📌 基本信息</h4>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>公司名称</label>
+                                <input type="text" id="company-name" placeholder="请输入公司名称" required>
+                            </div>
+                            <div class="form-group">
+                                <label>股票代码</label>
+                                <input type="text" id="stock-code" placeholder="如：600XXX" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>测算日期</label>
+                                <input type="date" id="calc-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label>公司股本总额（万股）</label>
+                                <input type="number" id="total-shares" placeholder="请输入股本总额" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 股票价格信息 -->
+                    <div class="form-section">
+                        <h4 class="form-section-title">📈 股票价格信息（元/股）</h4>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>测算日股票收盘价</label>
+                                <input type="number" id="current-price" step="0.01" placeholder="请输入收盘价" required>
+                            </div>
+                            <div class="form-group">
+                                <label>前20日股票收盘价均价</label>
+                                <input type="number" id="price-20d" step="0.01" placeholder="请输入20日均价" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>前60日股票收盘价均价</label>
+                                <input type="number" id="price-60d" step="0.01" placeholder="请输入60日均价" required>
+                            </div>
+                            <div class="form-group">
+                                <label>前120日股票收盘价均价</label>
+                                <input type="number" id="price-120d" step="0.01" placeholder="请输入120日均价" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 偿债方案 -->
+                    <div class="form-section">
+                        <h4 class="form-section-title">💰 偿债方案</h4>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>债权本金（万元）</label>
+                                <input type="number" id="debt-principal" placeholder="请输入债权本金" required>
+                            </div>
+                            <div class="form-group">
+                                <label>偿债比例（%）</label>
+                                <input type="number" id="repayment-ratio" step="0.01" placeholder="如：50表示50%" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>偿债股价倍数</label>
+                                <input type="number" id="price-multiple" step="0.01" placeholder="如：1.5" required>
+                            </div>
+                            <div class="form-group">
+                                <label>现金清偿金额（万元）</label>
+                                <input type="number" id="cash-repayment" placeholder="请输入现金清偿金额" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 投资人方案 -->
+                    <div class="form-section">
+                        <h4 class="form-section-title">👥 投资人方案</h4>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>产业投资人价格折扣（小数）</label>
+                                <input type="number" id="strategic-discount" step="0.01" min="0" max="1" placeholder="如：0.8表示8折" required>
+                            </div>
+                            <div class="form-group">
+                                <label>财务投资人价格折扣（小数）</label>
+                                <input type="number" id="financial-discount" step="0.01" min="0" max="1" placeholder="如：0.9表示9折" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>公积金转增比例（小数）</label>
+                                <input type="number" id="capitalization-ratio" step="0.01" placeholder="如：0.5表示每10股转增5股" required>
+                            </div>
+                            <div class="form-group">
+                                <label>产业投资人转增后持股比例（%）</label>
+                                <input type="number" id="strategic-holding-ratio" step="0.01" placeholder="如：30表示30%" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="secondary-btn" onclick="resetBankruptcyForm()">重置</button>
+                        <button type="submit" class="primary-btn generate-btn">🤖 AI生成重整方案</button>
+                    </div>
+                </form>
+                
+                <!-- 方案生成结果区域 -->
+                <div id="bankruptcy-result" class="solution-result" style="display: none;">
+                    <div class="result-header">
+                        <h4>📄 破产重整方案</h4>
+                        <div class="result-actions-top">
+                            <button class="secondary-btn" onclick="editBankruptcyForm()">修改要素</button>
+                            <button class="primary-btn" onclick="exportBankruptcySolution()">导出方案</button>
+                        </div>
+                    </div>
+                    <div class="result-content" id="bankruptcy-result-content">
+                        <!-- 生成的方案内容将显示在这里 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 二级页面：工作日志 -->
+    <div id="work-log-page" class="detail-page" style="display: none;">
+        <div class="detail-page-overlay" onclick="closeWorkLog()"></div>
+        <div class="detail-page-container work-log-container">
+            <div class="detail-page-header">
+                <button class="back-btn" onclick="closeWorkLog()">
+                    <span class="back-icon">‹</span>
+                    <span>返回</span>
+                </button>
+                <h3>今日任务</h3>
+                <div class="header-spacer"></div>
+            </div>
+            <div class="detail-page-content work-log-content">
+                <div class="log-input-section">
+                    <form id="work-log-form" onsubmit="saveWorkLog(event)">
+                        <div class="form-group">
+                            <label class="form-label">时间</label>
+                            <div class="time-inputs">
+                                <input type="date" id="log-date" class="form-input" required>
+                                <input type="time" id="log-time" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="log-title">标题</label>
+                            <div class="form-textarea-wrap">
+                                <textarea id="log-title" class="form-textarea form-textarea-compact" placeholder="请输入工作标题..." maxlength="100" rows="2" required oninput="updateEmployeeTaskCharCount('log-title', 'log-title-count', 100)"></textarea>
+                                <span class="form-char-count" id="log-title-count">0/100</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="log-summary">摘要</label>
+                            <div class="form-textarea-wrap">
+                                <textarea id="log-summary" class="form-textarea form-textarea-compact" placeholder="请输入工作摘要..." maxlength="200" rows="3" oninput="updateEmployeeTaskCharCount('log-summary', 'log-summary-count', 200)"></textarea>
+                                <span class="form-char-count" id="log-summary-count">0/200</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="log-content">事项</label>
+                            <div class="form-textarea-wrap">
+                                <textarea id="log-content" class="form-textarea" placeholder="请输入工作内容..." maxlength="2000" rows="5" required oninput="updateEmployeeTaskCharCount('log-content', 'log-content-count', 2000)"></textarea>
+                                <span class="form-char-count" id="log-content-count">0/2000</span>
+                            </div>
+                        </div>
+                        <div class="form-actions work-log-form-actions">
+                            <button type="button" class="secondary-btn" onclick="closeWorkLog()">取消</button>
+                            <button type="submit" class="primary-btn">保存任务</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 今日任务详情抽屉 -->
+    <div id="employee-task-detail-drawer" class="employee-task-drawer" hidden>
+        <div class="employee-task-drawer-overlay" onclick="closeEmployeeTaskDetail()"></div>
+        <aside class="employee-task-drawer-panel" id="employee-task-detail-panel" role="dialog" aria-modal="true" aria-labelledby="employee-task-drawer-heading">
+            <div class="employee-task-drawer-header">
+                <span class="employee-task-drawer-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+                </span>
+                <h4 class="employee-task-drawer-heading" id="employee-task-drawer-heading">任务详情</h4>
+                <button type="button" class="employee-task-detail-close" id="employee-task-detail-close" aria-label="关闭">×</button>
+            </div>
+            <div class="employee-task-drawer-body">
+                <p class="employee-task-drawer-main-title" id="employee-task-detail-title"></p>
+                <div class="employee-task-detail-field">
+                    <span class="employee-task-detail-label">摘要</span>
+                    <p class="employee-task-detail-text" id="employee-task-detail-summary"></p>
+                </div>
+                <div class="employee-task-detail-field">
+                    <span class="employee-task-detail-label">事项</span>
+                    <p class="employee-task-detail-text" id="employee-task-detail-content"></p>
+                </div>
+            </div>
+            <div class="employee-task-drawer-footer">
+                <div class="employee-task-detail-meta">
+                    <span id="employee-task-detail-source"></span>
+                    <span id="employee-task-detail-time"></span>
+                </div>
+                <button type="button" class="employee-task-agent-btn" id="employee-task-agent-btn">智能体协同处理</button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 今日任务删除确认 -->
+    <div id="employee-task-delete-modal" class="employee-task-confirm-modal" hidden>
+        <div class="employee-task-confirm-overlay" onclick="closeEmployeeTaskDeleteModal()"></div>
+        <div class="employee-task-confirm-box" role="dialog" aria-modal="true" aria-labelledby="employee-task-delete-title">
+            <p class="employee-task-confirm-text" id="employee-task-delete-title">确定要删除这条任务吗？</p>
+            <div class="employee-task-confirm-actions">
+                <button type="button" class="employee-task-confirm-btn employee-task-confirm-cancel" onclick="closeEmployeeTaskDeleteModal()">取消</button>
+                <button type="button" class="employee-task-confirm-btn employee-task-confirm-ok" onclick="confirmDeleteEmployeeTask()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 关联客户详情抽屉 -->
+    <div id="context-customer-detail-drawer" class="employee-task-drawer" hidden>
+        <div class="employee-task-drawer-overlay" onclick="closeContextCustomerDetail()"></div>
+        <aside class="employee-task-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="context-customer-drawer-heading">
+            <div class="employee-task-drawer-header">
+                <span class="employee-task-drawer-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg>
+                </span>
+                <h4 class="employee-task-drawer-heading" id="context-customer-drawer-heading">客户详情</h4>
+                <button type="button" class="employee-task-detail-close" aria-label="关闭" onclick="closeContextCustomerDetail()">×</button>
+            </div>
+            <div class="employee-task-drawer-body">
+                <p class="employee-task-drawer-main-title" id="context-customer-detail-title"></p>
+                <div class="context-customer-dimensions" id="context-customer-detail-dimensions"></div>
+            </div>
+            <div class="employee-task-drawer-footer">
+                <div class="employee-task-detail-meta">
+                    <span id="context-customer-detail-source"></span>
+                    <span id="context-customer-detail-time"></span>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 输出物预览 -->
+    <div id="context-output-preview-modal" class="employee-task-confirm-modal" hidden>
+        <div class="employee-task-confirm-overlay" onclick="closeContextOutputPreview()"></div>
+        <div class="employee-task-confirm-box context-output-preview-box" role="dialog" aria-modal="true" aria-labelledby="context-output-preview-title">
+            <div class="context-output-preview-header">
+                <p class="employee-task-confirm-text context-output-preview-title" id="context-output-preview-title">输出物预览</p>
+                <button type="button" class="employee-task-detail-close" aria-label="关闭" onclick="closeContextOutputPreview()">×</button>
+            </div>
+            <p class="context-output-preview-meta" id="context-output-preview-meta"></p>
+            <pre class="context-output-preview-body" id="context-output-preview-body"></pre>
+            <div class="employee-task-confirm-actions">
+                <button type="button" class="employee-task-confirm-btn employee-task-confirm-cancel" onclick="closeContextOutputPreview()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 二级页面：客户详情 -->
+    <div id="detail-page" class="detail-page" style="display: none;">
+        <div class="detail-page-overlay" onclick="closeDetailPage()"></div>
+        <div class="detail-page-container">
+            <div class="detail-page-header">
+                <button class="back-btn" onclick="closeDetailPage()">
+                    <span class="back-icon">‹</span>
+                    <span>返回</span>
+                </button>
+                <h3 id="detail-page-title">客户明细</h3>
+                <div class="header-spacer"></div>
+            </div>
+            <div class="detail-page-content">
+                <!-- 客户总资产明细 -->
+                <div id="assets-details-page" class="detail-section" style="display: none;">
+                    <div class="time-selector-single">
+                        <label class="time-label">选择时间点：</label>
+                        <div class="time-input-wrapper">
+                            <input type="date" id="assets-date" value="2026-01-31" class="time-input">
+                            <button class="query-btn" onclick="queryAssetsByDate()">查询</button>
+                        </div>
+                    </div>
+                    <div class="detail-summary">
+                        <div class="summary-card">
+                            <div class="summary-label">客户总数</div>
+                            <div class="summary-value">3户</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">总资产金额</div>
+                            <div class="summary-value">10.62亿元</div>
+                        </div>
+                    </div>
+                    <div class="detail-list">
+                        <div class="detail-item">
+                            <div class="item-header">
+                                <span class="item-name">王斌</span>
+                                <span class="item-type">经纪业务</span>
+                            </div>
+                            <div class="item-body">
+                                <div class="item-row">
+                                    <span class="item-label">业务种类：</span>
+                                    <span class="item-value">经纪业务</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-label">资产金额：</span>
+                                    <span class="item-value highlight">股票账户总金额 120万元</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="item-header">
+                                <span class="item-name">晋商银行</span>
+                                <span class="item-type">资管业务</span>
+                            </div>
+                            <div class="item-body">
+                                <div class="item-row">
+                                    <span class="item-label">业务种类：</span>
+                                    <span class="item-value">资管业务</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-label">资产金额：</span>
+                                    <span class="item-value highlight">金融市场部委外资金 10亿元</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="item-header">
+                                <span class="item-name">东方新能</span>
+                                <span class="item-type">资管业务</span>
+                            </div>
+                            <div class="item-body">
+                                <div class="item-row">
+                                    <span class="item-label">业务种类：</span>
+                                    <span class="item-value">资管业务</span>
+                                </div>
+                                <div class="item-row">
+                                    <span class="item-label">资产金额：</span>
+                                    <span class="item-value highlight">购买创金宝3个月产品 5000万元</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 客户收入明细 -->
+                <div id="revenue-details-page" class="detail-section" style="display: none;">
+                    <div class="time-selector-range">
+                        <label class="time-label">选择时间段：</label>
+                        <div class="time-inputs-row">
+                            <input type="date" id="revenue-start-date" value="2026-01-01" class="time-input">
+                            <span class="time-separator">至</span>
+                            <input type="date" id="revenue-end-date" value="2026-01-31" class="time-input">
+                            <button class="query-btn" onclick="queryRevenueByRange()">查询</button>
+                        </div>
+                    </div>
+                    <div class="detail-summary">
+                        <div class="summary-card">
+                            <div class="summary-label">总收入</div>
+                            <div class="summary-value">150万元</div>
+                        </div>
+                    </div>
+                    <div class="detail-list">
+                        <div class="detail-item">
+                            <div class="item-header">
+                                <span class="item-name">经纪业务佣金收入</span>
+                                <span class="item-amount">45万元</span>
+                            </div>
+                            <div class="item-body">
+                                <div class="item-desc">主要来自股票交易佣金收入</div>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="item-header">
+                                <span class="item-name">资管业务管理费收入</span>
+                                <span class="item-amount">85万元</span>
+                            </div>
+                            <div class="item-body">
+                                <div class="item-desc">主要来自委外资金及资管产品管理费</div>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="item-header">
+                                <span class="item-name">投资业务收入</span>
+                                <span class="item-amount">20万元</span>
+                            </div>
+                            <div class="item-body">
+                                <div class="item-desc">主要来自投资银行及公司自有资金投资收益</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 客户成本明细 -->
+                <div id="cost-details-page" class="detail-section" style="display: none;">
+                    <div class="time-selector-range">
+                        <label class="time-label">选择时间段：</label>
+                        <div class="time-inputs-row">
+                            <input type="date" id="cost-start-date" value="2026-01-01" class="time-input">
+                            <span class="time-separator">至</span>
+                            <input type="date" id="cost-end-date" value="2026-01-31" class="time-input">
+                            <button class="query-btn" onclick="queryCostByRange()">查询</button>
+                        </div>
+                    </div>
+                    <div class="detail-summary">
+                        <div class="summary-card">
+                            <div class="summary-label">总成本</div>
+                            <div class="summary-value">30万元</div>
+                        </div>
+                    </div>
+                    <div class="detail-list">
+                        <div class="detail-item">
+                            <div class="item-header">
+                                <span class="item-name">客户活动及招待费用</span>
+                                <span class="item-amount">15万元</span>
+                            </div>
+                            <div class="item-body">
+                                <div class="item-desc">包括客户答谢宴、商务宴请等</div>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="item-header">
+                                <span class="item-name">差旅及交通费用</span>
+                                <span class="item-amount">8万元</span>
+                            </div>
+                            <div class="item-body">
+                                <div class="item-desc">客户拜访、路演活动产生的差旅费用</div>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="item-header">
+                                <span class="item-name">营销物料</span>
+                                <span class="item-amount">7万元</span>
+                            </div>
+                            <div class="item-body">
+                                <div class="item-desc">宣传资料、营销用品等</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+

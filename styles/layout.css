@@ -1,0 +1,712 @@
+.wb-app {
+    height: 100vh;
+    overflow: hidden;
+}
+
+.wb-layout {
+    display: flex;
+    height: 100vh;
+    background: var(--wb-surface);
+    position: relative;
+}
+
+.sidebar-shell {
+    flex-shrink: 0;
+    width: var(--sidebar-w);
+    height: 100vh;
+    overflow: hidden;
+    transition: width 0.25s ease;
+}
+
+.wb-layout.is-sidebar-collapsed .sidebar-shell {
+    width: 0;
+    min-width: 0;
+}
+
+.sidebar {
+    width: var(--sidebar-w);
+    height: 100vh;
+    background: var(--wb-surface);
+    border-right: 1px solid var(--wb-border);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.main-area {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    background: var(--wb-surface);
+}
+
+.wb-app:has(.workbench-panel[data-panel="employee"].active #center-view-performance:not([hidden])) .main-area-header {
+    display: none;
+}
+
+.wb-app:has(.workbench-panel[data-panel="support"].active #center-view-exceptions-support:not([hidden])) .main-area-header,
+body.support-exceptions-view-active .main-area-header {
+    display: none;
+}
+
+.main-area-header {
+    display: block;
+}
+
+.main-area-header-row {
+    display: flex;
+}
+
+.main-toolbar {
+    gap: 8px;
+    display: none;
+    align-items: center;
+}
+
+.wb-layout.is-sidebar-collapsed .main-toolbar {
+    display: flex;
+}
+
+.wb-layout:not(.is-sidebar-collapsed) .main-toolbar {
+    display: none;
+}
+
+.context-expand-toolbar {
+    display: none;
+    align-items: center;
+}
+
+.wb-layout.is-context-collapsed .context-expand-toolbar {
+    display: flex;
+}
+
+.toolbar-btn {
+    border: 1px solid var(--wb-border);
+    background: var(--wb-surface);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--wb-muted);
+}
+
+.toolbar-btn:hover {
+    border-color: var(--brand-gold);
+    color: var(--brand-gold);
+}
+
+.toolbar-btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toolbar-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.layout-toggle-icon {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.panel-collapse-btn {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--wb-border);
+    border-radius: 6px;
+    background: var(--wb-surface-2);
+    color: var(--wb-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.panel-collapse-btn:hover {
+    color: var(--brand-gold-dark);
+    border-color: var(--brand-gold);
+    background: var(--brand-gold-soft);
+}
+
+.panel-collapse-btn .layout-toggle-icon {
+    width: 12px;
+    height: 12px;
+}
+
+.context-shell {
+    flex-shrink: 0;
+    width: var(--context-w);
+    height: 100vh;
+    overflow: hidden;
+    transition: width 0.25s ease;
+}
+
+.wb-layout.is-context-collapsed .context-shell {
+    width: 0;
+    min-width: 0;
+    border: none;
+}
+
+.wb-layout.is-context-collapsed .context-panel {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.context-panel {
+    width: var(--context-w);
+    height: 100vh;
+    background: var(--wb-surface);
+    border-left: 1px solid var(--wb-border);
+    display: flex;
+    flex-direction: column;
+}
+
+.workbench-panels {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.workbench-panel {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.workbench-panel.active {
+    display: flex;
+}
+
+.center-workspace {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+}
+
+.session-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 16px;
+}
+
+.session-merged.ai-workbench-section {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.session-input-fixed {
+    flex-shrink: 0;
+}
+
+/* 中栏模块切换：会话 / 业绩与绩效 */
+.center-module-view[hidden] {
+    display: none !important;
+}
+
+#center-view-session:not([hidden]) {
+    flex: 1;
+    min-height: 0;
+}
+
+/* 首页会话区：整体下移，避免头重脚轻 */
+body.wb-workbench-active:not(.employee-chat-mode) #center-view-session:not([hidden]) {
+    padding-top: min(8vh, 72px);
+    box-sizing: border-box;
+}
+
+.center-module-view.center-performance-view,
+.center-module-view.center-exceptions-view {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0 16px;
+}
+
+.performance-page-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 4px 12px;
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.performance-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px 6px 6px;
+    border: 1px solid var(--wb-border);
+    border-radius: 999px;
+    background: var(--wb-surface);
+    color: var(--wb-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.performance-back-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.performance-back-btn:hover {
+    background: var(--wb-surface-2);
+    color: var(--wb-text);
+    border-color: rgba(201, 169, 110, 0.45);
+}
+
+.performance-page-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.performance-page-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.performance-page-header .module-page-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.module-page-header {
+    flex-shrink: 0;
+    padding: 20px 0 12px;
+    border-bottom: 1px solid var(--wb-border);
+    margin-bottom: 8px;
+}
+
+.module-page-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0 0 6px;
+}
+
+.module-page-desc {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--wb-muted);
+}
+
+.module-page-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 8px 4px 20px;
+}
+
+/* 中栏业绩页：去掉侧栏同款灰底卡片框，内容铺满 */
+.wb-app .center-performance-view .performance-section-page {
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    max-width: none;
+    width: 100%;
+}
+
+.wb-app .center-exceptions-view .exceptions-section-page {
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    max-width: none;
+    width: 100%;
+}
+
+.wb-app .center-exceptions-view .module-page-scroll {
+    padding: 16px 24px 36px;
+}
+
+.wb-app .center-exceptions-view .performance-page-header {
+    padding-bottom: 18px;
+    margin-bottom: 4px;
+}
+
+body.support-exceptions-view-active .workbench-panel[data-panel="support"] .center-workspace {
+    flex: 1;
+    min-height: 0;
+}
+
+body.support-exceptions-view-active .workbench-panel[data-panel="support"] .input-section {
+    display: none !important;
+}
+
+body.support-exceptions-view-active .workbench-panel[data-panel="support"] #center-view-exceptions-support {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.wb-app .center-performance-view .performance-section-page .section-collapsible-body {
+    padding: 0;
+}
+
+.performance-section-page {
+    margin: 0;
+    border: none;
+    background: transparent;
+    max-width: 100%;
+    padding: 0;
+    box-shadow: none;
+}
+
+.performance-section-page .part-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--wb-text);
+    margin: 0 0 16px;
+    padding-left: 12px;
+    border-left: 3px solid var(--brand-gold, #c9a96e);
+}
+
+.performance-section-page .performance-part {
+    margin-bottom: 32px;
+}
+
+.performance-section-page .performance-part:last-child {
+    margin-bottom: 0;
+}
+
+.performance-dashboard-page {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.performance-dashboard-page .dashboard-card {
+    flex-direction: row;
+    align-items: center;
+    padding: 22px 24px;
+    min-height: 96px;
+    border-radius: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    background: #fff;
+    gap: 16px;
+}
+
+.performance-dashboard-page .dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    border-color: rgba(201, 169, 110, 0.45);
+}
+
+.performance-dashboard-page .dashboard-icon {
+    font-size: 2.5rem;
+    width: 52px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.performance-dashboard-page .dashboard-label {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.performance-dashboard-page .dashboard-hint {
+    font-size: 0.85rem;
+    color: #999;
+    margin-top: 0;
+}
+
+.performance-dashboard-page .dashboard-arrow {
+    font-size: 1.4rem;
+    color: #ccc;
+    font-weight: 400;
+    flex-shrink: 0;
+}
+
+.performance-bonus-page {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+    margin-top: 0;
+    padding: 24px 28px;
+    background: linear-gradient(135deg, #FFF9F0 0%, #FFF5E6 100%);
+    border: 1px solid rgba(201, 169, 110, 0.35);
+    border-radius: 14px;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.bonus-period-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.performance-bonus-page .date-label {
+    font-size: 1rem;
+    color: var(--wb-text);
+    margin-bottom: 0;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.date-inputs-page {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.date-inputs-page .date-input {
+    width: auto;
+    min-width: 160px;
+    padding: 11px 16px;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    background: #fff;
+    color: var(--wb-text);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.date-inputs-page .date-input:focus {
+    border-color: rgba(201, 169, 110, 0.65);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(201, 169, 110, 0.12);
+}
+
+.date-inputs-page .date-separator {
+    color: var(--wb-muted);
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.date-inputs-page .calculate-btn-compact {
+    padding: 11px 32px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    background: linear-gradient(180deg, #d4b87a 0%, #c9a96e 55%, #b89558 100%);
+    box-shadow: 0 2px 6px rgba(201, 169, 110, 0.35);
+}
+
+.date-inputs-page .calculate-btn-compact:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(201, 169, 110, 0.4);
+}
+
+.bonus-result-page {
+    width: 100%;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 1rem;
+}
+
+/* 覆盖旧版 compact-layout 的左边框与缩进 */
+.performance-bonus-page .bonus-result-inline.bonus-result-page {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    flex: none;
+    width: 100%;
+    align-items: flex-start;
+}
+
+.bonus-result-page .bonus-item-inline {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    width: auto;
+    max-width: none;
+}
+
+.bonus-result-page .bonus-label-inline {
+    color: var(--wb-muted);
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.bonus-result-page .bonus-value-inline {
+    font-weight: 600;
+    color: var(--wb-text);
+    font-size: 1.05rem;
+    text-align: left;
+}
+
+.bonus-result-page .bonus-item-inline.highlight .bonus-label-inline {
+    color: #a67c3d;
+    font-weight: 500;
+}
+
+.bonus-result-page .bonus-amount-inline {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #a67c3d;
+    text-align: left;
+}
+
+@media (max-width: 900px) {
+    .performance-dashboard-page {
+        grid-template-columns: 1fr;
+    }
+
+    .bonus-period-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .date-inputs-page {
+        width: 100%;
+    }
+
+    .date-inputs-page .date-input {
+        flex: 1;
+        min-width: 120px;
+    }
+}
+
+.center-hero {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 32px 0 16px;
+}
+
+.center-hero.is-hidden {
+    display: none;
+}
+
+.center-hero-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.center-hero-sub {
+    color: var(--wb-muted);
+    margin-bottom: 24px;
+}
+
+.mode-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.mode-pill {
+    border: 1px solid var(--wb-border);
+    background: var(--wb-surface);
+    border-radius: 999px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.mode-pill.active,
+.mode-pill:hover {
+    background: var(--wb-text);
+    color: #fff;
+    border-color: var(--wb-text);
+}
+
+.quick-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.quick-chip {
+    border: 1px solid var(--wb-border);
+    background: var(--wb-surface);
+    border-radius: var(--radius-md);
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.quick-chip:hover {
+    border-color: var(--brand-gold);
+    color: var(--brand-gold-dark);
+}
+
+@media (max-width: 900px) {
+    .sidebar-shell {
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 200;
+        box-shadow: var(--shadow-md);
+    }
+    .wb-layout.is-sidebar-collapsed .sidebar-shell {
+        width: 0;
+        min-width: 0;
+    }
+    .context-shell {
+        position: fixed;
+        right: 0;
+        top: 0;
+        z-index: 200;
+        box-shadow: var(--shadow-md);
+    }
+    .wb-layout.is-context-collapsed .context-shell {
+        width: 0;
+        min-width: 0;
+    }
+}
