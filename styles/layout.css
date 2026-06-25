@@ -315,6 +315,16 @@ body.wb-workbench-active:not(.employee-chat-mode) #center-view-session:not([hidd
     margin-bottom: 8px;
 }
 
+/* 业绩 / 差旅 / 异常提醒：统一顶部栏高度与位置 */
+.wb-app .center-module-view .module-page-header.performance-page-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 4px 12px;
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
 .module-page-title {
     font-size: 1.35rem;
     font-weight: 700;
@@ -359,24 +369,12 @@ body.wb-workbench-active:not(.employee-chat-mode) #center-view-session:not([hidd
 }
 
 .wb-app .center-exceptions-view .module-page-scroll {
-    padding: 8px 0 32px;
-}
-
-.wb-app .center-exceptions-view .performance-page-header {
-    padding: 12px 0 10px;
-    margin-bottom: 0;
-    flex-shrink: 0;
-}
-
-body.support-exceptions-view-active .center-exceptions-view .module-page-scroll {
-    padding-top: 4px;
-    padding-bottom: 40px;
+    padding: 8px 4px 20px;
 }
 
 body.support-exceptions-view-active .workbench-panel[data-panel="support"] .center-exceptions-view {
     width: 100%;
     max-width: none;
-    padding-top: min(5vh, 44px);
 }
 
 body.support-exceptions-view-active .workbench-panel[data-panel="support"] .center-workspace {
