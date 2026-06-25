@@ -26,7 +26,10 @@
             'institution': '机构业务助理',
             'research': '研究业务助理',
             'credit': '信用业务助理',
-            'verify': '交叉验证助理'
+            'verify': '交叉验证助理',
+            'wealth': '财富业务助理',
+            'fixed': '固收业务助理',
+            'quant': '量化业务助理'
         };
         const avatarName = avatarNames[avatarType] || '业务助理';
         
@@ -242,9 +245,9 @@
     
     // ========== 工作台 Tab 切换 ==========
     const workbenchPanelState = {
-        support: { chatModeActive: false, currentCardIndex: 0, miniAvatarsInitialized: false, currentSupportAgent: null, currentSupportInputAgent: 'daily-task', currentTaskAgentId: null, currentTask: null, currentTodoStep: null, supportWelcomeShown: false, currentSessionId: null, supportChatMessages: [] },
-        org: { chatModeActive: true, currentCardIndex: 0, miniAvatarsInitialized: false, currentOrgAgent: null },
-        employee: { chatModeActive: false, currentCardIndex: 0, miniAvatarsInitialized: false, currentSessionId: null, chatMessages: [], employeeModelGuide: null }
+        support: { chatModeActive: false, currentCardIndex: 0, miniAvatarsInitialized: false, currentSupportAgent: null, currentSupportInputAgent: 'daily-task', currentTaskAgentId: null, currentTask: null, currentTodoStep: null, supportWelcomeShown: false, currentSessionId: null, supportChatMessages: [], currentInputSkillId: null },
+        org: { chatModeActive: true, currentCardIndex: 0, miniAvatarsInitialized: false, currentOrgAgent: null, currentInputSkillId: null },
+        employee: { chatModeActive: false, currentCardIndex: 0, miniAvatarsInitialized: false, currentSessionId: null, chatMessages: [], employeeModelGuide: null, currentInputSkillId: null }
     };
 
     const supportCategoryAgentTasks = {
@@ -339,8 +342,8 @@
                 {
                     id: 'invest-1',
                     title: '中银金租新能源研究服务',
-                    description: '中银金租有新能源方面的研究服务需求，需协调研究所研究员路演。',
-                    completedSteps: ['确认客户研究需求范围', '联系新能源领域首席研究员', '初步拟定路演提纲'],
+                    description: '中银金租有新能源方面的研究服务安排，需协调研究所研究员路演。',
+                    completedSteps: ['确认客户研究服务范围', '联系新能源领域首席研究员', '初步拟定路演提纲'],
                     nextSteps: ['本周安排研究员路演', '准备新能源行业对比分析材料', '路演后跟进客户反馈']
                 },
                 {
@@ -375,7 +378,7 @@
                     id: 'sales-2',
                     title: '大客户交易服务方案',
                     description: '为战略机构客户制定专属交易服务方案，提升客户粘性。',
-                    completedSteps: ['梳理客户历史交易特征', '访谈客户交易需求', '对标同业服务方案'],
+                    completedSteps: ['梳理客户历史交易特征', '访谈客户交易意向', '对标同业服务方案'],
                     nextSteps: ['撰写专属服务方案', '协调交易台资源支持', '提交客户确认']
                 },
                 {
@@ -517,7 +520,7 @@
             image: 'images/Avatar3.png',
             prompts: [
                 '为账户资产500万以上的客户制定资产配置建议',
-                '分析两融业务客户需求与费率策略',
+                '分析两融业务客户意向与费率策略',
                 '生成客户拜访谈话要点',
                 '整理零售客户投诉处理流程',
                 '梳理新开客户开户与适当性匹配流程',
@@ -546,7 +549,7 @@
             name: '销交业务助理',
             image: 'images/Avatar5.png',
             prompts: [
-                '整理机构客户交易需求对接流程',
+                '整理机构客户交易意向对接流程',
                 '生成债券销售路演材料提纲',
                 '分析市场行情与交易策略要点',
                 '梳理大客户交易服务方案',
@@ -628,7 +631,7 @@
 
     function getOrgDefaultPromptReply(message) {
         const replies = {
-            '请示事项：帮我汇总本周待审批请示事项，并跟踪流转进度': '您好，这里是组织协同管理平台。我已收到您的请示事项查询需求，可为您汇总本周待审批事项清单、跟踪各节点流转进度，并提醒即将到期的关键审批。请说明具体请示类型、涉及部门或优先级，我将为您整理明细。',
+            '请示事项：帮我汇总本周待审批请示事项，并跟踪流转进度': '您好，这里是组织协同管理平台。我已收到您的请示事项查询，可为您汇总本周待审批事项清单、跟踪各节点流转进度，并提醒即将到期的关键审批。请说明具体请示类型、涉及部门或优先级，我将为您整理明细。',
             '经营看板：展示各业务条线核心经营指标、收入成本与同比环比趋势': '您好，这里是组织协同管理平台。我可以为您展示投行、资管、经纪等各业务条线的核心经营指标，包括收入、成本、利润及同比环比变化趋势。请告诉我您关注的业务条线、统计口径或时间范围（如本月、本季度）。',
             '风险提示：汇总当前合规、操作与市场等各类风险提示清单': '您好，这里是组织协同管理平台。我可以汇总当前需关注的合规风险、操作风险与市场风险预警信息，并按优先级分类展示。请说明您需要查看的风险类别（如合规、信用、流动性等）或关注范围。',
             '队伍状况：查看各部门人员配置、出勤情况与团队绩效概况': '您好，这里是组织协同管理平台。我可以提供各部门人员编制、在岗出勤、梯队结构及绩效达成概况，帮助您掌握队伍运行状态。请告诉我您需要了解的部门、团队或管理层级范围。',
@@ -1082,6 +1085,10 @@
             }
         });
         initExceptionReminderBoards();
+        if (typeof window.initAssistantManagement === 'function') {
+            window.initAssistantManagement();
+        }
+        initInputSkillPickers();
     }
 
     function restoreSupportStandardInput(panel) {
@@ -1222,27 +1229,16 @@
         const hero = p?.querySelector('#center-hero-support');
         if (!sessionScroll || p.querySelector('#support-home-cards')) return;
 
-        const taskCount = getSupportTotalTaskCount();
-        const exceptionCount = collectSupportExceptionAlerts().length;
         const section = document.createElement('div');
         section.className = 'ai-team-section support-home-cards';
         section.id = 'support-home-cards';
         section.innerHTML = `
-            <div class="ai-cards-fan support-home-cards-fan">
-                <div class="ai-card-fan support-home-card" data-support-card="tasks" role="button" tabindex="0" aria-label="查看今日任务">
-                    <div class="ai-card-fan-inner">
-                        <div class="ai-card-fan-avatar support-home-card-avatar support-home-card-avatar--tasks">📋</div>
-                        <div class="ai-card-fan-name">今日任务</div>
-                        <div class="ai-card-fan-desc">${taskCount} 项待办协同</div>
-                    </div>
-                </div>
-                <div class="ai-card-fan support-home-card" data-support-card="exceptions" role="button" tabindex="0" aria-label="查看异常提醒">
-                    <div class="ai-card-fan-inner">
-                        <div class="ai-card-fan-avatar support-home-card-avatar support-home-card-avatar--exceptions">⚠️</div>
-                        <div class="ai-card-fan-name">异常提醒</div>
-                        <div class="ai-card-fan-desc">${exceptionCount} 项需关注</div>
-                    </div>
-                </div>
+            <div class="ai-cards-fan-row support-home-cards-row">
+                <div class="ai-cards-fan support-home-cards-fan"></div>
+                <button type="button" class="ai-cards-add-btn support-home-cards-add-btn" id="support-home-cards-add-btn" aria-label="管理助手与技能">
+                    <span class="ai-cards-add-plus" aria-hidden="true">+</span>
+                    <span class="ai-cards-add-text">新增</span>
+                </button>
             </div>
         `;
 
@@ -1255,10 +1251,16 @@
         if (p.dataset.supportHomeCardsBound !== 'true') {
             p.dataset.supportHomeCardsBound = 'true';
             section.addEventListener('click', (event) => {
+                if (event.target.closest('#support-home-cards-add-btn')) return;
                 const card = event.target.closest('.support-home-card');
                 if (!card) return;
                 const cardType = card.dataset.supportCard;
-                if (cardType) openSupportHomeCardInChat(cardType);
+                if (cardType) {
+                    openSupportHomeCardInChat(cardType);
+                    return;
+                }
+                const assistantId = card.dataset.assistantId;
+                if (assistantId) openSupportFunctionalAssistantInChat(assistantId);
             });
             section.addEventListener('keydown', (event) => {
                 if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -1266,19 +1268,20 @@
                 if (!card) return;
                 event.preventDefault();
                 const cardType = card.dataset.supportCard;
-                if (cardType) openSupportHomeCardInChat(cardType);
+                if (cardType) {
+                    openSupportHomeCardInChat(cardType);
+                    return;
+                }
+                const assistantId = card.dataset.assistantId;
+                if (assistantId) openSupportFunctionalAssistantInChat(assistantId);
             });
         }
+
+        window.syncSupportHomeCards?.(p);
     }
 
     function refreshSupportHomeCardCounts(panel) {
-        const p = panel || document.getElementById('workbench-panel-support');
-        const section = p?.querySelector('#support-home-cards');
-        if (!section) return;
-        const tasksDesc = section.querySelector('[data-support-card="tasks"] .ai-card-fan-desc');
-        const exceptionsDesc = section.querySelector('[data-support-card="exceptions"] .ai-card-fan-desc');
-        if (tasksDesc) tasksDesc.textContent = `${getSupportTotalTaskCount()} 项待办协同`;
-        if (exceptionsDesc) exceptionsDesc.textContent = `${collectSupportExceptionAlerts().length} 项需关注`;
+        window.syncSupportHomeCards?.(panel || document.getElementById('workbench-panel-support'));
     }
 
     function buildSupportAllExceptionsChatHtml() {
@@ -1286,7 +1289,7 @@
         if (!items.length) {
             return '<p>当前暂无异常提醒。</p>';
         }
-        let html = `<p>您好，我是<strong>今日任务助理</strong>。以下是当前全部 <strong>${items.length}</strong> 项异常提醒：</p>`;
+        let html = `<p>您好，我是<strong>异常提醒助手</strong>。以下是当前全部 <strong>${items.length}</strong> 项异常提醒：</p>`;
         items.forEach((item, index) => {
             html += `<p class="support-chat-todo-line support-chat-todo-title">${index + 1}. <button type="button" class="support-chat-todo-trigger support-exception-item-trigger" data-exception-title="${escapeHtmlAttr(item.title)}"><strong>${escapeHtmlText(item.title)}</strong></button>${item.dept ? ` <span class="support-exception-dept">（${escapeHtmlText(item.dept)}）</span>` : ''}</p>`;
             if (item.desc) {
@@ -1334,14 +1337,19 @@
         }, 400);
     }
 
-    function openSupportHomeCardInChat(cardType) {
+    function openSupportHomeCardInChat(cardType, options = {}) {
         const panel = document.getElementById('workbench-panel-support');
         if (!panel) return;
 
-        const labels = { tasks: '今日任务', exceptions: '异常提醒' };
+        const labels = { tasks: '今日任务助手', exceptions: '异常提醒助手' };
         const label = labels[cardType] || '工作台';
+        const agentId = cardType === 'exceptions'
+            ? SUPPORT_INPUT_AGENT_EXCEPTIONS
+            : SUPPORT_INPUT_AGENT_DAILY_TASK;
+        setSupportInputAgent(panel, agentId);
         enterSupportChatMode(panel);
-        appendSupportChatMessage(`查看${label}`, 'user', panel);
+        const userText = options.fromSummon ? `召唤${label}` : `查看${label}`;
+        appendSupportChatMessage(userText, 'user', panel);
 
         const replyHtml = cardType === 'exceptions'
             ? buildSupportAllExceptionsChatHtml()
@@ -1350,17 +1358,113 @@
         setTimeout(() => {
             appendSupportChatMessage(replyHtml, 'assistant', panel, {
                 html: true,
-                agentId: SUPPORT_INPUT_AGENT_DAILY_TASK
+                agentId
             });
         }, 400);
     }
 
+    function getSupportFunctionalWelcomeHtml(agent) {
+        return getEmployeeCatalogWelcomeHtml(agent);
+    }
+
+    function openSupportFunctionalAssistantInChat(assistantId) {
+        const panel = document.getElementById('workbench-panel-support');
+        const agent = getSupportFunctionalAssistantMeta(assistantId);
+        if (!panel || !agent) return;
+
+        setSupportInputAgent(panel, assistantId);
+        enterSupportChatMode(panel);
+        appendSupportChatMessage(`召唤${agent.name}`, 'user', panel);
+        setTimeout(() => {
+            appendSupportChatMessage(getSupportFunctionalWelcomeHtml(agent), 'assistant', panel, {
+                html: true,
+                agentId: assistantId
+            });
+        }, 400);
+    }
+
+    function getEmployeeCatalogAgent(agentId) {
+        return typeof window.getAssistantCatalogEntry === 'function'
+            ? window.getAssistantCatalogEntry(agentId, 'employee')
+            : null;
+    }
+
+    function buildEmployeeCatalogChatAvatarHtml(agent) {
+        return `<div class="chat-avatar employee-chat-avatar ${agent.avatarClass || ''}" title="${escapeHtmlText(agent.name)}"><span>${agent.emoji || '🤖'}</span></div>`;
+    }
+
+    function getEmployeeCatalogWelcomeHtml(agent) {
+        const extendedWelcome = {
+            hegui: `**合规审查助手**\n\n快速筛查合规风险，识别潜在违规事项。\n\n输入：业务类型、审查材料或关注要点。`,
+            shuju: `**数据洞察助手**\n\n数据穿透看经营，多维指标联动分析。\n\n输入：分析主题、指标范围或业务条线。`,
+            xuqiu: `**意图识别助手**\n\n深度识别合作意图，辅助商机判断。\n\n输入：客户名称、沟通记录或合作背景。`
+        };
+        if (extendedWelcome[agent.id]) {
+            return markdownToHtml(extendedWelcome[agent.id]);
+        }
+        const base = typeof agent.chatIndex === 'number' ? aiAssistants[agent.chatIndex] : null;
+        if (base?.welcomeText) {
+            return markdownToHtml(base.welcomeText.replace(/^\*\*[^*]+\*\*/, `**${agent.name}**`));
+        }
+        return markdownToHtml(`**${agent.name}**\n\n${agent.desc || '我将为您提供相关支持。'}\n\n请直接输入具体事项或相关材料。`);
+    }
+
+    function appendEmployeeCatalogAssistantWelcome(agent, panel, options = {}) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (!messagesEl || !agent) return;
+
+        const row = document.createElement('div');
+        row.className = 'chat-row chat-row-assistant';
+        row.innerHTML = `
+            ${buildEmployeeCatalogChatAvatarHtml(agent)}
+            <div class="chat-bubble chat-bubble-assistant">${getEmployeeCatalogWelcomeHtml(agent)}</div>
+        `;
+        messagesEl.appendChild(row);
+        scrollWorkbenchChatToBottom(p);
+
+        if (!options.skipPersist) {
+            recordEmployeeChatMessage(p, {
+                role: 'assistant',
+                type: 'welcome',
+                assistantId: agent.id,
+                assistantIndex: typeof agent.chatIndex === 'number' ? agent.chatIndex : 0,
+                text: agent.name
+            });
+        }
+    }
+
+    function openEmployeeAssistantInChat(assistantId) {
+        const agent = getEmployeeCatalogAgent(assistantId);
+        const panel = document.getElementById('workbench-panel-employee');
+        if (!agent || !panel) return;
+
+        const state = getPanelState(panel);
+        const index = typeof agent.chatIndex === 'number' ? agent.chatIndex : 0;
+
+        applyEmployeeChatModeUI(panel, {
+            index,
+            showWelcome: false,
+            createHistory: true,
+            sessionTitle: `${agent.name}对话`
+        });
+
+        state.currentCatalogAssistant = agent;
+        state.currentInputSkillId = null;
+        updateMiniAvatarActive(index, panel);
+
+        appendChatMessage(`召唤${agent.name}`, 'user', panel);
+        appendEmployeeCatalogAssistantWelcome(agent, panel);
+        refreshInputSkillPicker(panel);
+    }
+
     const SUPPORT_DAILY_TASK_AVATAR_SRC = 'images/daily-task-assistant-avatar.png';
     const SUPPORT_INPUT_AGENT_DAILY_TASK = 'daily-task';
+    const SUPPORT_INPUT_AGENT_EXCEPTIONS = 'exceptions';
 
     function getSupportDailyTaskRobotAvatarHtml() {
-        return `<div class="support-daily-task-robot-avatar" title="今日任务">
-            <img src="${SUPPORT_DAILY_TASK_AVATAR_SRC}" alt="今日任务" class="support-daily-task-robot-avatar-img">
+        return `<div class="support-daily-task-robot-avatar" title="今日任务助手">
+            <img src="${SUPPORT_DAILY_TASK_AVATAR_SRC}" alt="今日任务助手" class="support-daily-task-robot-avatar-img">
         </div>`;
     }
 
@@ -1666,23 +1770,243 @@
     }
 
     function getSupportAgentDisplayLabel(agentId) {
-        if (agentId === SUPPORT_INPUT_AGENT_DAILY_TASK) return '今日任务助理';
+        if (agentId === SUPPORT_INPUT_AGENT_DAILY_TASK) return '今日任务助手';
+        if (agentId === SUPPORT_INPUT_AGENT_EXCEPTIONS) return '异常提醒助手';
+        const functional = getSupportFunctionalAssistantMeta(agentId);
+        if (functional) return functional.name;
         return getSupportAgent(agentId)?.name || '';
     }
 
     function getSupportInputAgentMeta(agentId) {
         if (!agentId) return null;
         if (agentId === SUPPORT_INPUT_AGENT_DAILY_TASK) {
-            return { id: SUPPORT_INPUT_AGENT_DAILY_TASK, name: '今日任务助理', image: SUPPORT_DAILY_TASK_AVATAR_SRC };
+            return { id: SUPPORT_INPUT_AGENT_DAILY_TASK, name: '今日任务助手', image: SUPPORT_DAILY_TASK_AVATAR_SRC };
+        }
+        if (agentId === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
+            return {
+                id: SUPPORT_INPUT_AGENT_EXCEPTIONS,
+                name: '异常提醒助手',
+                emoji: '⚠️',
+                avatarClass: 'support-exceptions-avatar'
+            };
+        }
+        const functional = getSupportFunctionalAssistantMeta(agentId);
+        if (functional) {
+            return {
+                id: functional.id,
+                name: functional.name,
+                emoji: functional.emoji,
+                avatarClass: functional.avatarClass
+            };
         }
         const agent = getSupportAgent(agentId);
         return agent ? { id: agentId, name: agent.name, image: agent.image } : null;
     }
 
+    function getSupportFunctionalAssistantMeta(agentId) {
+        return typeof window.getSupportFunctionalAssistantMeta === 'function'
+            ? window.getSupportFunctionalAssistantMeta(agentId)
+            : null;
+    }
+
+    function getSupportInputAgentAvatarHtml(meta, imgClass, emojiClass) {
+        if (meta?.image) {
+            return `<img src="${escapeHtml(meta.image)}" alt="${escapeHtmlText(meta.name)}" class="${imgClass}">`;
+        }
+        if (meta?.emoji) {
+            const extraClass = meta.avatarClass ? ` ${meta.avatarClass}` : '';
+            return `<span class="${emojiClass}${extraClass}" aria-hidden="true">${meta.emoji}</span>`;
+        }
+        return '';
+    }
+
+    function updateSupportInputAgentTriggerAvatar(trigger, meta) {
+        if (!trigger || !meta) return;
+        trigger.querySelector('.support-input-agent-trigger-img')?.remove();
+        trigger.querySelector('.support-input-agent-trigger-emoji')?.remove();
+        trigger.insertAdjacentHTML('afterbegin', getSupportInputAgentAvatarHtml(
+            meta,
+            'support-input-agent-trigger-img',
+            'support-input-agent-trigger-emoji'
+        ));
+    }
+
     function getSupportInputPlaceholder(agentId) {
-        const name = getSupportInputAgentMeta(agentId)?.name || '今日任务助理';
+        const name = getSupportInputAgentMeta(agentId)?.name || '今日任务助手';
         return `向${name}发送工作指令`;
     }
+
+    function getInputSkillPickerEl(panel) {
+        return getPanelEl('input-skill-picker', panel);
+    }
+
+    function getActiveAssistantSkillOwnerKey(panel) {
+        const key = getPanelKey(panel);
+        if (key === 'support') {
+            const state = getPanelState(panel);
+            const meta = getSupportInputAgentMeta(getSupportInputReplyAgentId(state));
+            return window.getAssistantSkillOwnerKey?.(meta?.name) || '';
+        }
+        if (key === 'employee') {
+            const state = getPanelState(panel);
+            if (state.currentCatalogAssistant?.name) {
+                return window.getAssistantSkillOwnerKey(state.currentCatalogAssistant.name);
+            }
+            if (state.chatModeActive) {
+                const assistant = aiAssistants[state.currentCardIndex ?? 0];
+                return window.getAssistantSkillOwnerKey?.(assistant?.name) || '';
+            }
+            const activeCard = panel?.querySelector('.ai-card-fan.active[data-assistant-id]');
+            if (activeCard?.dataset.assistantId) {
+                const agent = window.getAssistantCatalogEntry?.(activeCard.dataset.assistantId, 'employee');
+                if (agent?.name) return window.getAssistantSkillOwnerKey(agent.name);
+            }
+            const assistant = aiAssistants[state.currentCardIndex ?? 0];
+            return window.getAssistantSkillOwnerKey?.(assistant?.name) || '';
+        }
+        return '';
+    }
+
+    function closeInputSkillPicker(panel) {
+        const picker = getInputSkillPickerEl(panel);
+        if (!picker) return;
+        picker.classList.remove('is-open');
+        const trigger = picker.querySelector('.input-skill-trigger');
+        const menu = picker.querySelector('.input-skill-menu');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        if (menu) menu.hidden = true;
+    }
+
+    function setInputSkillSelection(panel, skillId) {
+        const state = getPanelState(panel);
+        state.currentInputSkillId = skillId || null;
+        const picker = getInputSkillPickerEl(panel);
+        if (!picker) return;
+        const triggerText = picker.querySelector('.input-skill-trigger-text');
+        const skill = skillId ? window.getSkillById?.(skillId) : null;
+        if (triggerText) {
+            triggerText.textContent = skill?.name || '技能';
+        }
+        picker.querySelectorAll('.input-skill-option').forEach((btn) => {
+            const active = (btn.dataset.skillId || '') === (skillId || '');
+            btn.classList.toggle('is-active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        closeInputSkillPicker(panel);
+    }
+
+    function refreshInputSkillPicker(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const picker = getInputSkillPickerEl(p);
+        if (!picker) return;
+
+        const ownerKey = getActiveAssistantSkillOwnerKey(p);
+        const skills = window.getInstalledSkillsForOwner?.(ownerKey) || [];
+        const state = getPanelState(p);
+        const menu = picker.querySelector('.input-skill-menu');
+        const trigger = picker.querySelector('.input-skill-trigger');
+
+        if (!state.currentInputSkillId || !skills.some((s) => s.id === state.currentInputSkillId)) {
+            state.currentInputSkillId = null;
+        }
+
+        if (!skills.length) {
+            if (menu) {
+                menu.innerHTML = '<div class="input-skill-empty">当前助手暂无已安装技能</div>';
+            }
+            if (trigger) {
+                trigger.disabled = true;
+                trigger.title = ownerKey ? `${ownerKey}助手暂无已安装技能` : '请先选择助手';
+            }
+            setInputSkillSelection(p, null);
+            if (trigger) trigger.querySelector('.input-skill-trigger-text').textContent = '技能';
+            return;
+        }
+
+        if (trigger) {
+            trigger.disabled = false;
+            trigger.title = `选择${ownerKey}助手下的已安装技能`;
+        }
+
+        if (menu) {
+            const items = [
+                `<button type="button" class="input-skill-option${!state.currentInputSkillId ? ' is-active' : ''}" data-skill-id="" role="option" aria-selected="${!state.currentInputSkillId ? 'true' : 'false'}">不使用技能</button>`
+            ].concat(skills.map((skill) => `
+                <button type="button" class="input-skill-option${state.currentInputSkillId === skill.id ? ' is-active' : ''}" data-skill-id="${escapeHtmlAttr(skill.id)}" role="option" aria-selected="${state.currentInputSkillId === skill.id ? 'true' : 'false'}">
+                    <span class="input-skill-option-name">${escapeHtmlText(skill.name)}</span>
+                </button>
+            `));
+            menu.innerHTML = items.join('');
+            window.bindOverlayScrollbar?.(menu);
+        }
+
+        const activeSkill = state.currentInputSkillId ? window.getSkillById(state.currentInputSkillId) : null;
+        const triggerText = picker.querySelector('.input-skill-trigger-text');
+        if (triggerText) triggerText.textContent = activeSkill?.name || '技能';
+    }
+
+    function toggleInputSkillPicker(panel) {
+        const picker = getInputSkillPickerEl(panel);
+        const trigger = picker?.querySelector('.input-skill-trigger');
+        const menu = picker?.querySelector('.input-skill-menu');
+        if (!picker || !trigger || trigger.disabled || !menu) return;
+
+        const willOpen = !picker.classList.contains('is-open');
+        document.querySelectorAll('.input-skill-picker.is-open').forEach((el) => {
+            if (el !== picker) closeInputSkillPicker(el.closest('.workbench-panel'));
+        });
+        picker.classList.toggle('is-open', willOpen);
+        trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        menu.hidden = !willOpen;
+        if (willOpen) {
+            menu.classList.add('overlay-scrollbar');
+            window.bindOverlayScrollbar?.(menu);
+        }
+    }
+
+    function formatMessageWithSelectedSkill(message, panel) {
+        const state = getPanelState(panel);
+        const skill = state.currentInputSkillId ? window.getSkillById?.(state.currentInputSkillId) : null;
+        if (!skill) return message;
+        return `【${skill.name}】${message}`;
+    }
+
+    function initInputSkillPickers(root) {
+        const scope = root?.querySelectorAll ? root : document;
+        scope.querySelectorAll('.workbench-panel').forEach((panel) => refreshInputSkillPicker(panel));
+
+        if (document.body.dataset.inputSkillPickerBound === 'true') return;
+        document.body.dataset.inputSkillPickerBound = 'true';
+
+        document.addEventListener('click', (event) => {
+            const trigger = event.target.closest('.input-skill-trigger');
+            if (trigger) {
+                event.preventDefault();
+                event.stopPropagation();
+                const panel = trigger.closest('.workbench-panel');
+                toggleInputSkillPicker(panel);
+                return;
+            }
+
+            const option = event.target.closest('.input-skill-option');
+            if (option) {
+                event.preventDefault();
+                const panel = option.closest('.workbench-panel');
+                setInputSkillSelection(panel, option.dataset.skillId || null);
+                return;
+            }
+
+            if (!event.target.closest('.input-skill-picker')) {
+                document.querySelectorAll('.input-skill-picker.is-open').forEach((picker) => {
+                    closeInputSkillPicker(picker.closest('.workbench-panel'));
+                });
+            }
+        });
+    }
+
+    window.refreshInputSkillPickers = function (root) {
+        initInputSkillPickers(root);
+    };
 
     function getMainInputDefaultPlaceholder(panel) {
         if (getPanelKey(panel) === 'support') {
@@ -1771,7 +2095,10 @@
     }
 
     function getSupportInputAgentOptions() {
-        const options = [getSupportInputAgentMeta(SUPPORT_INPUT_AGENT_DAILY_TASK)];
+        const options = [
+            getSupportInputAgentMeta(SUPPORT_INPUT_AGENT_DAILY_TASK),
+            getSupportInputAgentMeta(SUPPORT_INPUT_AGENT_EXCEPTIONS)
+        ];
         supportAgents.forEach((agent) => {
             options.push(getSupportInputAgentMeta(agent.id));
         });
@@ -1779,14 +2106,28 @@
     }
 
     function buildSupportInputAgentOptionHtml(meta, isActive) {
+        const avatarInner = meta.image
+            ? `<img src="${escapeHtml(meta.image)}" alt="">`
+            : `<span class="support-input-agent-option-emoji ${meta.avatarClass || ''}" aria-hidden="true">${meta.emoji || ''}</span>`;
         return `
             <button type="button" class="support-input-agent-option${isActive ? ' is-active' : ''}" data-agent-id="${escapeHtml(meta.id)}" role="option" aria-selected="${isActive ? 'true' : 'false'}">
                 <span class="support-input-agent-option-avatar">
-                    <img src="${escapeHtml(meta.image)}" alt="">
+                    ${avatarInner}
                 </span>
                 <span class="support-input-agent-option-name">${escapeHtmlText(meta.name)}</span>
             </button>
         `;
+    }
+
+    function refreshSupportInputAgentMenu(picker, panel) {
+        if (!picker) return;
+        const menu = picker.querySelector('.support-input-agent-menu');
+        if (!menu) return;
+        const state = getPanelState(panel);
+        const activeId = state.currentSupportInputAgent || SUPPORT_INPUT_AGENT_DAILY_TASK;
+        menu.innerHTML = getSupportInputAgentOptions()
+            .map((meta) => buildSupportInputAgentOptionHtml(meta, meta.id === activeId))
+            .join('');
     }
 
     function updateSupportInputAgentPickerUI(picker, agentId) {
@@ -1796,15 +2137,11 @@
 
         const panel = picker.closest('.workbench-panel');
         const trigger = picker.querySelector('.support-input-agent-trigger');
-        const triggerImg = picker.querySelector('.support-input-agent-trigger-img');
         if (trigger) {
             trigger.dataset.agentName = meta.name;
             trigger.setAttribute('aria-label', `当前助理：${meta.name}，点击切换`);
             trigger.title = meta.name;
-        }
-        if (triggerImg) {
-            triggerImg.src = meta.image;
-            triggerImg.alt = meta.name;
+            updateSupportInputAgentTriggerAvatar(trigger, meta);
         }
         if (panel) updateSupportInputPlaceholder(panel, agentId);
 
@@ -1831,12 +2168,20 @@
     function setSupportInputAgent(panel, agentId) {
         const state = getPanelState(panel);
         state.currentSupportInputAgent = agentId;
+        state.currentInputSkillId = null;
         const picker = panel?.querySelector('.support-input-agent-picker');
         if (picker) {
             updateSupportInputAgentPickerUI(picker, agentId);
         } else {
             updateSupportInputPlaceholder(panel, agentId);
         }
+        refreshInputSkillPicker(panel);
+    }
+
+    function bindSupportInputAgentMenuScroll(menu) {
+        if (!menu) return;
+        menu.classList.add('overlay-scrollbar');
+        window.bindOverlayScrollbar?.(menu);
     }
 
     function toggleSupportInputAgentPicker(picker) {
@@ -1845,6 +2190,9 @@
         closeAllSupportInputAgentPickers(picker);
         picker.classList.toggle('is-open', willOpen);
         picker.querySelector('.support-input-agent-trigger')?.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        if (willOpen) {
+            bindSupportInputAgentMenuScroll(picker.querySelector('.support-input-agent-menu'));
+        }
     }
 
     function initSupportInputAgentSelect(panel) {
@@ -1869,7 +2217,7 @@
                 <button type="button" class="support-input-agent-trigger" aria-haspopup="listbox" aria-expanded="false" data-agent-name="${escapeHtmlText(defaultMeta.name)}" title="${escapeHtmlText(defaultMeta.name)}">
                     <img src="${escapeHtml(defaultMeta.image)}" alt="${escapeHtmlText(defaultMeta.name)}" class="support-input-agent-trigger-img">
                 </button>
-                <div class="support-input-agent-menu" role="listbox" aria-label="选择助理" hidden>
+                <div class="support-input-agent-menu overlay-scrollbar" role="listbox" aria-label="选择助理" hidden>
                     ${optionsHtml}
                 </div>
             `;
@@ -1878,6 +2226,8 @@
             insertTarget.insertBefore(picker, insertTarget.firstChild);
         } else if (topRow && picker.parentElement !== topRow) {
             topRow.insertBefore(picker, topRow.firstChild);
+        } else {
+            refreshSupportInputAgentMenu(picker, panel);
         }
 
         const state = getPanelState(panel);
@@ -1885,6 +2235,7 @@
             state.currentSupportInputAgent = SUPPORT_INPUT_AGENT_DAILY_TASK;
         }
         updateSupportInputAgentPickerUI(picker, state.currentSupportInputAgent);
+        bindSupportInputAgentMenuScroll(picker.querySelector('.support-input-agent-menu'));
 
         if (!picker.dataset.bound) {
             picker.dataset.bound = 'true';
@@ -1902,15 +2253,15 @@
                 }
             });
 
-            picker.querySelectorAll('.support-input-agent-option').forEach((btn) => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const agentId = btn.dataset.agentId;
-                    if (!agentId) return;
-                    setSupportInputAgent(panel, agentId);
-                    closeSupportInputAgentPicker(picker);
-                    menu?.setAttribute('hidden', '');
-                });
+            menu?.addEventListener('click', (e) => {
+                const btn = e.target.closest('.support-input-agent-option');
+                if (!btn) return;
+                e.stopPropagation();
+                const agentId = btn.dataset.agentId;
+                if (!agentId) return;
+                setSupportInputAgent(panel, agentId);
+                closeSupportInputAgentPicker(picker);
+                menu.setAttribute('hidden', '');
             });
         }
     }
@@ -2200,6 +2551,30 @@
         showOrgAgentJumpToast(agent.name);
     }
 
+    function buildSupportAssistantChatAvatarHtml(agentMeta) {
+        if (!agentMeta) {
+            return `<div class="chat-avatar support-chat-avatar support-daily-task-chat-avatar">${getSupportDailyTaskRobotAvatarHtml()}</div>`;
+        }
+        if (agentMeta.id === SUPPORT_INPUT_AGENT_DAILY_TASK) {
+            return `<div class="chat-avatar support-chat-avatar support-daily-task-chat-avatar">${getSupportDailyTaskRobotAvatarHtml()}</div>`;
+        }
+        if (agentMeta.id === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
+            const emojiHtml = getSupportInputAgentAvatarHtml(
+                agentMeta,
+                'support-input-agent-trigger-img',
+                'support-input-agent-option-emoji support-exceptions-avatar'
+            );
+            return `<div class="chat-avatar support-chat-avatar support-exceptions-chat-avatar"><span class="support-exceptions-chat-option-avatar">${emojiHtml}</span></div>`;
+        }
+        if (agentMeta.emoji && agentMeta.avatarClass) {
+            return `<div class="chat-avatar employee-chat-avatar support-functional-chat-avatar ${agentMeta.avatarClass}" title="${escapeHtmlText(agentMeta.name)}"><span>${agentMeta.emoji}</span></div>`;
+        }
+        if (agentMeta.image) {
+            return `<div class="chat-avatar support-chat-avatar"><img src="${escapeHtml(agentMeta.image)}" alt="${escapeHtmlText(agentMeta.name)}"></div>`;
+        }
+        return `<div class="chat-avatar support-chat-avatar support-daily-task-chat-avatar">${getSupportDailyTaskRobotAvatarHtml()}</div>`;
+    }
+
     function appendSupportChatMessage(text, role, panel, options = {}) {
         const p = panel || document.getElementById('workbench-panel-support');
         const messagesEl = getPanelEl('ai-chat-messages', p);
@@ -2217,7 +2592,7 @@
             row.innerHTML = `<div class="chat-bubble chat-bubble-user">${escapeHtml(text)}</div>`;
         } else if (agentMeta) {
             row.innerHTML = `
-                <div class="chat-avatar support-chat-avatar"><img src="${agentMeta.image}" alt="${escapeHtmlText(agentMeta.name)}"></div>
+                ${buildSupportAssistantChatAvatarHtml(agentMeta)}
                 <div class="chat-bubble chat-bubble-assistant">${assistantBody}</div>
             `;
         } else {
@@ -2245,7 +2620,7 @@
         supportExecSuggestions.forEach(execStep => {
             html += `<li>${buildSupportTodoTriggerHtml(agentId, task, execStep, stepText, 'exec')}</li>`;
         });
-        html += '</ul><p>您可<strong>直接点击</strong>上方执行建议快速发送，我将协助您推进处理；也可在对话框继续输入具体需求。</p>';
+        html += '</ul><p>您可<strong>直接点击</strong>上方执行建议快速发送，我将协助您推进处理；也可在对话框继续输入具体事项。</p>';
         return html;
     }
 
@@ -2340,6 +2715,13 @@
         const p = panel || document.getElementById('workbench-panel-support');
         const state = getPanelState(p);
         const resolvedAgentId = agentId || state.currentSupportInputAgent || state.currentTaskAgentId || state.currentSupportAgent;
+        if (resolvedAgentId === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
+            appendSupportChatMessage(buildSupportAllExceptionsChatHtml(), 'assistant', p, {
+                html: true,
+                agentId: resolvedAgentId
+            });
+            return;
+        }
         const task = state.currentTask || (resolvedAgentId ? findSupportTaskByMessage(message, resolvedAgentId) : null);
         if (task && resolvedAgentId) {
             state.currentTask = task;
@@ -2377,9 +2759,12 @@
             return getSupportTaskReply(task, agentId || supportState.currentTaskAgentId);
         }
         if (agentId === SUPPORT_INPUT_AGENT_DAILY_TASK) {
-            return `您好，我是今日任务助理。关于「${message}」，我将为您汇总待办并协助跟进处理。请补充具体需求或相关材料。`;
+            return `您好，我是今日任务助手。关于「${message}」，我将为您汇总待办并协助跟进处理。请补充具体事项或相关材料。`;
         }
-        return `您好，我是${getSupportAgentDisplayLabel(agentId)}。关于「${message}」，我将结合当前任务进展为您提供支持。请补充具体需求或相关材料。`;
+        if (agentId === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
+            return `您好，我是异常提醒助手。关于「${message}」，我将为您汇总需关注的异常并协助推进处理。请补充具体事项或相关材料。`;
+        }
+        return `您好，我是${getSupportAgentDisplayLabel(agentId)}。关于「${message}」，我将结合当前任务进展为您提供支持。请补充具体事项或相关材料。`;
     }
 
     function customizeOrgPanel(panel) {
@@ -2965,7 +3350,29 @@
         updateSupportAvatarPendingDots();
         updateDigitalAvatarsScrollButtons();
         requestAnimationFrame(updateDigitalAvatarsScrollButtons);
+        if (tabKey === 'support' || tabKey === 'employee') {
+            window.syncCenterAgentsBar?.();
+        }
+        if (panel && (tabKey === 'support' || tabKey === 'employee')) {
+            refreshInputSkillPicker(panel);
+        }
     }
+
+    const OVERLAY_SCROLLBAR_SELECTOR = [
+        '.ai-chat-view',
+        '.support-dialogue',
+        '.org-workbench-scroll',
+        '.employee-tasks-scroll',
+        '.support-sidebar-tasks-scroll',
+        '.module-page-scroll',
+        '.manage-tab-panel',
+        '.session-scroll',
+        '.sidebar-tab-scroll',
+        '.context-scroll',
+        '.support-input-agent-menu',
+        '.input-skill-menu',
+        '.ai-cards-fan-row .ai-cards-fan'
+    ].join(', ');
 
     function bindOverlayScrollbar(el) {
         if (!el || el.dataset.overlayScrollbarBound === 'true') return;
@@ -2981,13 +3388,37 @@
 
     function initOverlayScrollbars(root) {
         const scope = root || document;
-        scope.querySelectorAll('.ai-chat-view, .support-dialogue, .org-workbench-scroll, .employee-tasks-scroll').forEach(bindOverlayScrollbar);
+        scope.querySelectorAll(OVERLAY_SCROLLBAR_SELECTOR).forEach(bindOverlayScrollbar);
     }
+
+    window.bindOverlayScrollbar = bindOverlayScrollbar;
+    window.initOverlayScrollbars = initOverlayScrollbars;
+
+    function syncHomeCardsFanLayout(root) {
+        const scope = root && typeof root.querySelectorAll === 'function' ? root : document;
+        scope.querySelectorAll('.ai-cards-fan-row .ai-cards-fan').forEach((fan) => {
+            bindOverlayScrollbar(fan);
+            const overflow = fan.scrollWidth > fan.clientWidth + 2;
+            fan.classList.toggle('is-scroll-overflow', overflow);
+            if (typeof ResizeObserver !== 'undefined' && fan.dataset.fanResizeObserved !== 'true') {
+                fan.dataset.fanResizeObserved = 'true';
+                const ro = new ResizeObserver(() => {
+                    const nextOverflow = fan.scrollWidth > fan.clientWidth + 2;
+                    fan.classList.toggle('is-scroll-overflow', nextOverflow);
+                });
+                ro.observe(fan);
+            }
+        });
+    }
+
+    window.syncHomeCardsFanLayout = syncHomeCardsFanLayout;
 
     function initWorkbenchTabs() {
         cloneWorkbenchPanels();
         initWorkbenchPanel(document.getElementById('workbench-panel-employee'));
         initOverlayScrollbars();
+        syncHomeCardsFanLayout();
+        window.addEventListener('resize', syncHomeCardsFanLayout);
     }
 
     // AI横向堆叠卡片功能
@@ -3235,6 +3666,7 @@
         }
 
         syncEmployeeChatModeLayout();
+        refreshInputSkillPicker(p);
     }
 
     function enterChatMode(index, panel) {
@@ -3277,12 +3709,15 @@
         const state = getPanelState(p);
         if (index === state.currentCardIndex) return;
 
+        state.currentCatalogAssistant = null;
+        state.currentInputSkillId = null;
         state.currentCardIndex = index;
         updateMiniAvatarActive(index, p);
         if (getPanelKey(p) === 'employee') {
             collapseTopSections(p);
         }
         appendAssistantConversation(index, p);
+        refreshInputSkillPicker(p);
     }
 
     function updateMiniAvatarActive(index, panel) {
@@ -3297,6 +3732,11 @@
     }
 
     function buildEmployeeChatAvatarHtml(index) {
+        const panel = getActiveWorkbenchPanel();
+        const state = getPanelState(panel);
+        if (state.currentCatalogAssistant) {
+            return buildEmployeeCatalogChatAvatarHtml(state.currentCatalogAssistant);
+        }
         const assistant = getEmployeeAssistant(index);
         return `<div class="chat-avatar employee-chat-avatar ${assistant.avatarClass}" title="${assistant.name}"><span>${assistant.emoji}</span></div>`;
     }
@@ -3357,8 +3797,9 @@
             }
         } else {
             const index = options.assistantIndex ?? getPanelState(p).currentCardIndex ?? 0;
+            const catalogAgent = getPanelState(p).currentCatalogAssistant;
             row.innerHTML = `
-                ${buildEmployeeChatAvatarHtml(index)}
+                ${catalogAgent ? buildEmployeeCatalogChatAvatarHtml(catalogAgent) : buildEmployeeChatAvatarHtml(index)}
                 <div class="chat-bubble chat-bubble-assistant">${markdownToHtml(text)}</div>
             `;
         }
@@ -3425,6 +3866,7 @@
     function bringToFront(clickedCard) {
         const panel = clickedCard.closest('.workbench-panel');
         if (getPanelKey(panel) === 'employee') {
+            getPanelState(panel).currentCatalogAssistant = null;
             collapseTopSections(panel);
         }
         const state = getPanelState(panel);
@@ -3484,7 +3926,7 @@
             }
         },
         canmou: {
-            keywords: ['客户分析', '客户需求', '客户价值', '客户关系', '客户风险', '潜在客户', '客户跟进', '客户分层', '企业客户', '个人客户', '交易行为', '合作记录', '资产规模'],
+            keywords: ['客户分析', '合作意图', '客户价值', '客户关系', '客户风险', '潜在客户', '客户跟进', '客户分层', '企业客户', '个人客户', '交易行为', '合作记录', '资产规模'],
             name: '客户分析助手',
             action: () => {
                 enterChatMode(0);
@@ -3566,11 +4008,11 @@
     function sendMainMessage() {
         const panel = getActiveWorkbenchPanel();
         const input = getPanelEl('main-chat-input', panel);
-        const message = input?.value.trim();
-        
-        if (!message) {
+        const raw = input?.value.trim();
+        if (!raw) {
             return;
         }
+        const message = formatMessageWithSelectedSkill(raw, panel);
         
         input.value = '';
 
@@ -3739,7 +4181,7 @@
             <div class="toast-content">
                 <span class="toast-icon">🤖</span>
                 <div class="toast-text">
-                    <p class="toast-title">已识别您的需求</p>
+                    <p class="toast-title">已识别您的意图</p>
                     <p class="toast-detail">"${message.substring(0, 30)}${message.length > 30 ? '...' : ''}"</p>
                     <p class="toast-assistant">路由至 <strong>${assistantName}</strong></p>
                 </div>
@@ -4226,7 +4668,7 @@
         { id: 'e4', name: '亿晶光电', type: 'enterprise', info: '已被申请预重整', phone: '0519-8888103' },
         { id: 'e5', name: '棒杰股份', type: 'enterprise', info: '法院受理重整申请', phone: '0579-8888104' },
         { id: 'e6', name: 'ST沐邦', type: 'enterprise', info: '共益债方案', phone: '0755-8888105' },
-        { id: 'e7', name: '声通科技', type: 'enterprise', info: '财务分析需求', phone: '021-8888106' }
+        { id: 'e7', name: '声通科技', type: 'enterprise', info: '财务分析事项', phone: '021-8888106' }
     ];
     
     // 当前选中的资讯
@@ -5103,7 +5545,7 @@
     function fillAnalysisExample() {
         const textarea = document.getElementById('analysis-input');
         if (!textarea.value.trim()) {
-            textarea.value = '请帮我分析某企业客户的合作历史、资金规模、已购产品/持仓结构与待确认需求项';
+            textarea.value = '请帮我分析某企业客户的合作历史、资金规模、已购产品/持仓结构与待确认合作项';
         }
     }
     
@@ -5353,7 +5795,7 @@
                     </div>
                     <div class="strategy-item mid-term">
                         <div class="strategy-title">中期布局（6-12个月）</div>
-                        <div class="strategy-content">中联数据建议关注客户多元化进展，润泽科技关注产能扩张与订单匹配度，两家均受益于AI算力需求爆发</div>
+                        <div class="strategy-content">中联数据建议关注客户多元化进展，润泽科技关注产能扩张与订单匹配度，两家均受益于AI算力订单增长</div>
                     </div>
                     <div class="strategy-item key-points">
                         <div class="strategy-title">核心观察指标</div>
@@ -5484,7 +5926,7 @@
                 <h5>⚠️ 风险提示</h5>
                 <div class="risk-warning-box">
                     <ul class="warning-list">
-                        <li><strong>市场风险：</strong>宏观经济波动可能影响下游需求，导致业绩不及预期</li>
+                        <li><strong>市场风险：</strong>宏观经济波动可能影响下游订单，导致业绩不及预期</li>
                         <li><strong>竞争风险：</strong>行业毛利率同比变动待核对（请补充%）</li>
                         <li><strong>流动性风险：</strong>资产负债率68.5%，高于行业均值55%</li>
                         <li><strong>模型局限：</strong>本分析基于历史数据和公开信息，无法预测突发事件影响</li>
@@ -5728,7 +6170,25 @@
         [/高净值客户/g, '客户（账户资产待补录万元）'],
         [/高净值/g, ''],
         [/客户画像/g, '客户分析'],
-        [/需求偏好/g, '待确认需求项'],
+        [/需求偏好/g, '待确认合作项'],
+        [/待确认需求项/g, '待确认合作项'],
+        [/需求挖掘/g, '意图识别'],
+        [/客户需求/g, '合作意图'],
+        [/研究服务需求/g, '研究服务安排'],
+        [/交易需求/g, '交易意向'],
+        [/合作需求/g, '合作意向'],
+        [/分析需求/g, '分析事项'],
+        [/潜在需求/g, '待确认合作项'],
+        [/输入需求/g, '输入事项'],
+        [/查询需求/g, '查询事项'],
+        [/具体需求/g, '具体事项'],
+        [/您的需求/g, '您的意图'],
+        [/已识别您的需求/g, '已识别您的意图'],
+        [/流动性需求/g, '流动性安排'],
+        [/算力需求/g, '算力订单'],
+        [/下游需求/g, '下游订单'],
+        [/特殊需求/g, '特殊事项'],
+        [/需求/g, '意图'],
         [/产品偏好/g, '已购产品/持仓结构'],
         [/风险偏好/g, '风险测评结果'],
         [/竞争格局/g, '同业对比维度'],
@@ -6163,13 +6623,21 @@
         renderEmployeeDailyTasks();
     }
     
+    function getDigitalAvatarsScrollContainer(wrap) {
+        if (wrap?.classList.contains('center-agents-scroll-wrap')) {
+            const track = wrap.querySelector('.digital-avatars-scroll.center-agents-track');
+            return track?.querySelector('.digital-avatars') || track;
+        }
+        return wrap?.querySelector('.digital-avatars-scroll');
+    }
+
     function measureCenterAgentsOverflow(scrollContainer, avatarsEl, threshold) {
         if (!scrollContainer || !avatarsEl) return false;
         return scrollContainer.scrollWidth - scrollContainer.clientWidth > threshold;
     }
 
     function updateDigitalAvatarsScrollButtonsForWrap(wrap) {
-        const scrollContainer = wrap?.querySelector('.digital-avatars-scroll');
+        const scrollContainer = getDigitalAvatarsScrollContainer(wrap);
         const btnLeft = wrap?.querySelector('.digital-avatars-scroll-left');
         const btnRight = wrap?.querySelector('.digital-avatars-scroll-right');
         if (!scrollContainer || !btnLeft || !btnRight) return;
@@ -6183,8 +6651,10 @@
         }
 
         const overflowThreshold = 8;
-        const avatarsEl = scrollContainer.querySelector('.digital-avatars');
         const isCenterBar = wrap.classList.contains('center-agents-scroll-wrap');
+        const avatarsEl = isCenterBar
+            ? scrollContainer
+            : scrollContainer.querySelector('.digital-avatars');
         let hasOverflow;
 
         if (isCenterBar) {
@@ -6223,7 +6693,7 @@
     window.updateDigitalAvatarsScrollButtons = updateDigitalAvatarsScrollButtons;
 
     function scrollDigitalAvatars(wrap, direction) {
-        const scrollContainer = wrap?.querySelector('.digital-avatars-scroll');
+        const scrollContainer = getDigitalAvatarsScrollContainer(wrap);
         if (!scrollContainer) return;
         const isCenterBar = wrap.classList.contains('center-agents-scroll-wrap');
         let step;
@@ -6234,8 +6704,7 @@
                 const containerRect = scrollContainer.getBoundingClientRect();
                 return rect.right > containerRect.left + 2 && rect.left < containerRect.right - 2;
             }) || items[0];
-            const avatarsEl = scrollContainer.querySelector('.digital-avatars');
-            const gap = avatarsEl ? parseFloat(getComputedStyle(avatarsEl).columnGap || getComputedStyle(avatarsEl).gap || '0') || 0 : 0;
+            const gap = parseFloat(getComputedStyle(scrollContainer).columnGap || getComputedStyle(scrollContainer).gap || '0') || 0;
             step = firstVisible ? firstVisible.getBoundingClientRect().width + gap : 120;
         } else {
             step = Math.max(180, Math.round(scrollContainer.clientWidth * 0.65));
@@ -6245,7 +6714,7 @@
 
     function initDigitalAvatarsScrollControls() {
         document.querySelectorAll('.digital-avatars-scroll-wrap').forEach((wrap) => {
-        const scrollContainer = wrap.querySelector('.digital-avatars-scroll');
+        const scrollContainer = getDigitalAvatarsScrollContainer(wrap);
         const btnLeft = wrap.querySelector('.digital-avatars-scroll-left');
         const btnRight = wrap.querySelector('.digital-avatars-scroll-right');
         if (!scrollContainer || !btnLeft || !btnRight) return;
@@ -6356,6 +6825,7 @@
         const state = getPanelState(panel);
         state.chatModeActive = false;
         state.currentCardIndex = 0;
+        state.currentCatalogAssistant = null;
         state.currentSessionId = null;
         state.chatMessages = [];
         window.AppShell?.setCurrentSessionId?.(null);
@@ -6436,6 +6906,10 @@
     };
     window.sendSupportExceptionQuick = sendSupportExceptionQuick;
     window.openSupportHomeCardInChat = openSupportHomeCardInChat;
+    window.openSupportFunctionalAssistantInChat = openSupportFunctionalAssistantInChat;
+    window.openEmployeeAssistantInChat = openEmployeeAssistantInChat;
+    window.getSupportTotalTaskCount = getSupportTotalTaskCount;
+    window.collectSupportExceptionAlerts = collectSupportExceptionAlerts;
     window.renderSupportSessionHistory = renderSupportSessionHistory;
 
     // 页面加载时初始化（app-shell.js 也会初始化，此处保留兼容）

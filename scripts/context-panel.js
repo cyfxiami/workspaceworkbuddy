@@ -137,8 +137,6 @@
     function syncContextPanelVisibility() {
         if (hasContextData()) {
             window.AppShell?.expandContextPanel?.();
-        } else {
-            window.AppShell?.collapseContextPanel?.();
         }
     }
 

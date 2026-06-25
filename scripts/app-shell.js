@@ -8,30 +8,73 @@
     let currentBcMenu = 'tasks';
     let currentCenterView = 'session';
 
-    function getCenterModuleEl(view) {
-        const isSupport = document.body.classList.contains('support-tab-active');
-        const suffix = isSupport ? '-support' : '';
-        const map = {
-            session: 'center-view-session',
-            performance: 'center-view-performance',
-            travel: 'center-view-travel',
-            exceptions: 'center-view-exceptions'
-        };
-        const baseId = map[view];
-        if (!baseId) return null;
-        return document.getElementById(baseId + suffix) || document.getElementById(baseId);
+    const CENTER_VIEW_IDS = {
+        session: 'center-view-session',
+        performance: 'center-view-performance',
+        travel: 'center-view-travel',
+        exceptions: 'center-view-exceptions',
+        manageBizAgents: 'center-view-manage-biz-agents',
+        manageAssistants: 'center-view-manage-assistants'
+    };
+
+    function getActiveWorkbenchPanel() {
+        return document.querySelector('.workbench-panel.active')
+            || document.getElementById('workbench-panel-employee');
+    }
+
+    function getCenterModuleEl(view, panel) {
+        const activePanel = panel || getActiveWorkbenchPanel();
+        const baseId = CENTER_VIEW_IDS[view];
+        if (!activePanel || !baseId) return null;
+        const panelKey = activePanel.dataset.panel || 'employee';
+        const scopedId = panelKey === 'employee' ? baseId : `${baseId}-${panelKey}`;
+        return activePanel.querySelector(`#${scopedId}`)
+            || document.getElementById(scopedId)
+            || activePanel.querySelector(`#${baseId}`)
+            || document.getElementById(baseId);
+    }
+
+    function ensurePanelActiveByNavItem(item) {
+        if (!item) return;
+        const targetPanelKey = item.classList.contains('support-only-nav') ? 'support' : 'employee';
+        document.querySelectorAll('.workbench-panel').forEach((panel) => {
+            panel.classList.toggle('active', panel.dataset.panel === targetPanelKey);
+        });
+        document.body.classList.toggle('support-tab-active', targetPanelKey === 'support');
+        document.body.classList.toggle('org-tab-active', false);
     }
 
     function setCenterView(view) {
         currentCenterView = view || 'session';
-        ['session', 'performance', 'travel', 'exceptions'].forEach((name) => {
-            const el = getCenterModuleEl(name);
-            if (el) el.hidden = name !== currentCenterView;
+        const panel = getActiveWorkbenchPanel();
+        Object.keys(CENTER_VIEW_IDS).forEach((name) => {
+            const el = getCenterModuleEl(name, panel);
+            if (!el) return;
+            const isActive = name === currentCenterView;
+            el.hidden = !isActive;
+            if (isActive) el.removeAttribute('hidden');
+            else el.setAttribute('hidden', '');
         });
 
-        const isSupport = document.body.classList.contains('support-tab-active');
+        const isSupport = panel?.dataset?.panel === 'support';
         document.body.classList.toggle('support-exceptions-view-active', isSupport && currentCenterView === 'exceptions');
-        document.body.classList.toggle('employee-performance-view-active', !isSupport && (currentCenterView === 'performance' || currentCenterView === 'travel'));
+        document.body.classList.toggle('employee-performance-view-active', !isSupport && (
+            currentCenterView === 'performance'
+            || currentCenterView === 'travel'
+            || currentCenterView === 'manageBizAgents'
+            || currentCenterView === 'manageAssistants'
+        ));
+        document.body.classList.toggle('employee-manage-view-active', !isSupport && (
+            currentCenterView === 'manageBizAgents' || currentCenterView === 'manageAssistants'
+        ));
+        document.body.classList.toggle('support-manage-view-active', isSupport && (
+            currentCenterView === 'manageBizAgents' || currentCenterView === 'manageAssistants'
+        ));
+
+        // 员工端从会话页切到任一模块页时，退出聊天态样式，避免中栏被聊天布局压空
+        if (!isSupport && currentCenterView !== 'session') {
+            document.body.classList.remove('employee-chat-mode');
+        }
 
         if (currentCenterView === 'performance') {
             const performanceSection = document.getElementById('performance-section');
@@ -46,9 +89,27 @@
             window.initTravelAnalysis();
         }
 
+        if (currentCenterView === 'manageBizAgents') {
+            if (typeof window.initAssistantManagement === 'function') {
+                window.initAssistantManagement();
+            }
+            window.renderManageBizAgentsPage?.();
+        }
+        if (currentCenterView === 'manageAssistants') {
+            if (typeof window.initAssistantManagement === 'function') {
+                window.initAssistantManagement();
+            }
+            window.renderManageAssistantsPage?.();
+            window.renderManageSkillsPage?.();
+        }
+
         document.querySelectorAll('.sidebar .bc-item-nav').forEach((item) => {
             const targetView = item.dataset.centerView || 'session';
             item.classList.toggle('is-center-active', targetView === currentCenterView);
+        });
+
+        requestAnimationFrame(() => {
+            window.initOverlayScrollbars?.();
         });
     }
 
@@ -72,6 +133,9 @@
         }
         if (resetChat && typeof window.resetSupportChatView === 'function' && document.body.classList.contains('support-tab-active')) {
             window.resetSupportChatView();
+        }
+        if (wasModuleView && typeof window.syncCenterAgentsBar === 'function') {
+            window.syncCenterAgentsBar();
         }
     }
 
@@ -102,6 +166,7 @@
 
             trigger.addEventListener('click', () => {
                 const centerView = item.dataset.centerView || 'session';
+                ensurePanelActiveByNavItem(item);
 
                 if (item.classList.contains('bc-item-nav')) {
                     getSidebarBcItems().forEach((other) => {

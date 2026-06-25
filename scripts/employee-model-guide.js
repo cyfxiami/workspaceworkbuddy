@@ -529,7 +529,7 @@
                     <li>交易行为：近12个月主动交易 ${tradeCount} 笔，月均成交金额约 ${monthlyAmount} 万元</li>
                     <li>合作记录：存续合作项目 ${coopCount} 项，最近一笔合作签署日 2025-11-08</li>
                     <li>风险测评：${riskLevel}，持仓 R3 产品占比 62%</li>
-                    <li>分层结论：${tier} 类客户，流动性需求中等、跟进优先级较高</li>
+                    <li>分层结论：${tier} 类客户，流动性安排中等、跟进优先级较高</li>
                     <li>待跟进动作：①核验近3月单笔银证转入≥100万元来源 ②安排季度复盘邀约 ③同步 R4 产品适配说明</li>
                     <li>版本：${v + 1}</li>
                 </ul>
@@ -1147,11 +1147,11 @@
     function getGuideWelcomeText(assistantIndex) {
         const tagline = getKnowledge().assistantConfig?.find((item) => item.index === assistantIndex)?.tagline || '';
         const lines = {
-            0: `**客户分析助手**\n\n从资产、行为、交易、合作记录等维度分析客户价值与风险。点选提示词或输入需求，直接生成分析结果。`,
+            0: `**客户分析助手**\n\n从资产、行为、交易、合作记录等维度分析客户价值与风险。点选提示词或输入事项，直接生成分析结果。`,
             1: `**业务分析助手**\n\n基于业务分析模型（${tagline}）自动识别意图并直接生成结果卡片。`,
             2: `**方案生成助手**\n\n基于方案设计模型（${tagline}）自动识别意图并直接生成结果卡片。`,
             3: `**交叉验证助手**\n\n基于交叉验证模型（${tagline}）自动识别意图并直接生成结果卡片。`,
-            4: `**客户服务助手**\n\n处理买方分析、信披判断、临时公告生成等任务。点选提示词或输入需求，直接生成处理结果。`
+            4: `**客户服务助手**\n\n处理买方分析、信披判断、临时公告生成等任务。点选提示词或输入事项，直接生成处理结果。`
         };
         const assistant = window.getEmployeeAssistant?.(assistantIndex);
         return lines[assistantIndex] || `**${assistant?.name || '助手'}**\n\n说明当前能力与操作入口。`;
