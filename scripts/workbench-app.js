@@ -3360,6 +3360,7 @@
 
     const OVERLAY_SCROLLBAR_SELECTOR = [
         '.ai-chat-view',
+        '.ai-chat-messages',
         '.support-dialogue',
         '.org-workbench-scroll',
         '.employee-tasks-scroll',
@@ -3586,6 +3587,8 @@
         const messagesEl = getPanelEl('ai-chat-messages', p);
         if (!messagesEl) return;
 
+        bindOverlayScrollbar(messagesEl);
+
         messagesEl.innerHTML = '';
         state.chatMessages = Array.isArray(session?.messages) ? session.messages.slice() : [];
         state.currentCardIndex = typeof session?.assistantIndex === 'number' ? session.assistantIndex : 0;
@@ -3641,6 +3644,9 @@
         if (workbench) workbench.classList.add('chat-mode');
         if (inputSection) inputSection.classList.add('chat-mode');
         if (sessionScroll) sessionScroll.classList.add('is-chat-active');
+
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (messagesEl) bindOverlayScrollbar(messagesEl);
 
         collapseTopSections(p);
         initMiniAvatars(p);

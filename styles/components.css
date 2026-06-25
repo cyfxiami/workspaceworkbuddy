@@ -2061,17 +2061,43 @@ body.wb-workbench-active.employee-chat-mode .ai-chat-messages {
     padding: 16px 0;
 }
 
-/* 任一侧栏收起：对话内容向中间收窄（业务团队 + 业务支持） */
-body.wb-workbench-active.employee-chat-mode .wb-layout:is(.is-sidebar-collapsed, .is-context-collapsed) .workbench-panel[data-panel="employee"] .session-scroll.is-chat-active {
+/* 两侧栏均展开：对话区适度收窄 */
+body.wb-workbench-active.employee-chat-mode .wb-layout:not(.is-sidebar-collapsed):not(.is-context-collapsed) .workbench-panel[data-panel="employee"] .session-scroll.is-chat-active {
+    padding: 0 clamp(24px, 4vw, 44px);
+    box-sizing: border-box;
+}
+
+body.wb-workbench-active.employee-chat-mode .wb-layout:not(.is-sidebar-collapsed):not(.is-context-collapsed) .workbench-panel[data-panel="employee"] .ai-chat-messages {
+    width: 100%;
+    max-width: min(860px, 100%);
+    margin-left: auto;
+    margin-right: auto;
+    padding: 16px clamp(12px, 2vw, 20px);
+    box-sizing: border-box;
+}
+
+body.wb-workbench-active.employee-chat-mode .wb-layout:not(.is-sidebar-collapsed):not(.is-context-collapsed) .workbench-panel[data-panel="employee"] .chat-bubble,
+body.support-tab-active .wb-layout:not(.is-sidebar-collapsed):not(.is-context-collapsed) .workbench-panel[data-panel="support"] .ai-workbench-section.support-workbench-mode.support-chat-mode .chat-bubble {
+    max-width: 70%;
+}
+
+body.support-tab-active .wb-layout:not(.is-sidebar-collapsed):not(.is-context-collapsed) .workbench-panel[data-panel="support"] #session-scroll-support.is-chat-active {
+    padding: 0 clamp(24px, 4vw, 44px);
+    box-sizing: border-box;
+}
+
+body.support-tab-active .wb-layout:not(.is-sidebar-collapsed):not(.is-context-collapsed) .workbench-panel[data-panel="support"] .ai-workbench-section.support-workbench-mode.support-chat-mode .ai-chat-messages {
+    max-width: min(860px, 100%);
+    padding: 16px clamp(12px, 2vw, 20px);
+}
+
+/* 左侧栏收起：对话内容向中间收窄 */
+body.wb-workbench-active.employee-chat-mode .wb-layout.is-sidebar-collapsed:not(.is-context-collapsed) .workbench-panel[data-panel="employee"] .session-scroll.is-chat-active {
     padding: 0 clamp(52px, 12vw, 136px);
     box-sizing: border-box;
 }
 
-body.wb-workbench-active.employee-chat-mode .wb-layout.is-sidebar-collapsed.is-context-collapsed .workbench-panel[data-panel="employee"] .session-scroll.is-chat-active {
-    padding: 0 clamp(72px, 14vw, 176px);
-}
-
-body.wb-workbench-active.employee-chat-mode .wb-layout:is(.is-sidebar-collapsed, .is-context-collapsed) .workbench-panel[data-panel="employee"] .ai-chat-messages {
+body.wb-workbench-active.employee-chat-mode .wb-layout.is-sidebar-collapsed:not(.is-context-collapsed) .workbench-panel[data-panel="employee"] .ai-chat-messages {
     width: 100%;
     max-width: min(760px, 100%);
     margin-left: auto;
@@ -2080,18 +2106,45 @@ body.wb-workbench-active.employee-chat-mode .wb-layout:is(.is-sidebar-collapsed,
     box-sizing: border-box;
 }
 
-body.wb-workbench-active.employee-chat-mode .wb-layout.is-sidebar-collapsed.is-context-collapsed .workbench-panel[data-panel="employee"] .ai-chat-messages {
-    max-width: min(700px, 100%);
-    padding: 16px clamp(44px, 8vw, 96px);
+/* 右侧栏收起：利用释放空间，对话向两侧扩散 */
+body.wb-workbench-active.employee-chat-mode .wb-layout.is-context-collapsed:not(.is-sidebar-collapsed) .workbench-panel[data-panel="employee"] .session-scroll.is-chat-active {
+    padding: 0 clamp(28px, 5vw, 48px);
+    box-sizing: border-box;
 }
 
-body.support-tab-active .wb-layout:is(.is-sidebar-collapsed, .is-context-collapsed) .workbench-panel[data-panel="support"] #session-scroll-support.is-chat-active {
+body.wb-workbench-active.employee-chat-mode .wb-layout.is-context-collapsed:not(.is-sidebar-collapsed) .workbench-panel[data-panel="employee"] .ai-chat-messages {
+    width: 100%;
+    max-width: min(920px, 100%);
+    margin-left: auto;
+    margin-right: auto;
+    padding: 16px clamp(16px, 3vw, 28px);
+    box-sizing: border-box;
+}
+
+body.wb-workbench-active.employee-chat-mode .wb-layout.is-sidebar-collapsed.is-context-collapsed .workbench-panel[data-panel="employee"] .session-scroll.is-chat-active {
+    padding: 0 clamp(40px, 7vw, 96px);
+    box-sizing: border-box;
+}
+
+body.wb-workbench-active.employee-chat-mode .wb-layout.is-sidebar-collapsed.is-context-collapsed .workbench-panel[data-panel="employee"] .ai-chat-messages {
+    max-width: min(1000px, 100%);
+    padding: 16px clamp(20px, 4vw, 32px);
+    box-sizing: border-box;
+}
+
+body.support-tab-active .wb-layout.is-sidebar-collapsed:not(.is-context-collapsed) .workbench-panel[data-panel="support"] #session-scroll-support.is-chat-active {
     padding: 0 clamp(52px, 12vw, 136px);
     box-sizing: border-box;
 }
 
+body.support-tab-active .wb-layout.is-context-collapsed:not(.is-sidebar-collapsed) .workbench-panel[data-panel="support"] #session-scroll-support.is-chat-active {
+    padding: 0 clamp(28px, 5vw, 48px);
+    box-sizing: border-box;
+}
+
 body.support-tab-active .wb-layout.is-sidebar-collapsed.is-context-collapsed .workbench-panel[data-panel="support"] #session-scroll-support.is-chat-active {
-    padding: 0 clamp(72px, 14vw, 176px);
+    padding: 0 clamp(32px, 6vw, 88px);
+    box-sizing: border-box;
 }
 
 body.wb-workbench-active.employee-chat-mode .workbench-panel[data-panel="employee"] .ai-workbench-section.chat-mode {
@@ -2407,20 +2460,35 @@ body.support-tab-active .workbench-panel[data-panel="support"] .ai-workbench-sec
     justify-content: flex-start;
 }
 
-/* 业务支持 - 侧栏收起时对话区向中间收窄（覆盖上方默认 1160px 宽） */
-body.support-tab-active .wb-layout:is(.is-sidebar-collapsed, .is-context-collapsed) .workbench-panel[data-panel="support"] .ai-workbench-section.support-workbench-mode.support-chat-mode .ai-chat-messages {
+/* 业务支持 - 侧栏收起时对话区宽度 */
+body.support-tab-active .wb-layout.is-sidebar-collapsed:not(.is-context-collapsed) .workbench-panel[data-panel="support"] .ai-workbench-section.support-workbench-mode.support-chat-mode .ai-chat-messages {
     max-width: min(760px, 100%);
     padding: 16px clamp(36px, 7vw, 80px);
 }
 
-body.support-tab-active .wb-layout.is-sidebar-collapsed.is-context-collapsed .workbench-panel[data-panel="support"] .ai-workbench-section.support-workbench-mode.support-chat-mode .ai-chat-messages {
-    max-width: min(700px, 100%);
-    padding: 16px clamp(44px, 8vw, 96px);
+body.support-tab-active .wb-layout.is-context-collapsed:not(.is-sidebar-collapsed) .workbench-panel[data-panel="support"] .ai-workbench-section.support-workbench-mode.support-chat-mode .ai-chat-messages {
+    max-width: min(920px, 100%);
+    padding: 16px clamp(16px, 3vw, 28px);
 }
 
-body.wb-workbench-active.employee-chat-mode .wb-layout:is(.is-sidebar-collapsed, .is-context-collapsed) .workbench-panel[data-panel="employee"] .chat-bubble,
-body.support-tab-active .wb-layout:is(.is-sidebar-collapsed, .is-context-collapsed) .workbench-panel[data-panel="support"] .ai-workbench-section.support-workbench-mode.support-chat-mode .chat-bubble {
+body.support-tab-active .wb-layout.is-sidebar-collapsed.is-context-collapsed .workbench-panel[data-panel="support"] .ai-workbench-section.support-workbench-mode.support-chat-mode .ai-chat-messages {
+    max-width: min(1000px, 100%);
+    padding: 16px clamp(20px, 4vw, 32px);
+}
+
+body.wb-workbench-active.employee-chat-mode .wb-layout.is-sidebar-collapsed:not(.is-context-collapsed) .workbench-panel[data-panel="employee"] .chat-bubble,
+body.support-tab-active .wb-layout.is-sidebar-collapsed:not(.is-context-collapsed) .workbench-panel[data-panel="support"] .ai-workbench-section.support-workbench-mode.support-chat-mode .chat-bubble {
     max-width: 65%;
+}
+
+body.wb-workbench-active.employee-chat-mode .wb-layout.is-context-collapsed:not(.is-sidebar-collapsed) .workbench-panel[data-panel="employee"] .chat-bubble,
+body.support-tab-active .wb-layout.is-context-collapsed:not(.is-sidebar-collapsed) .workbench-panel[data-panel="support"] .ai-workbench-section.support-workbench-mode.support-chat-mode .chat-bubble {
+    max-width: 72%;
+}
+
+body.wb-workbench-active.employee-chat-mode .wb-layout.is-sidebar-collapsed.is-context-collapsed .workbench-panel[data-panel="employee"] .chat-bubble,
+body.support-tab-active .wb-layout.is-sidebar-collapsed.is-context-collapsed .workbench-panel[data-panel="support"] .ai-workbench-section.support-workbench-mode.support-chat-mode .chat-bubble {
+    max-width: 78%;
 }
 
 body.support-tab-active .workbench-panel[data-panel="support"] .input-section.chat-mode {

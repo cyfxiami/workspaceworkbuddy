@@ -4412,6 +4412,21 @@ body.employee-chat-mode .workbench-panel[data-panel="employee"] .ai-workbench-se
     padding-bottom: 0;
 }
 
+/* 三栏布局：滚动落在消息列表，滚动条默认隐藏、滚动时显示 */
+body.wb-workbench-active.employee-chat-mode .workbench-panel[data-panel="employee"] .ai-workbench-section.chat-mode .ai-chat-view {
+    flex: 1;
+    min-height: 0;
+    max-height: none !important;
+    overflow: hidden;
+    padding-top: 0;
+}
+
+body.wb-workbench-active.employee-chat-mode .workbench-panel[data-panel="employee"] .ai-chat-messages {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
 /* 顶部模块展开时：聊天列表固定高度区间，不再被 flex 压缩 */
 body.employee-chat-mode .workbench-panel[data-panel="employee"]:has(
     .work-tips-section:not(.collapsed),
