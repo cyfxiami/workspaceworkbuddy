@@ -66,6 +66,13 @@
         }).join('');
     }
 
+    const CHART_COLORS = {
+        personal: '#b8a078',
+        dept: '#e8dcc8',
+        grid: '#eef0f3',
+        axis: '#9ca3af'
+    };
+
     function buildChartSvg(data) {
         const width = 560;
         const height = 280;
@@ -101,41 +108,41 @@
         const yLines = Array.from({ length: yTicks + 1 }, (_, i) => {
             const val = Math.round((yMax / yTicks) * i);
             const y = pad.top + chartH - (val / yMax) * chartH;
-            return `<line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="#eef0f3" stroke-width="1"/>
-                <text x="${pad.left - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#9ca3af">${val}</text>`;
+            return `<line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="${CHART_COLORS.grid}" stroke-width="1"/>
+                <text x="${pad.left - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="${CHART_COLORS.axis}">${val}</text>`;
         }).join('');
 
         const xLabels = MONTHS.map((label, i) => {
             const x = pad.left + i * stepX;
-            return `<text x="${x}" y="${height - 10}" text-anchor="middle" font-size="11" fill="#9ca3af">${label}</text>`;
+            return `<text x="${x}" y="${height - 10}" text-anchor="middle" font-size="11" fill="${CHART_COLORS.axis}">${label}</text>`;
         }).join('');
 
         const personalDots = data.personal.map((v, i) => {
             const p = toPoint(v, i);
-            return `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#1e3a5f"/>`;
+            return `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${CHART_COLORS.personal}"/>`;
         }).join('');
 
         const deptDots = data.dept.map((v, i) => {
             const p = toPoint(v, i);
-            return `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#5eb8e8"/>`;
+            return `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${CHART_COLORS.dept}"/>`;
         }).join('');
 
         return `<defs>
             <linearGradient id="travel-area-personal" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#1e3a5f" stop-opacity="0.18"/>
-                <stop offset="100%" stop-color="#1e3a5f" stop-opacity="0.02"/>
+                <stop offset="0%" stop-color="${CHART_COLORS.personal}" stop-opacity="0.16"/>
+                <stop offset="100%" stop-color="${CHART_COLORS.personal}" stop-opacity="0.02"/>
             </linearGradient>
             <linearGradient id="travel-area-dept" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#5eb8e8" stop-opacity="0.22"/>
-                <stop offset="100%" stop-color="#5eb8e8" stop-opacity="0.02"/>
+                <stop offset="0%" stop-color="${CHART_COLORS.dept}" stop-opacity="0.22"/>
+                <stop offset="100%" stop-color="${CHART_COLORS.dept}" stop-opacity="0.02"/>
             </linearGradient>
         </defs>
         ${yLines}
         ${xLabels}
         <path d="${areaPath(data.dept)}" fill="url(#travel-area-dept)"/>
         <path d="${areaPath(data.personal)}" fill="url(#travel-area-personal)"/>
-        <path d="${linePath(data.dept)}" fill="none" stroke="#5eb8e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="${linePath(data.personal)}" fill="none" stroke="#1e3a5f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${linePath(data.dept)}" fill="none" stroke="${CHART_COLORS.dept}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${linePath(data.personal)}" fill="none" stroke="${CHART_COLORS.personal}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         ${deptDots}
         ${personalDots}`;
     }

@@ -37,7 +37,7 @@
 .sidebar-nav-cards {
     display: flex;
     gap: 8px;
-    margin: 8px 12px 0;
+    margin: 8px 12px 4px;
 }
 
 .sidebar-nav-cards .bc-nav-card {
@@ -47,7 +47,7 @@
     border: 1px solid var(--wb-border);
     border-radius: var(--radius-md);
     background: var(--brand-gold-soft);
-    overflow: hidden;
+    overflow: visible;
     transition: border-color 0.15s, box-shadow 0.15s;
 }
 
@@ -56,8 +56,10 @@
 }
 
 .sidebar-nav-cards .bc-nav-card.is-center-active {
-    border-color: var(--brand-gold);
-    box-shadow: 0 0 0 1px rgba(201, 169, 110, 0.25);
+    border: 1px solid var(--brand-gold);
+    box-shadow: none;
+    position: relative;
+    z-index: 1;
 }
 
 .sidebar-nav-cards .bc-nav-card > .bc-trigger {
@@ -66,6 +68,7 @@
     flex-wrap: wrap;
     row-gap: 4px;
     background: transparent;
+    border-radius: calc(var(--radius-md) - 1px);
 }
 
 .sidebar-nav-cards .bc-nav-card > .bc-trigger:hover {
@@ -417,7 +420,7 @@ body.support-tab-active .sidebar-scroll {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 4px;
+    gap: 6px;
     width: 100%;
     padding: 10px 12px;
     margin: 0;
@@ -450,13 +453,44 @@ body.support-tab-active .sidebar-scroll {
     outline-offset: 2px;
 }
 
+.wb-app .support-sidebar-tasks-content .support-task-card.support-chat-todo-trigger .support-task-card-title {
+    display: block;
+    width: 100%;
+    font-size: 0.76rem;
+    font-weight: 400;
+    color: #4b5563;
+    line-height: 1.4;
+    margin: 0;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.wb-app .support-sidebar-tasks-content .support-task-card.support-chat-todo-trigger .support-task-card-meta {
+    display: block;
+    width: 100%;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--primary-dark, #a88b52);
+    line-height: 1.45;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.wb-app .support-sidebar-tasks-content .support-task-card.support-chat-todo-trigger:hover .support-task-card-title {
+    color: #4b5563;
+}
+
+.wb-app .support-sidebar-tasks-content .support-task-card.support-chat-todo-trigger:hover .support-task-card-meta {
+    color: var(--primary-dark, #a88b52);
+}
+
 .support-task-card-title {
     display: block;
     width: 100%;
-    font-size: 0.84rem;
-    font-weight: 600;
-    color: var(--wb-text, var(--text-primary));
-    line-height: 1.45;
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: #b0b5bc;
+    line-height: 1.4;
     white-space: normal;
     word-break: break-word;
 }
@@ -464,9 +498,10 @@ body.support-tab-active .sidebar-scroll {
 .support-task-card-meta {
     display: block;
     width: 100%;
-    font-size: 0.76rem;
-    color: var(--wb-muted, var(--text-light));
-    line-height: 1.4;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--brand-gold-dark, #a8861f);
+    line-height: 1.45;
     white-space: normal;
     word-break: break-word;
 }
@@ -486,22 +521,22 @@ body.support-tab-active .sidebar-scroll {
 /* 异常提醒看板 */
 .exception-reminder-board {
     width: 100%;
-    max-width: min(960px, 100%);
-    margin: 0 auto;
-    padding: 20px 12px 40px;
+    max-width: none;
+    margin: 0;
+    padding: 0 0 16px;
     box-sizing: border-box;
 }
 
 .exception-stats-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin-bottom: 28px;
+    gap: 16px;
+    margin-bottom: 20px;
 }
 
 .exception-stat-card {
     border-radius: 12px;
-    padding: 22px 16px 20px;
+    padding: 16px 14px 14px;
     text-align: center;
     border: 1px solid transparent;
 }
@@ -522,10 +557,10 @@ body.support-tab-active .sidebar-scroll {
 }
 
 .exception-stat-value {
-    font-size: 1.9rem;
+    font-size: 1.65rem;
     font-weight: 700;
     line-height: 1.1;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .exception-stat-card--new .exception-stat-value { color: #e53e3e; }
@@ -543,16 +578,17 @@ body.support-tab-active .sidebar-scroll {
     gap: 0;
     background: #f3f4f6;
     border-radius: 12px;
-    padding: 6px;
-    margin-bottom: 28px;
+    padding: 5px;
+    margin-bottom: 20px;
+    max-width: 480px;
 }
 
 .exception-tab {
     border: none;
     background: transparent;
     border-radius: 9px;
-    padding: 14px 18px;
-    font-size: 0.96rem;
+    padding: 11px 16px;
+    font-size: 0.92rem;
     font-weight: 600;
     color: var(--wb-muted);
     cursor: pointer;
@@ -576,7 +612,7 @@ body.support-tab-active .sidebar-scroll {
 .exception-alert-list {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 14px;
 }
 
 .exception-alert-card {
@@ -609,15 +645,19 @@ body.support-tab-active .sidebar-scroll {
 .exception-alert-body {
     flex: 1;
     min-width: 0;
-    padding: 22px 22px 20px;
+    padding: 16px 20px 14px;
 }
 
 .exception-alert-head {
+    margin-bottom: 8px;
+}
+
+.exception-alert-title-line {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
 }
 
 .exception-alert-title {
@@ -626,6 +666,7 @@ body.support-tab-active .sidebar-scroll {
     font-weight: 700;
     color: var(--wb-text);
     line-height: 1.35;
+    flex: 0 1 auto;
 }
 
 .exception-alert-dept {
@@ -643,20 +684,35 @@ body.support-tab-active .sidebar-scroll {
     display: inline-flex;
     align-items: center;
     padding: 3px 12px;
-    margin-bottom: 12px;
+    margin: 0;
     border-radius: 999px;
     border: 1px solid #ed8936;
     color: #c05621;
     font-size: 0.75rem;
     font-weight: 600;
     background: #fffaf0;
+    flex-shrink: 0;
 }
 
 .exception-alert-desc {
-    margin: 0 0 18px;
-    font-size: 0.9rem;
-    line-height: 1.85;
+    margin: 0 0 12px;
+    font-size: 0.88rem;
+    line-height: 1.6;
     color: #4a5568;
+}
+
+.exception-alert-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.exception-alert-time {
+    font-size: 0.75rem;
+    color: #b0b5bc;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .exception-status-tag {
@@ -690,10 +746,6 @@ body.support-tab-active .sidebar-scroll {
     font-size: 1.3rem;
     color: #cbd5e0;
     flex-shrink: 0;
-}
-
-.exception-alert-arrow--active {
-    color: #e53e3e;
 }
 
 .new-session-btn {

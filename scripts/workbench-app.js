@@ -1,4 +1,4 @@
-﻿    // 登录处理函数
+    // 登录处理函数
     function handleLogin() {
         alert('登录功能即将上线，敬请期待！');
     }
@@ -1211,7 +1211,8 @@
             title: card.querySelector('.exception-alert-title')?.textContent?.trim() || '',
             dept: card.querySelector('.exception-alert-dept')?.textContent?.trim() || '',
             desc: card.querySelector('.exception-alert-desc')?.textContent?.trim() || '',
-            status: card.querySelector('.exception-status-tag')?.textContent?.trim() || ''
+            status: card.querySelector('.exception-status-tag')?.textContent?.trim() || '',
+            createdAt: card.querySelector('.exception-alert-time')?.textContent?.trim() || ''
         })).filter((item) => item.title);
     }
 
