@@ -470,6 +470,28 @@
         }).join('') || '<div class="manage-empty-hint">暂无已展示助手，请前往「新增」添加</div>';
 
         requestAnimationFrame(() => window.syncHomeCardsFanLayout?.(p));
+        window.syncSupportInputAgentPickers?.();
+    }
+
+    function getInstalledSupportAssistantsForHome() {
+        const installed = sortInstalledByCatalogOrder(
+            getInstalledAssistantIds('support'),
+            getAssistantCatalogOrder('support')
+        );
+        const catalogMap = Object.fromEntries(getSupportManageAssistantCatalog().map((a) => [a.id, a]));
+        return installed.map((id, listIndex) => {
+            const agent = catalogMap[id];
+            if (!agent) return null;
+            return {
+                id: agent.id,
+                name: agent.name,
+                emoji: agent.emoji,
+                image: agent.image,
+                avatarClass: agent.avatarClass,
+                supportCard: agent.supportCard || null,
+                listIndex
+            };
+        }).filter(Boolean);
     }
 
     function syncAiCardsFan() {
@@ -505,6 +527,24 @@
         requestAnimationFrame(() => window.syncHomeCardsFanLayout?.());
         const employeePanel = document.getElementById('workbench-panel-employee');
         if (employeePanel) window.refreshInputSkillPickers?.(employeePanel);
+        window.syncEmployeeMiniAvatars?.();
+    }
+
+    function getInstalledEmployeeAssistantsForHome() {
+        const installed = sortInstalledByCatalogOrder(getInstalledAssistantIds('employee'), getAssistantCatalogOrder('employee'));
+        const catalogMap = Object.fromEntries(ASSISTANT_CATALOG.map((a) => [a.id, a]));
+        return installed.map((id, listIndex) => {
+            const agent = catalogMap[id];
+            if (!agent) return null;
+            return {
+                id: agent.id,
+                name: agent.name,
+                emoji: agent.emoji,
+                avatarClass: agent.avatarClass,
+                chatIndex: typeof agent.chatIndex === 'number' ? agent.chatIndex : listIndex,
+                listIndex
+            };
+        }).filter(Boolean);
     }
 
     function refreshManageOverlayScrollbars() {
@@ -824,12 +864,14 @@
     }
 
     window.syncSupportHomeCards = syncSupportHomeCards;
+    window.getInstalledSupportAssistantsForHome = getInstalledSupportAssistantsForHome;
     window.getSupportFunctionalAssistantMeta = function (id) {
         return ASSISTANT_CATALOG.find((a) => a.id === id) || null;
     };
     window.getAssistantCatalogEntry = function (id, panelKey) {
         return getAssistantCatalog(panelKey || getPanelKey(getActiveWorkbenchPanel())).find((a) => a.id === id) || null;
     };
+    window.getInstalledEmployeeAssistantsForHome = getInstalledEmployeeAssistantsForHome;
     window.getAssistantSkillOwnerKey = getAssistantSkillOwnerKey;
     window.getInstalledSkillsForOwner = getInstalledSkillsForOwner;
     window.getSkillById = getSkillById;
