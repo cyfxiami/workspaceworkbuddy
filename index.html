@@ -89,19 +89,30 @@
                             <svg class="layout-toggle-icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
                         </button>
                     </div>
-                    <div class="bc-item bc-item-nav employee-only-nav" data-bc="performance" data-center-view="performance">
-                        <button type="button" class="bc-trigger" id="bc-trigger-performance">
-                            <span class="bc-nav-icon">📊</span>
-                            <span class="bc-label">业绩与绩效</span>
-                            <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </button>
+                    <div class="sidebar-nav-cards employee-only-nav">
+                        <div class="bc-item bc-item-nav bc-nav-card" data-bc="performance" data-center-view="performance">
+                            <button type="button" class="bc-trigger" id="bc-trigger-performance">
+                                <span class="bc-nav-icon">📊</span>
+                                <span class="bc-label">业绩绩效</span>
+                                <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                        </div>
+                        <div class="bc-item bc-item-nav bc-nav-card" data-bc="travel" data-center-view="travel">
+                            <button type="button" class="bc-trigger" id="bc-trigger-travel">
+                                <span class="bc-nav-icon">✈️</span>
+                                <span class="bc-label">差旅分析</span>
+                                <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                        </div>
                     </div>
-                    <div class="bc-item bc-item-nav support-only-nav" data-bc="exceptions" data-center-view="exceptions">
-                        <button type="button" class="bc-trigger" id="bc-trigger-exceptions">
-                            <span class="bc-nav-icon">⚠️</span>
-                            <span class="bc-label">异常提醒</span>
-                            <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        </button>
+                    <div class="sidebar-nav-cards sidebar-nav-cards--single support-only-nav">
+                        <div class="bc-item bc-item-nav bc-nav-card" data-bc="exceptions" data-center-view="exceptions">
+                            <button type="button" class="bc-trigger" id="bc-trigger-exceptions">
+                                <span class="bc-nav-icon">⚠️</span>
+                                <span class="bc-label">异常提醒</span>
+                                <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="sidebar-tabs employee-only-nav" id="sidebar-tabs">
                         <div class="sidebar-tabs-bar" role="tablist" aria-label="任务与会话">
@@ -449,6 +460,67 @@
                                 </div>
                             </div>
 
+                            <div class="center-module-view center-travel-view" id="center-view-travel" hidden>
+                                <div class="module-page-header performance-page-header">
+                                    <button type="button" class="performance-back-btn" id="travel-back-btn" aria-label="返回主会话">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+                                        <span>返回</span>
+                                    </button>
+                                    <div class="performance-page-title-wrap">
+                                        <span class="performance-page-icon" aria-hidden="true">✈️</span>
+                                        <h2 class="module-page-title">差旅分析</h2>
+                                    </div>
+                                </div>
+                                <div class="module-page-scroll">
+                                    <div class="travel-dashboard" id="travel-dashboard">
+                                        <div class="travel-summary-cards" role="tablist" aria-label="差旅费用分类">
+                                            <button type="button" class="travel-summary-card is-active" role="tab" aria-selected="true" data-travel-tab="flight">
+                                                <span class="travel-summary-icon">✈️</span>
+                                                <span class="travel-summary-label">差旅费</span>
+                                                <span class="travel-summary-amount">¥2.44万</span>
+                                                <span class="travel-summary-count">9次</span>
+                                            </button>
+                                            <button type="button" class="travel-summary-card" role="tab" aria-selected="false" data-travel-tab="meal">
+                                                <span class="travel-summary-icon">🍽️</span>
+                                                <span class="travel-summary-label">餐费</span>
+                                                <span class="travel-summary-amount">¥0.38万</span>
+                                                <span class="travel-summary-count">45次</span>
+                                            </button>
+                                            <button type="button" class="travel-summary-card" role="tab" aria-selected="false" data-travel-tab="car">
+                                                <span class="travel-summary-icon">🚗</span>
+                                                <span class="travel-summary-label">用车</span>
+                                                <span class="travel-summary-amount">¥0.16万</span>
+                                                <span class="travel-summary-count">28次</span>
+                                            </button>
+                                        </div>
+                                        <div class="travel-dashboard-body">
+                                            <div class="travel-chart-panel">
+                                                <h3 class="travel-chart-title">智能分析联动</h3>
+                                                <p class="travel-chart-subtitle" id="travel-chart-subtitle">个人差旅金额 vs 部门平均</p>
+                                                <div class="travel-chart-legend">
+                                                    <span class="travel-legend-item"><i class="travel-legend-dot travel-legend-dot--personal"></i>个人</span>
+                                                    <span class="travel-legend-item"><i class="travel-legend-dot travel-legend-dot--dept"></i>部门平均</span>
+                                                </div>
+                                                <div class="travel-chart-wrap" id="travel-chart-wrap">
+                                                    <svg class="travel-chart-svg" id="travel-chart-svg" viewBox="0 0 560 280" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+                                                </div>
+                                            </div>
+                                            <aside class="travel-insight-panel">
+                                                <div class="travel-insight-box travel-insight-box--behavior">
+                                                    <h4 class="travel-insight-title">🔍 行为分析</h4>
+                                                    <ol class="travel-insight-list" id="travel-behavior-list"></ol>
+                                                </div>
+                                                <div class="travel-insight-box travel-insight-box--saving">
+                                                    <h4 class="travel-insight-title">💡 节省建议</h4>
+                                                    <ol class="travel-insight-list" id="travel-saving-list"></ol>
+                                                    <button type="button" class="travel-explain-btn" id="travel-explain-btn">💬 说明原因</button>
+                                                </div>
+                                            </aside>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="center-module-view center-performance-view" id="center-view-performance" hidden>
                                 <div class="module-page-header performance-page-header">
                                     <button type="button" class="performance-back-btn" id="performance-back-btn" aria-label="返回主会话">
@@ -457,7 +529,7 @@
                                     </button>
                                     <div class="performance-page-title-wrap">
                                         <span class="performance-page-icon" aria-hidden="true">📊</span>
-                                        <h2 class="module-page-title">业绩与绩效</h2>
+                                        <h2 class="module-page-title">业绩绩效</h2>
                                     </div>
                                 </div>
                                 <div class="module-page-scroll">
@@ -1668,6 +1740,7 @@
     <script src="scripts/employee-model-guide.js"></script>
     <script src="scripts/workbench-app.js"></script>
     <script src="scripts/context-panel.js"></script>
+    <script src="scripts/travel-analysis.js"></script>
     <script src="scripts/app-shell.js"></script>
 </body>
 </html>

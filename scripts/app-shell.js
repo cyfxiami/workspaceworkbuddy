@@ -14,6 +14,7 @@
         const map = {
             session: 'center-view-session',
             performance: 'center-view-performance',
+            travel: 'center-view-travel',
             exceptions: 'center-view-exceptions'
         };
         const baseId = map[view];
@@ -23,14 +24,14 @@
 
     function setCenterView(view) {
         currentCenterView = view || 'session';
-        ['session', 'performance', 'exceptions'].forEach((name) => {
+        ['session', 'performance', 'travel', 'exceptions'].forEach((name) => {
             const el = getCenterModuleEl(name);
             if (el) el.hidden = name !== currentCenterView;
         });
 
         const isSupport = document.body.classList.contains('support-tab-active');
         document.body.classList.toggle('support-exceptions-view-active', isSupport && currentCenterView === 'exceptions');
-        document.body.classList.toggle('employee-performance-view-active', !isSupport && currentCenterView === 'performance');
+        document.body.classList.toggle('employee-performance-view-active', !isSupport && (currentCenterView === 'performance' || currentCenterView === 'travel'));
 
         if (currentCenterView === 'performance') {
             const performanceSection = document.getElementById('performance-section');
@@ -39,6 +40,10 @@
                 const toggleBtn = document.getElementById('performance-toggle');
                 if (toggleBtn) toggleBtn.textContent = '收起';
             }
+        }
+
+        if (currentCenterView === 'travel' && typeof window.initTravelAnalysis === 'function') {
+            window.initTravelAnalysis();
         }
 
         document.querySelectorAll('.sidebar .bc-item-nav').forEach((item) => {
@@ -445,6 +450,9 @@
             }
         });
         document.getElementById('performance-back-btn')?.addEventListener('click', () => {
+            returnToMainSessionView({ resetChat: true });
+        });
+        document.getElementById('travel-back-btn')?.addEventListener('click', () => {
             returnToMainSessionView({ resetChat: true });
         });
         document.addEventListener('click', (event) => {

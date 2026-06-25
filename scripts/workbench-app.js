@@ -1404,7 +1404,7 @@
     function renderSupportSidebarTasks(panel) {
         const body = document.getElementById('support-sidebar-tasks-body');
         if (!body) return;
-        body.innerHTML = `<div class="support-sidebar-tasks-content support-daily-task-body">${buildSupportDailyTasksSummaryHtml()}</div>`;
+        body.innerHTML = `<div class="support-sidebar-tasks-content support-daily-task-body">${buildSupportDailyTasksSummaryHtml({ sidebar: true })}</div>`;
         updateSupportSidebarTasksCount();
         refreshSupportHomeCardCounts(panel);
         const scrollEl = body.closest('.support-sidebar-tasks-scroll');
@@ -1638,6 +1638,15 @@
         const nextStep = task.nextSteps[0] || '请跟进推进';
         const lineText = `${index + 1}. ${task.title}：${nextStep}`;
         return `<p class="support-chat-todo-line">${buildSupportTodoTriggerHtml(agentId, task, lineText, nextStep)}</p>`;
+    }
+
+    function buildSupportTaskCardHtml(agentId, task, index) {
+        const nextStep = task.nextSteps[0] || '请跟进推进';
+        const lineText = `${index + 1}. ${task.title}：${nextStep}`;
+        return `<button type="button" class="support-task-card support-chat-todo-trigger" data-agent-id="${escapeHtmlAttr(agentId)}" data-task-id="${escapeHtmlAttr(task.id)}" data-step-text="${escapeHtmlAttr(nextStep)}" data-send-text="${escapeHtmlAttr(lineText)}" data-reply-mode="task">
+            <span class="support-task-card-title">${escapeHtmlText(task.title)}</span>
+            <span class="support-task-card-meta">${escapeHtmlText(nextStep)}</span>
+        </button>`;
     }
 
     function buildSupportTodoLineGuideHtml(agentId, task, index) {
@@ -1949,7 +1958,33 @@
         });
     }
 
+    const collapsedSupportTaskGroups = new Set();
+
     function buildSupportDailyTasksSummaryHtml(options = {}) {
+        const useCards = options.sidebar === true;
+
+        if (useCards) {
+            let html = '<div class="support-task-cards-wrap">';
+            supportBadgeAgentIds.forEach(agentId => {
+                const agent = getSupportAgent(agentId);
+                const allTasks = getSupportAgentAllTasks(agentId);
+                if (!allTasks.length) return;
+                const expanded = !collapsedSupportTaskGroups.has(agentId);
+                html += `<section class="support-task-group${expanded ? ' is-expanded' : ''}" data-agent-id="${escapeHtmlAttr(agentId)}">
+                    <button type="button" class="support-task-group-toggle" aria-expanded="${expanded}">
+                        <span class="support-task-group-label">${escapeHtmlText(agent.name)}（${allTasks.length}项待办）</span>
+                        ${getSupportDailyTaskChevronHtml()}
+                    </button>
+                    <div class="support-task-card-list">`;
+                getSupportAgentTasksWithCategory(agentId).forEach((item, index) => {
+                    html += buildSupportTaskCardHtml(agentId, item.task, index);
+                });
+                html += '</div></section>';
+            });
+            html += '</div>';
+            return html;
+        }
+
         let html = '<p>以下是有待办事项的业务助理任务汇总：</p>';
         supportBadgeAgentIds.forEach(agentId => {
             const agent = getSupportAgent(agentId);
@@ -1960,9 +1995,11 @@
                 html += buildSupportTodoLineSummaryHtml(agentId, item.task, index);
             });
         });
-        html += options.forChatCard
-            ? '<p>点击任务项发送到对话框，我将协助您推进处理。</p>'
-            : '<p>请点击任务项，或选择带角标的业务助理头像，快速发起对话。</p>';
+        if (options.forChatCard) {
+            html += '<p>点击任务项发送到对话框，我将协助您推进处理。</p>';
+        } else {
+            html += '<p>请点击任务项，或选择带角标的业务助理头像，快速发起对话。</p>';
+        }
         return html;
     }
 
@@ -2024,11 +2061,29 @@
         if (window.__supportTodoActionsBound === 'true') return;
         window.__supportTodoActionsBound = 'true';
 
+        document.getElementById('support-sidebar-tasks-body')?.addEventListener('click', (event) => {
+            const toggle = event.target.closest('.support-task-group-toggle');
+            if (!toggle) return;
+            event.preventDefault();
+            event.stopPropagation();
+            const group = toggle.closest('.support-task-group');
+            if (!group) return;
+            const agentId = group.dataset.agentId;
+            const expanded = group.classList.toggle('is-expanded');
+            toggle.setAttribute('aria-expanded', String(expanded));
+            if (agentId) {
+                if (expanded) collapsedSupportTaskGroups.delete(agentId);
+                else collapsedSupportTaskGroups.add(agentId);
+            }
+        });
+
         document.addEventListener('click', (event) => {
             if (!document.body.classList.contains('support-tab-active')) return;
 
             const trigger = event.target.closest('.support-chat-todo-trigger');
             if (!trigger) return;
+
+            if (event.target.closest('.support-task-group-toggle')) return;
 
             const exceptionTitle = trigger.dataset.exceptionTitle;
             if (exceptionTitle && trigger.classList.contains('support-exception-item-trigger')) {
