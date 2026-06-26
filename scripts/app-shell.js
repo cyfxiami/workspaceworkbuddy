@@ -34,9 +34,26 @@
             || document.getElementById(baseId);
     }
 
+    function getNavItemPanelKey(item) {
+        if (!item) return 'employee';
+        if (item.classList.contains('support-only-nav') || item.closest('.support-only-nav')) {
+            return 'support';
+        }
+        return 'employee';
+    }
+
+    function ensureSupportPanelActive() {
+        document.querySelectorAll('.workbench-panel').forEach((panel) => {
+            panel.classList.toggle('active', panel.dataset.panel === 'support');
+        });
+        document.body.classList.add('support-tab-active');
+        document.body.classList.remove('org-tab-active', 'employee-chat-mode');
+        syncBreadcrumbForRole('support');
+    }
+
     function ensurePanelActiveByNavItem(item) {
         if (!item) return;
-        const targetPanelKey = item.classList.contains('support-only-nav') ? 'support' : 'employee';
+        const targetPanelKey = getNavItemPanelKey(item);
         document.querySelectorAll('.workbench-panel').forEach((panel) => {
             panel.classList.toggle('active', panel.dataset.panel === targetPanelKey);
         });
@@ -61,6 +78,7 @@
         document.body.classList.toggle('employee-performance-view-active', !isSupport && (
             currentCenterView === 'performance'
             || currentCenterView === 'travel'
+            || currentCenterView === 'exceptions'
             || currentCenterView === 'manageBizAgents'
             || currentCenterView === 'manageAssistants'
         ));
@@ -89,6 +107,10 @@
             window.initTravelAnalysis();
         }
 
+        if (currentCenterView === 'exceptions' && typeof window.applyAllExceptionBoardScopes === 'function') {
+            window.applyAllExceptionBoardScopes();
+        }
+
         if (currentCenterView === 'manageBizAgents') {
             if (typeof window.initAssistantManagement === 'function') {
                 window.initAssistantManagement();
@@ -108,15 +130,40 @@
             item.classList.toggle('is-center-active', targetView === currentCenterView);
         });
 
+        if (currentCenterView !== 'session') {
+            collapseContextPanel();
+        }
+
         requestAnimationFrame(() => {
             window.initOverlayScrollbars?.();
         });
+    }
+
+    function returnToSupportSessionView(options = {}) {
+        const { keepChat = false } = options;
+        ensureSupportPanelActive();
+        setCenterView('session');
+        document.body.classList.remove('support-exceptions-view-active');
+        document.querySelectorAll('.sidebar .bc-item-nav[data-bc="exceptions"]').forEach((el) => {
+            el.classList.remove('is-center-active');
+        });
+        if (!keepChat && typeof window.exitSupportChatMode === 'function') {
+            window.exitSupportChatMode(document.getElementById('workbench-panel-support'));
+        } else if (typeof window.syncSupportHomeLayout === 'function') {
+            window.syncSupportHomeLayout(document.getElementById('workbench-panel-support'));
+        }
+        if (typeof window.syncCenterAgentsBar === 'function') {
+            window.syncCenterAgentsBar();
+        }
     }
 
     function returnToMainSessionView(options = {}) {
         const { resetChat = false } = options;
         const wasModuleView = currentCenterView !== 'session';
         const wasExceptions = currentCenterView === 'exceptions';
+        if (document.body.classList.contains('support-tab-active')) {
+            ensureSupportPanelActive();
+        }
         setCenterView('session');
         if (wasModuleView) {
             document.querySelectorAll('.sidebar .bc-item-nav').forEach((el) => {
@@ -133,6 +180,9 @@
         }
         if (resetChat && typeof window.resetSupportChatView === 'function' && document.body.classList.contains('support-tab-active')) {
             window.resetSupportChatView();
+        }
+        if (!resetChat && typeof window.restoreEmployeeSessionView === 'function') {
+            window.restoreEmployeeSessionView();
         }
         if (wasModuleView && typeof window.syncCenterAgentsBar === 'function') {
             window.syncCenterAgentsBar();
@@ -494,6 +544,7 @@
             chatView.classList.remove('is-visible');
         }
         document.body.classList.remove('employee-chat-mode');
+        window.AppShell?.collapseContextPanel?.();
         if (typeof window.ContextPanel !== 'undefined') {
             window.ContextPanel.reset();
         }
@@ -518,7 +569,7 @@
             returnToMainSessionView({ resetChat: true });
         });
         document.getElementById('travel-back-btn')?.addEventListener('click', () => {
-            returnToMainSessionView({ resetChat: true });
+            returnToMainSessionView();
         });
         document.addEventListener('click', (event) => {
             const backBtn = event.target.closest('.exceptions-back-btn');
@@ -627,6 +678,7 @@
         highlightSessionInSidebar,
         setCenterView,
         returnToMainSessionView,
+        returnToSupportSessionView,
         syncBreadcrumbForRole,
         renderSessionHistory,
         switchSidebarTab,

@@ -245,9 +245,9 @@
     
     // ========== 工作台 Tab 切换 ==========
     const workbenchPanelState = {
-        support: { chatModeActive: false, currentCardIndex: 0, miniAvatarsInitialized: false, currentSupportAgent: null, currentSupportInputAgent: 'daily-task', currentTaskAgentId: null, currentTask: null, currentTodoStep: null, supportWelcomeShown: false, currentSessionId: null, supportChatMessages: [], currentInputSkillId: null },
+        support: { chatModeActive: false, currentCardIndex: 0, miniAvatarsInitialized: false, currentSupportAgent: null, currentSupportInputAgent: 'daily-task', currentTaskAgentId: null, currentTask: null, currentTodoStep: null, supportWelcomeShown: false, currentSessionId: null, supportChatMessages: [], currentInputSkillId: null, currentExtraAssistantId: null },
         org: { chatModeActive: true, currentCardIndex: 0, miniAvatarsInitialized: false, currentOrgAgent: null, currentInputSkillId: null },
-        employee: { chatModeActive: false, currentCardIndex: 0, miniAvatarsInitialized: false, currentSessionId: null, chatMessages: [], employeeModelGuide: null, currentInputSkillId: null }
+        employee: { chatModeActive: false, currentCardIndex: 0, miniAvatarsInitialized: false, currentSessionId: null, chatMessages: [], employeeModelGuide: null, currentInputSkillId: null, currentExtraAssistantId: null, exceptionChatActive: false }
     };
 
     const supportCategoryAgentTasks = {
@@ -646,6 +646,27 @@
 
     const WORKBENCH_ROLE_STORAGE_KEY = 'workbenchRole';
     const WORKBENCH_LOGIN_STORAGE_KEY = 'workbenchLoggedIn';
+    /** 临时隐藏：顶部业务助理新增、助手卡片新增、输入框技能选择（改为 false 即可恢复） */
+    const WB_HIDE_MANAGE_ENTRIES = true;
+    /** 临时隐藏：侧栏业绩绩效入口（改为 false 即可恢复） */
+    const WB_HIDE_PERFORMANCE_ENTRY = true;
+    const WORKBENCH_LOGIN_USER_KEY = 'workbenchLoginUser';
+
+    const EMPLOYEE_LOGIN_PROFILES = {
+        demo: { name: '陈小明', dept: '投行一部' },
+        chenming: { name: '陈小明', dept: '投行一部' },
+        mingchen: { name: '陈小明', dept: '投行一部' },
+        chengong: { name: '陈小明', dept: '投行一部' }
+    };
+
+    const EXCEPTION_SUPPORT_NAME_MASK = {
+        周强: '张三',
+        王磊: '王五',
+        李航: '赵六',
+        赵静: '孙七',
+        钱七: '周八',
+        张某: '王某'
+    };
     const SUPPORT_SESSIONS_KEY = 'workbench-sessions-support-v1';
     let currentWorkbenchRole = null;
     let loginAccountMode = 'oa';
@@ -743,8 +764,19 @@
         const sidebarTitleEl = document.getElementById('sidebar-title');
         const heroTitleEl = document.getElementById('center-hero-title');
         const sidebarUserNameEl = document.getElementById('sidebar-user-name');
+        const sidebarUserAvatarEl = document.getElementById('sidebar-user-avatar');
         if (sidebarTitleEl) sidebarTitleEl.textContent = brandTitle;
-        if (sidebarUserNameEl) sidebarUserNameEl.textContent = userLabel;
+        if (sidebarUserNameEl) {
+            sidebarUserNameEl.textContent = resolvedRole === 'employee'
+                ? getLoggedInEmployeeProfile().name
+                : userLabel;
+        }
+        if (sidebarUserAvatarEl) {
+            const avatarSource = resolvedRole === 'employee'
+                ? getLoggedInEmployeeProfile().name
+                : userLabel;
+            sidebarUserAvatarEl.textContent = avatarSource ? avatarSource.charAt(0) : '';
+        }
         if (heroTitleEl && resolvedRole === 'employee') heroTitleEl.textContent = brandTitle;
 
         const supportHeroTitle = document.querySelector('#workbench-panel-support #center-hero-title-support');
@@ -774,7 +806,7 @@
     function showLoginPage() {
         document.getElementById('login-page')?.removeAttribute('hidden');
         document.getElementById('app-workbench')?.setAttribute('hidden', '');
-        document.body.classList.remove('support-tab-active', 'org-tab-active', 'wb-workbench-active', 'employee-chat-mode');
+        document.body.classList.remove('support-tab-active', 'org-tab-active', 'wb-workbench-active', 'wb-hide-manage-entries', 'employee-chat-mode');
         document.body.style.overflow = '';
         resetLoginFormState();
     }
@@ -784,6 +816,7 @@
         try {
             sessionStorage.removeItem(WORKBENCH_LOGIN_STORAGE_KEY);
             sessionStorage.removeItem(WORKBENCH_ROLE_STORAGE_KEY);
+            sessionStorage.removeItem(WORKBENCH_LOGIN_USER_KEY);
             currentWorkbenchRole = null;
 
             hideSupportAvatarsNav();
@@ -846,6 +879,8 @@
         document.getElementById('login-page')?.setAttribute('hidden', '');
         document.getElementById('app-workbench')?.removeAttribute('hidden');
         document.body.classList.add('wb-workbench-active');
+        document.body.classList.toggle('wb-hide-manage-entries', WB_HIDE_MANAGE_ENTRIES);
+        document.body.classList.toggle('wb-hide-performance-entry', WB_HIDE_PERFORMANCE_ENTRY);
         updateNavTitleForRole(resolvedRole);
 
         if (!workbenchInitialized) {
@@ -879,6 +914,7 @@
             return;
         }
         if (errorEl) errorEl.hidden = true;
+        sessionStorage.setItem(WORKBENCH_LOGIN_USER_KEY, username.toLowerCase());
         enterWorkbench(roleInput.value);
     }
 
@@ -1028,40 +1064,867 @@
         scrollLastChatCardIntoView(panel, { card: element, padding });
     }
 
+    function getLoggedInEmployeeProfile() {
+        const loginId = (sessionStorage.getItem(WORKBENCH_LOGIN_USER_KEY) || 'demo').toLowerCase();
+        return EMPLOYEE_LOGIN_PROFILES[loginId] || EMPLOYEE_LOGIN_PROFILES.demo;
+    }
+
+    function getExceptionBoardScope(board) {
+        if (!board) return 'employee';
+        if (board.id === 'exception-reminder-board-support') return 'support';
+        if (board.closest('#workbench-panel-support')) return 'support';
+        return 'employee';
+    }
+
+    function maskExceptionSupportText(text) {
+        let result = String(text || '');
+        Object.entries(EXCEPTION_SUPPORT_NAME_MASK).forEach(([real, fake]) => {
+            result = result.split(real).join(fake);
+        });
+        return result;
+    }
+
+    function getExceptionScopedDesc(card, scope) {
+        const fallback = card.querySelector('.exception-alert-desc')?.textContent?.trim() || '';
+        if (scope === 'employee') {
+            return card.dataset.exceptionDescEmployee || fallback;
+        }
+        return card.dataset.exceptionDescSupport || fallback;
+    }
+
+    function applyExceptionCardScopedCopy(card, scope) {
+        const descEl = card.querySelector('.exception-alert-desc');
+        if (!descEl) return;
+
+        const deptEl = card.querySelector('.exception-alert-dept');
+        const desc = getExceptionScopedDesc(card, scope);
+        const dept = scope === 'employee'
+            ? (card.dataset.exceptionDeptEmployee || deptEl?.textContent?.trim() || '')
+            : (card.dataset.exceptionDeptSupport || deptEl?.textContent?.trim() || '');
+
+        card.dataset.exceptionDescOriginal = desc;
+        if (deptEl && dept) {
+            card.dataset.exceptionDeptOriginal = dept;
+        }
+
+        if (scope === 'employee') {
+            descEl.textContent = desc;
+            if (deptEl && dept) deptEl.textContent = dept;
+            delete card.dataset.supportMasked;
+            return;
+        }
+
+        applySupportNameMaskToCard(card);
+    }
+
+    function refreshExceptionCardOriginalText(card) {
+        if (!card) return;
+        const dept = card.querySelector('.exception-alert-dept');
+        const desc = card.querySelector('.exception-alert-desc');
+        if (dept) card.dataset.exceptionDeptOriginal = dept.textContent.trim();
+        if (desc) card.dataset.exceptionDescOriginal = desc.textContent.trim();
+    }
+
+    function cacheExceptionCardOriginalText(card) {
+        if (!card || card.dataset.exceptionDeptOriginal) return;
+        const dept = card.querySelector('.exception-alert-dept');
+        const desc = card.querySelector('.exception-alert-desc');
+        if (dept) card.dataset.exceptionDeptOriginal = dept.textContent.trim();
+        if (desc) card.dataset.exceptionDescOriginal = desc.textContent.trim();
+    }
+
+    function restoreExceptionCardOriginalText(card) {
+        if (!card) return;
+        const dept = card.querySelector('.exception-alert-dept');
+        const desc = card.querySelector('.exception-alert-desc');
+        if (dept && card.dataset.exceptionDeptOriginal) {
+            dept.textContent = card.dataset.exceptionDeptOriginal;
+        }
+        if (desc && card.dataset.exceptionDescOriginal) {
+            desc.textContent = card.dataset.exceptionDescOriginal;
+        }
+        delete card.dataset.supportMasked;
+    }
+
+    function applySupportNameMaskToCard(card) {
+        const dept = card.querySelector('.exception-alert-dept');
+        const desc = card.querySelector('.exception-alert-desc');
+        if (dept && card.dataset.exceptionDeptOriginal) {
+            dept.textContent = maskExceptionSupportText(card.dataset.exceptionDeptOriginal);
+        }
+        if (desc && card.dataset.exceptionDescOriginal) {
+            desc.textContent = maskExceptionSupportText(card.dataset.exceptionDescOriginal);
+        }
+        card.dataset.supportMasked = 'true';
+    }
+
+    function getEmployeeVisibleExceptionIds() {
+        const employeeBoard = document.getElementById('exception-reminder-board');
+        if (!employeeBoard) return new Set();
+        return new Set(
+            Array.from(employeeBoard.querySelectorAll('.exception-alert-card'))
+                .filter((card) => {
+                    const assignee = card.dataset.exceptionAssignee || '';
+                    return assignee === getLoggedInEmployeeProfile().name;
+                })
+                .map((card) => card.dataset.exceptionId)
+                .filter(Boolean)
+        );
+    }
+
+    function ensureSupportShowsEmployeeExceptions(supportBoard) {
+        if (!supportBoard || getExceptionBoardScope(supportBoard) !== 'support') return;
+        const sharedIds = getEmployeeVisibleExceptionIds();
+        supportBoard.querySelectorAll('.exception-alert-card').forEach((card) => {
+            const id = card.dataset.exceptionId;
+            if (id && sharedIds.has(id)) {
+                card.classList.remove('is-scope-hidden');
+            }
+        });
+    }
+
+    function applyExceptionBoardScope(board) {
+        if (!board) return;
+        const scope = getExceptionBoardScope(board);
+        const profile = getLoggedInEmployeeProfile();
+
+        board.querySelectorAll('.exception-alert-card').forEach((card) => {
+            const assignee = card.dataset.exceptionAssignee || '';
+            if (scope === 'employee') {
+                const visible = assignee === profile.name;
+                card.classList.toggle('is-scope-hidden', !visible);
+                if (visible) {
+                    applyExceptionCardScopedCopy(card, 'employee');
+                }
+                return;
+            }
+
+            card.classList.remove('is-scope-hidden');
+            applyExceptionCardScopedCopy(card, 'support');
+        });
+
+        if (scope === 'support') {
+            ensureSupportShowsEmployeeExceptions(board);
+        }
+
+        if (scope === 'employee') {
+            syncEmployeeExceptionTabs(board);
+        }
+        syncExceptionBoardStats(board);
+        board.querySelectorAll('.exception-tab-panel').forEach((panel) => {
+            const filterKey = board.dataset.exceptionView === 'all'
+                ? (board.dataset.exceptionFilter || 'all')
+                : (panel.dataset.exceptionFilter || 'all');
+            if (board.dataset.exceptionView === 'all') return;
+            applyExceptionListFilter(panel, filterKey);
+        });
+        if (board.dataset.exceptionView === 'all') {
+            applyExceptionAllViewFilter(board, board.dataset.exceptionFilter || 'all');
+        }
+    }
+
+    function syncEmployeeExceptionTabs(board) {
+        if (getExceptionBoardScope(board) !== 'employee') return;
+        if (board.dataset.exceptionView === 'all') return;
+
+        board.querySelectorAll('.exception-tab').forEach((tab) => {
+            tab.hidden = false;
+        });
+
+        const panelKeys = ['behavior', 'employee'];
+        let firstVisibleKey = null;
+        panelKeys.forEach((key) => {
+            const panel = board.querySelector(`.exception-tab-panel[data-exception-panel="${key}"]`);
+            const count = panel?.querySelectorAll('.exception-alert-card:not(.is-scope-hidden)').length || 0;
+            if (count > 0 && !firstVisibleKey) firstVisibleKey = key;
+        });
+
+        const activePanel = board.querySelector('.exception-tab-panel.is-active:not([hidden])');
+        const activeCount = activePanel?.querySelectorAll('.exception-alert-card:not(.is-scope-hidden)').length || 0;
+        if (!activeCount && firstVisibleKey) {
+            activateExceptionTab(board, firstVisibleKey);
+        }
+    }
+
+    function injectSupportOnlyExceptionCards(board) {
+        if (!board || board.dataset.supportInjected === 'true') return;
+        if (getExceptionBoardScope(board) !== 'support') return;
+
+        const list = board.querySelector('[data-exception-panel="behavior"] .exception-alert-list');
+        if (!list) return;
+
+        const card = document.createElement('article');
+        card.className = 'exception-alert-card exception-alert-card--processing';
+        card.setAttribute('role', 'button');
+        card.tabIndex = 0;
+        card.dataset.exceptionId = 'large-fund-transfer';
+        card.dataset.exceptionAssignee = '钱七';
+        card.dataset.exceptionSupportOnly = 'true';
+        card.dataset.exceptionInjectedSupport = 'true';
+        card.innerHTML = `
+            <div class="exception-alert-accent" aria-hidden="true"></div>
+            <div class="exception-alert-body">
+                <div class="exception-alert-head">
+                    <div class="exception-alert-title-line">
+                        <h3 class="exception-alert-title">大额异常资金划转</h3>
+                        <span class="exception-alert-dept">自营投资部-钱七</span>
+                    </div>
+                </div>
+                <p class="exception-alert-desc">监测到自营投资部钱七名下账户发生单笔超5000万元资金划转，与常规操作模式不符，请组织核实并同步风控。</p>
+                <div class="exception-alert-footer">
+                    <span class="exception-status-tag exception-status-tag--processing">处理中</span>
+                    <time class="exception-alert-time" datetime="2026-06-25T10:40">2026-06-25 10:40</time>
+                </div>
+            </div>
+            <span class="exception-alert-arrow" aria-hidden="true">›</span>
+        `;
+        list.appendChild(card);
+        board.dataset.supportInjected = 'true';
+    }
+
+    function bindExceptionAlertCard(board, card) {
+        card.removeAttribute('onclick');
+        ensureExceptionStatusTagButton(card);
+
+        const handleOpen = (event) => {
+            if (event?.target?.closest?.('.exception-status-tag')) return;
+            openExceptionAlertFromCard(card);
+        };
+
+        if (card.dataset.exceptionCardBound === 'true') return;
+        card.dataset.exceptionCardBound = 'true';
+        card.addEventListener('click', handleOpen);
+        card.querySelector('.exception-status-tag')?.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            openExceptionAlertFromCard(card);
+        });
+        card.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openExceptionAlertFromCard(card);
+            }
+        });
+    }
+
+    function applyAllExceptionBoardScopes() {
+        const employeeBoard = document.getElementById('exception-reminder-board');
+        const supportBoard = document.getElementById('exception-reminder-board-support');
+        if (employeeBoard) applyExceptionBoardScope(employeeBoard);
+        if (supportBoard) applyExceptionBoardScope(supportBoard);
+    }
+
+    window.applyAllExceptionBoardScopes = applyAllExceptionBoardScopes;
+
+    function getLocalDateKey(date = new Date()) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    function formatExceptionCardTime(date) {
+        if (!date || Number.isNaN(date.getTime())) return '';
+        const hh = String(date.getHours()).padStart(2, '0');
+        const mm = String(date.getMinutes()).padStart(2, '0');
+        return `${getLocalDateKey(date)} ${hh}:${mm}`;
+    }
+
+    function syncExceptionDemoTodayDates(board) {
+        const today = new Date();
+        board?.querySelectorAll('[data-exception-demo-today="true"]').forEach((card) => {
+            const timeEl = card.querySelector('.exception-alert-time');
+            if (!timeEl) return;
+            const existing = parseExceptionCardCreatedAt(card);
+            const hours = existing?.getHours() ?? 9;
+            const minutes = existing?.getMinutes() ?? 0;
+            const updated = new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                today.getDate(),
+                hours,
+                minutes,
+                0,
+                0
+            );
+            const hh = String(hours).padStart(2, '0');
+            const mm = String(minutes).padStart(2, '0');
+            timeEl.setAttribute('datetime', `${getLocalDateKey(updated)}T${hh}:${mm}`);
+            timeEl.textContent = formatExceptionCardTime(updated);
+        });
+    }
+
+    function parseExceptionCardCreatedAt(card) {
+        const timeEl = card?.querySelector('.exception-alert-time');
+        if (!timeEl) return null;
+        const raw = (timeEl.getAttribute('datetime') || timeEl.textContent || '').trim();
+        if (!raw) return null;
+        const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
+        const dt = new Date(normalized);
+        return Number.isNaN(dt.getTime()) ? null : dt;
+    }
+
+    function isExceptionCardCreatedToday(card) {
+        const created = parseExceptionCardCreatedAt(card);
+        if (!created) return false;
+        return getLocalDateKey(created) === getLocalDateKey();
+    }
+
+    function getExceptionCardStatusKey(card) {
+        const status = card.querySelector('.exception-status-tag')?.textContent?.trim() || '';
+        if (status === '处理中') return 'processing';
+        if (status === '已处理') return 'done';
+        return 'pending';
+    }
+
+    function cardMatchesExceptionFilter(card, filterKey) {
+        if (!filterKey || filterKey === 'all') return true;
+        if (filterKey === 'today') return isExceptionCardCreatedToday(card);
+        return getExceptionCardStatusKey(card) === filterKey;
+    }
+
+    const EXCEPTION_STAT_FILTER_MAP = {
+        new: 'today',
+        processing: 'processing',
+        done: 'done'
+    };
+
+    function updateExceptionBoardChrome(board) {
+        if (!board) return;
+        const isAllView = board.dataset.exceptionView === 'all';
+        const allBtn = board.querySelector('.exception-all-btn');
+        allBtn?.setAttribute('aria-pressed', isAllView ? 'true' : 'false');
+        board.classList.toggle('is-all-exceptions-view', isAllView);
+    }
+
+    function updateExceptionStatsFilterUI(statsRow, filterKey) {
+        const key = filterKey || 'all';
+        statsRow?.querySelectorAll('.exception-stat-card').forEach((stat) => {
+            const statType = stat.classList.contains('exception-stat-card--new') ? 'new'
+                : stat.classList.contains('exception-stat-card--processing') ? 'processing'
+                : stat.classList.contains('exception-stat-card--done') ? 'done'
+                : '';
+            const mapped = EXCEPTION_STAT_FILTER_MAP[statType];
+            stat.classList.toggle('is-filter-active', key !== 'all' && mapped === key);
+            stat.setAttribute('aria-pressed', key !== 'all' && mapped === key ? 'true' : 'false');
+        });
+    }
+
+    function updateExceptionFilterUI(panel, filterKey) {
+        const key = filterKey || 'all';
+        const board = panel?.closest('.exception-reminder-board');
+        const isAllView = board?.dataset.exceptionView === 'all';
+        updateExceptionStatsFilterUI(panel?.querySelector('.exception-stats-row'), key);
+        if (board && !isAllView) {
+            updateExceptionBoardChrome(board);
+        }
+    }
+
+    function updateExceptionAllViewFilterUI(board, filterKey) {
+        const allView = board?.querySelector('.exception-all-view');
+        updateExceptionStatsFilterUI(allView?.querySelector('.exception-stats-row'), filterKey);
+    }
+
+    function applyExceptionListFilter(panel, filterKey) {
+        if (!panel) return;
+        const key = filterKey || 'all';
+        panel.dataset.exceptionFilter = key;
+        panel.querySelectorAll('.exception-alert-card').forEach((card) => {
+            if (card.classList.contains('is-scope-hidden')) {
+                card.classList.add('is-filter-hidden');
+                return;
+            }
+            const show = cardMatchesExceptionFilter(card, key);
+            card.classList.toggle('is-filter-hidden', !show);
+        });
+        updateExceptionFilterUI(panel, key);
+    }
+
+    function applyExceptionAllViewFilter(board, filterKey) {
+        const allView = board?.querySelector('.exception-all-view');
+        if (!allView) return;
+        const key = filterKey || 'all';
+        board.dataset.exceptionFilter = key;
+        allView.querySelectorAll('.exception-alert-card').forEach((card) => {
+            if (card.classList.contains('is-scope-hidden')) {
+                card.classList.add('is-filter-hidden');
+                return;
+            }
+            const show = cardMatchesExceptionFilter(card, key);
+            card.classList.toggle('is-filter-hidden', !show);
+        });
+        updateExceptionAllViewFilterUI(board, key);
+    }
+
+    function markExceptionCardOrigins(board) {
+        board?.querySelectorAll('.exception-tab-panel').forEach((panel) => {
+            const key = panel.dataset.exceptionPanel;
+            if (!key) return;
+            panel.querySelectorAll('.exception-alert-card').forEach((card) => {
+                card.dataset.exceptionOriginPanel = key;
+            });
+        });
+    }
+
+    function restoreExceptionCardsToPanels(board) {
+        if (!board) return;
+        board.querySelectorAll('.exception-alert-card').forEach((card) => {
+            const origin = card.dataset.exceptionOriginPanel;
+            const list = origin
+                ? board.querySelector(`.exception-tab-panel[data-exception-panel="${origin}"] .exception-alert-list`)
+                : null;
+            if (list) list.appendChild(card);
+        });
+    }
+
+    function ensureExceptionAllView(board) {
+        let allView = board.querySelector('.exception-all-view');
+        if (allView) return allView;
+
+        const templateStats = board.querySelector('.exception-tab-panel .exception-stats-row');
+        allView = document.createElement('div');
+        allView.className = 'exception-all-view';
+        allView.hidden = true;
+
+        if (templateStats) {
+            const statsRow = templateStats.cloneNode(true);
+            statsRow.setAttribute('aria-label', '全部异常统计');
+            statsRow.querySelectorAll('.exception-stat-card').forEach((statCard) => {
+                delete statCard.dataset.bound;
+                statCard.classList.remove('is-filter-active');
+                statCard.setAttribute('aria-pressed', 'false');
+            });
+            allView.appendChild(statsRow);
+        }
+
+        const list = document.createElement('div');
+        list.className = 'exception-alert-list';
+        allView.appendChild(list);
+
+        board.querySelector('.exception-board-header')?.insertAdjacentElement('afterend', allView);
+        allView.querySelectorAll('.exception-stat-card').forEach((statCard) => {
+            bindExceptionStatCard(board, statCard);
+        });
+        return allView;
+    }
+
+    function bindExceptionStatCard(board, statCard) {
+        if (!statCard || statCard.dataset.bound === 'true') return;
+        statCard.dataset.bound = 'true';
+        statCard.setAttribute('role', 'button');
+        statCard.setAttribute('tabindex', '0');
+
+        const activateFilter = () => {
+            if (board.dataset.exceptionView === 'all') {
+                if (!statCard.closest('.exception-all-view')) return;
+                const statType = statCard.classList.contains('exception-stat-card--new') ? 'new'
+                    : statCard.classList.contains('exception-stat-card--processing') ? 'processing'
+                    : 'done';
+                const filterKey = EXCEPTION_STAT_FILTER_MAP[statType];
+                if (!filterKey) return;
+                const current = board.dataset.exceptionFilter || 'all';
+                const nextKey = current === filterKey ? 'all' : filterKey;
+                applyExceptionAllViewFilter(board, nextKey);
+                return;
+            }
+
+            const panel = statCard.closest('.exception-tab-panel');
+            if (!panel || panel.hidden) return;
+            const statType = statCard.classList.contains('exception-stat-card--new') ? 'new'
+                : statCard.classList.contains('exception-stat-card--processing') ? 'processing'
+                : 'done';
+            const filterKey = EXCEPTION_STAT_FILTER_MAP[statType];
+            if (!filterKey) return;
+            const current = panel.dataset.exceptionFilter || 'all';
+            const nextKey = current === filterKey ? 'all' : filterKey;
+            applyExceptionListFilter(panel, nextKey);
+        };
+
+        statCard.addEventListener('click', activateFilter);
+        statCard.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                activateFilter();
+            }
+        });
+    }
+
+    function getActiveExceptionTabPanel(board) {
+        return board?.querySelector('.exception-tab-panel.is-active:not([hidden])')
+            || board?.querySelector('.exception-tab-panel:not([hidden])');
+    }
+
+    function resetExceptionPanelFilter(panel) {
+        applyExceptionListFilter(panel, 'all');
+    }
+
+    function activateExceptionTab(board, tabKey) {
+        const tabs = board.querySelectorAll('.exception-tab');
+        const panels = board.querySelectorAll('.exception-tab-panel');
+        const allView = board.querySelector('.exception-all-view');
+        board.dataset.exceptionView = 'tab';
+        delete board.dataset.exceptionFilter;
+        if (allView) allView.hidden = true;
+        restoreExceptionCardsToPanels(board);
+        updateExceptionBoardChrome(board);
+
+        tabs.forEach((item) => {
+            const active = item.dataset.exceptionTab === tabKey;
+            item.classList.toggle('is-active', active);
+            item.setAttribute('aria-selected', String(active));
+        });
+        panels.forEach((panel) => {
+            const show = panel.dataset.exceptionPanel === tabKey;
+            panel.hidden = !show;
+            panel.classList.toggle('is-active', show);
+            if (show) {
+                syncExceptionPanelStats(panel);
+                resetExceptionPanelFilter(panel);
+            }
+        });
+    }
+
+    function sortExceptionCardsByCreatedAtDesc(cards) {
+        return [...cards].sort((a, b) => {
+            const aTime = parseExceptionCardCreatedAt(a)?.getTime() ?? 0;
+            const bTime = parseExceptionCardCreatedAt(b)?.getTime() ?? 0;
+            return bTime - aTime;
+        });
+    }
+
+    function showAllExceptions(board) {
+        const tabs = board.querySelectorAll('.exception-tab');
+        const panels = board.querySelectorAll('.exception-tab-panel');
+        markExceptionCardOrigins(board);
+        restoreExceptionCardsToPanels(board);
+
+        const allView = ensureExceptionAllView(board);
+        const mergedList = allView.querySelector('.exception-alert-list');
+        const cards = [];
+        ['behavior', 'employee'].forEach((key) => {
+            const panel = board.querySelector(`.exception-tab-panel[data-exception-panel="${key}"]`);
+            panel?.querySelectorAll('.exception-alert-list .exception-alert-card:not(.is-scope-hidden)').forEach((card) => {
+                cards.push(card);
+            });
+        });
+        sortExceptionCardsByCreatedAtDesc(cards).forEach((card) => {
+            mergedList.appendChild(card);
+        });
+
+        board.dataset.exceptionView = 'all';
+        panels.forEach((panel) => {
+            panel.hidden = true;
+            panel.classList.remove('is-active');
+        });
+        allView.hidden = false;
+
+        tabs.forEach((item) => {
+            item.classList.remove('is-active');
+            item.setAttribute('aria-selected', 'false');
+        });
+
+        syncExceptionAllViewStats(board);
+        applyExceptionAllViewFilter(board, 'all');
+        updateExceptionBoardChrome(board);
+    }
+
+    function countExceptionCards(cards) {
+        const counts = { new: 0, processing: 0, done: 0 };
+        cards.forEach((card) => {
+            if (card.classList.contains('is-scope-hidden')) return;
+            if (isExceptionCardCreatedToday(card)) {
+                counts.new += 1;
+            }
+            const status = card.querySelector('.exception-status-tag')?.textContent?.trim() || '';
+            if (status === '处理中') {
+                counts.processing += 1;
+            } else if (status === '已处理') {
+                counts.done += 1;
+            }
+        });
+        return counts;
+    }
+
+    function countExceptionPanelStats(panel) {
+        const cards = panel?.querySelectorAll('.exception-alert-card') || [];
+        return countExceptionCards(cards);
+    }
+
+    function syncExceptionAllViewStats(board) {
+        const allView = board?.querySelector('.exception-all-view');
+        if (!allView) return;
+        const counts = countExceptionCards(allView.querySelectorAll('.exception-alert-card'));
+        const statsRow = allView.querySelector('.exception-stats-row');
+        if (!statsRow) return;
+        const setVal = (key, value) => {
+            const el = statsRow.querySelector(`.exception-stat-value[data-stat="${key}"]`);
+            if (el) el.textContent = String(value);
+        };
+        setVal('new', counts.new);
+        setVal('processing', counts.processing);
+        setVal('done', counts.done);
+    }
+
+    function syncExceptionPanelStats(panel) {
+        if (!panel) return;
+        const counts = countExceptionPanelStats(panel);
+        const statsRow = panel.querySelector('.exception-stats-row');
+        if (!statsRow) return;
+        const setVal = (key, value) => {
+            const el = statsRow.querySelector(`.exception-stat-value[data-stat="${key}"]`);
+            if (el) el.textContent = String(value);
+        };
+        setVal('new', counts.new);
+        setVal('processing', counts.processing);
+        setVal('done', counts.done);
+    }
+
+    function syncExceptionBoardStats(board) {
+        board?.querySelectorAll('.exception-tab-panel').forEach((panel) => {
+            syncExceptionPanelStats(panel);
+        });
+    }
+
     function initExceptionReminderBoards(root) {
         const scope = root || document;
         scope.querySelectorAll('.exception-reminder-board').forEach((board) => {
             if (board.dataset.initialized === 'true') return;
             board.dataset.initialized = 'true';
 
+            board.dataset.exceptionView = 'tab';
+            markExceptionCardOrigins(board);
+            syncExceptionDemoTodayDates(board);
+            syncExceptionBoardStats(board);
+            board.querySelectorAll('.exception-tab-panel').forEach((panel) => {
+                resetExceptionPanelFilter(panel);
+            });
+            updateExceptionBoardChrome(board);
+
             const tabs = board.querySelectorAll('.exception-tab');
-            const panels = board.querySelectorAll('.exception-tab-panel');
             tabs.forEach((tab) => {
                 tab.addEventListener('click', () => {
                     const key = tab.dataset.exceptionTab;
                     if (!key) return;
-                    tabs.forEach((item) => {
-                        const active = item.dataset.exceptionTab === key;
-                        item.classList.toggle('is-active', active);
-                        item.setAttribute('aria-selected', String(active));
-                    });
-                    panels.forEach((panel) => {
-                        const show = panel.dataset.exceptionPanel === key;
-                        panel.hidden = !show;
-                        panel.classList.toggle('is-active', show);
-                    });
+                    activateExceptionTab(board, key);
                 });
             });
 
-            board.querySelectorAll('.exception-alert-card').forEach((card) => {
-                card.addEventListener('keydown', (event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        card.click();
-                    }
-                });
+            board.querySelectorAll('.exception-tab-panel .exception-stat-card').forEach((statCard) => {
+                bindExceptionStatCard(board, statCard);
             });
+
+            const allBtn = board.querySelector('.exception-all-btn');
+            if (allBtn && !allBtn.dataset.bound) {
+                allBtn.dataset.bound = 'true';
+                allBtn.addEventListener('click', () => {
+                    showAllExceptions(board);
+                });
+            }
+
+            board.querySelectorAll('.exception-alert-card').forEach((card) => {
+                bindExceptionAlertCard(board, card);
+            });
+
+            applyExceptionBoardScope(board);
         });
+    }
+
+    function ensureExceptionStatusTagButton(card) {
+        const tag = card?.querySelector('.exception-status-tag');
+        if (!tag || tag.tagName === 'BUTTON') return;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = tag.className;
+        btn.textContent = tag.textContent;
+        btn.setAttribute('aria-label', `${tag.textContent.trim()}，点击查看详情`);
+        tag.replaceWith(btn);
+    }
+
+    function parseExceptionAlertCard(card) {
+        if (!card) return null;
+        return {
+            title: card.querySelector('.exception-alert-title')?.textContent?.trim() || '',
+            dept: card.dataset.exceptionDeptOriginal
+                || card.querySelector('.exception-alert-dept')?.textContent?.trim() || '',
+            desc: card.dataset.exceptionDescOriginal
+                || card.querySelector('.exception-alert-desc')?.textContent?.trim() || '',
+            status: card.querySelector('.exception-status-tag')?.textContent?.trim() || '待处理',
+            createdAt: card.querySelector('.exception-alert-time')?.textContent?.trim() || '',
+            category: card.dataset.exceptionOriginPanel
+                || card.closest('.exception-tab-panel')?.dataset.exceptionPanel
+                || 'behavior'
+        };
+    }
+
+    function getExceptionCategoryLabel(category) {
+        return category === 'employee' ? '员工异常' : '行为异常';
+    }
+
+    function getExceptionActionFromStatus(status) {
+        const text = String(status || '').trim();
+        if (text === '处理中') return 'processing';
+        if (text === '已处理') return 'done';
+        return 'pending';
+    }
+
+    function findExceptionAlertCard(title) {
+        const board = document.getElementById('exception-reminder-board-support')
+            || document.getElementById('exception-reminder-board');
+        if (!board || !title) return null;
+        return Array.from(board.querySelectorAll('.exception-alert-card')).find((card) => {
+            return card.querySelector('.exception-alert-title')?.textContent?.trim() === title;
+        }) || null;
+    }
+
+    function buildExceptionUserMessage(item, action) {
+        const categoryLabel = getExceptionCategoryLabel(item.category);
+        if (action === 'processing') {
+            return `请查看「${item.title}」${categoryLabel}的处理进度`;
+        }
+        if (action === 'done') {
+            return `请查看「${item.title}」${categoryLabel}的处理结果`;
+        }
+        return `请协助处理「${item.title}」${categoryLabel}`;
+    }
+
+    function buildExceptionAssistantReplyHtml(item, action) {
+        const categoryLabel = getExceptionCategoryLabel(item.category);
+        const header = `<p>您好，我是<strong>异常提醒助手</strong>。以下为您汇总「${escapeHtmlText(item.title)}」${categoryLabel}信息：</p>`;
+        const meta = `
+            <p><strong>异常类型：</strong>${categoryLabel}</p>
+            <p><strong>责任部门/人员：</strong>${escapeHtmlText(item.dept || '—')}</p>
+            <p>${escapeHtmlText(item.desc || '')}</p>
+            <p><strong>提醒时间：</strong>${escapeHtmlText(item.createdAt || '—')}</p>`;
+
+        if (action === 'processing') {
+            return `${header}${meta}
+                <p><strong>当前状态：</strong>处理中</p>
+                <p><strong>处理进度</strong></p>
+                <ul class="chat-md-list">
+                    <li>已完成初步核实与情况说明收集</li>
+                    <li>责任部门正在推进处置方案执行</li>
+                    <li>关键节点与协作事项已同步相关同事</li>
+                </ul>
+                <p>如需了解最新进展、补充材料或协调会商，请继续说明。</p>`;
+        }
+
+        if (action === 'done') {
+            return `${header}${meta}
+                <p><strong>当前状态：</strong>已处理</p>
+                <p><strong>处理结果</strong></p>
+                <ul class="chat-md-list">
+                    <li>异常事项已核实并完成处置闭环</li>
+                    <li>相关说明、整改或复核材料已归档备查</li>
+                    <li>后续将纳入常规监测，如有反复将再次提醒</li>
+                </ul>
+                <p>如需查看完整处理记录或导出结论，请继续说明。</p>`;
+        }
+
+        return `${header}${meta}
+            <p><strong>当前状态：</strong>待处理</p>
+            <p><strong>建议处置步骤</strong></p>
+            <ul class="chat-md-list">
+                <li>核实异常事实与影响范围</li>
+                <li>同步合规、风控及相关负责人</li>
+                <li>制定处置方案并在截止节点前提交结论</li>
+            </ul>
+            <p>如需我继续协助撰写说明、安排会商或推进审批，请直接告知。</p>`;
+    }
+
+    function sendSupportExceptionAlert(item, action) {
+        const panel = document.getElementById('workbench-panel-support');
+        if (!panel || !item?.title) return;
+
+        if (!panel.classList.contains('active')) {
+            switchWorkbenchTab('support');
+        }
+        window.AppShell?.returnToSupportSessionView?.({ keepChat: true });
+        setSupportInputAgent(panel, SUPPORT_INPUT_AGENT_EXCEPTIONS);
+
+        const state = getPanelState(panel);
+        if (!state.chatModeActive) {
+            enterSupportChatMode(panel);
+        }
+
+        const resolvedAction = action || getExceptionActionFromStatus(item.status);
+        appendSupportChatMessage(buildExceptionUserMessage(item, resolvedAction), 'user', panel);
+        setTimeout(() => {
+            appendSupportChatMessage(buildExceptionAssistantReplyHtml(item, resolvedAction), 'assistant', panel, {
+                html: true,
+                agentId: SUPPORT_INPUT_AGENT_EXCEPTIONS
+            });
+        }, 400);
+    }
+
+    function buildEmployeeExceptionChatAvatarHtml() {
+        const meta = getSupportInputAgentMeta(SUPPORT_INPUT_AGENT_EXCEPTIONS);
+        return buildSupportAssistantChatAvatarHtml(meta);
+    }
+
+    function clearEmployeeAssistantInputSelection(panel) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        if (!p || getPanelKey(p) !== 'employee') return;
+        const state = getPanelState(p);
+
+        state.currentExtraAssistantId = null;
+        state.currentCatalogAssistant = null;
+        state.currentInputSkillId = null;
+        state.exceptionChatActive = true;
+
+        p.querySelectorAll('.ai-mini-avatar').forEach((avatar) => avatar.classList.remove('active'));
+        p.querySelectorAll('.ai-card-fan[data-index]').forEach((card) => card.classList.remove('active'));
+        p.querySelectorAll('.indicator').forEach((ind) => ind.classList.remove('active'));
+        p.querySelectorAll('.input-assistant-tag:not(.input-assistant-more-trigger)').forEach((tag) => {
+            tag.classList.remove('is-active');
+            tag.setAttribute('aria-selected', 'false');
+        });
+        syncAssistantMorePickerState(p);
+        refreshInputSkillPicker(p);
+    }
+
+    function sendEmployeeExceptionAlert(item, action) {
+        const panel = document.getElementById('workbench-panel-employee');
+        if (!panel || !item?.title) return;
+
+        if (!panel.classList.contains('active')) {
+            switchWorkbenchTab('employee');
+        }
+        window.AppShell?.returnToMainSessionView?.();
+
+        const state = getPanelState(panel);
+        const resolvedAction = action || getExceptionActionFromStatus(item.status);
+
+        if (!state.chatModeActive) {
+            applyEmployeeChatModeUI(panel, {
+                index: state.currentCardIndex ?? 0,
+                showWelcome: false,
+                createHistory: true,
+                sessionTitle: `异常提醒·${item.title}`,
+                skipAssistantSelection: true
+            });
+        } else {
+            clearEmployeeAssistantInputSelection(panel);
+        }
+
+        appendChatMessage(buildExceptionUserMessage(item, resolvedAction), 'user', panel);
+        setTimeout(() => {
+            appendChatMessage(buildExceptionAssistantReplyHtml(item, resolvedAction), 'assistant', panel, {
+                html: true,
+                agentId: SUPPORT_INPUT_AGENT_EXCEPTIONS
+            });
+        }, 400);
+    }
+
+    function openExceptionAlertFromCard(card) {
+        const item = parseExceptionAlertCard(card);
+        if (!item?.title) return;
+        const board = card.closest('.exception-reminder-board');
+        const action = getExceptionActionFromStatus(item.status);
+        if (getExceptionBoardScope(board) === 'support') {
+            sendSupportExceptionAlert(item, action);
+        } else {
+            sendEmployeeExceptionAlert(item, action);
+        }
     }
 
     function cloneWorkbenchPanels() {
@@ -1084,7 +1947,9 @@
                 customizeSupportPanel(target);
             }
         });
+        injectSupportOnlyExceptionCards(document.getElementById('exception-reminder-board-support'));
         initExceptionReminderBoards();
+        applyAllExceptionBoardScopes();
         if (typeof window.initAssistantManagement === 'function') {
             window.initAssistantManagement();
         }
@@ -1159,6 +2024,9 @@
         syncSupportHomeLayout(p);
     }
 
+    window.exitSupportChatMode = exitSupportChatMode;
+    window.syncSupportHomeLayout = syncSupportHomeLayout;
+
     function returnToSupportMainPage() {
         window.AppShell?.setCenterView?.('session');
         document.body.classList.remove('support-exceptions-view-active');
@@ -1207,6 +2075,7 @@
         panel.querySelector('.support-daily-task-panel')?.remove();
         ensureSupportHomeCards(panel);
         initSupportInputAgentSelect(panel);
+        syncSupportAssistantTags(panel);
         panel.dataset.supportCustomized = 'true';
     }
 
@@ -1214,13 +2083,13 @@
         const board = document.getElementById('exception-reminder-board-support')
             || document.getElementById('exception-reminder-board');
         if (!board) return [];
-        return Array.from(board.querySelectorAll('.exception-alert-card')).map((card) => ({
-            title: card.querySelector('.exception-alert-title')?.textContent?.trim() || '',
-            dept: card.querySelector('.exception-alert-dept')?.textContent?.trim() || '',
-            desc: card.querySelector('.exception-alert-desc')?.textContent?.trim() || '',
-            status: card.querySelector('.exception-status-tag')?.textContent?.trim() || '',
-            createdAt: card.querySelector('.exception-alert-time')?.textContent?.trim() || ''
-        })).filter((item) => item.title);
+        applyExceptionBoardScope(board);
+        return Array.from(board.querySelectorAll('.exception-alert-card')).map((card) => {
+            if (card.classList.contains('is-scope-hidden') || card.classList.contains('is-filter-hidden')) {
+                return null;
+            }
+            return parseExceptionAlertCard(card);
+        }).filter((item) => item?.title);
     }
 
     function ensureSupportHomeCards(panel) {
@@ -1315,26 +2184,14 @@
     }
 
     function sendSupportExceptionQuick(title) {
-        const panel = document.getElementById('workbench-panel-support');
-        if (!panel || !title) return;
-
-        const item = collectSupportExceptionAlerts().find((entry) => entry.title === title);
-        const message = `请协助处理「${title}」异常提醒`;
-        const state = getPanelState(panel);
-
-        if (!state.chatModeActive) {
-            enterSupportChatMode(panel);
+        const card = findExceptionAlertCard(title);
+        if (card) {
+            openExceptionAlertFromCard(card);
+            return;
         }
-
-        appendSupportChatMessage(message, 'user', panel);
-        setTimeout(() => {
-            appendSupportChatMessage(
-                buildSupportExceptionReplyHtml(item),
-                'assistant',
-                panel,
-                { html: true, agentId: SUPPORT_INPUT_AGENT_DAILY_TASK }
-            );
-        }, 400);
+        const item = collectSupportExceptionAlerts().find((entry) => entry.title === title);
+        if (!item) return;
+        sendSupportExceptionAlert(item, getExceptionActionFromStatus(item.status));
     }
 
     function openSupportHomeCardInChat(cardType, options = {}) {
@@ -1770,6 +2627,8 @@
     }
 
     function getSupportAgentDisplayLabel(agentId) {
+        const extra = getExtraAssistantById(agentId);
+        if (extra) return extra.name;
         if (agentId === SUPPORT_INPUT_AGENT_DAILY_TASK) return '今日任务助手';
         if (agentId === SUPPORT_INPUT_AGENT_EXCEPTIONS) return '异常提醒助手';
         const functional = getSupportFunctionalAssistantMeta(agentId);
@@ -1779,6 +2638,10 @@
 
     function getSupportInputAgentMeta(agentId) {
         if (!agentId) return null;
+        const extra = getExtraAssistantById(agentId);
+        if (extra) {
+            return { id: extra.id, name: extra.name, emoji: extra.emoji, avatarClass: extra.avatarClass };
+        }
         if (agentId === SUPPORT_INPUT_AGENT_DAILY_TASK) {
             return { id: SUPPORT_INPUT_AGENT_DAILY_TASK, name: '今日任务助手', image: SUPPORT_DAILY_TASK_AVATAR_SRC };
         }
@@ -1844,11 +2707,19 @@
         const key = getPanelKey(panel);
         if (key === 'support') {
             const state = getPanelState(panel);
+            if (state.currentExtraAssistantId) {
+                const extra = getExtraAssistantById(state.currentExtraAssistantId);
+                return window.getAssistantSkillOwnerKey?.(extra?.name) || '';
+            }
             const meta = getSupportInputAgentMeta(getSupportInputReplyAgentId(state));
             return window.getAssistantSkillOwnerKey?.(meta?.name) || '';
         }
         if (key === 'employee') {
             const state = getPanelState(panel);
+            if (state.currentExtraAssistantId) {
+                const extra = getExtraAssistantById(state.currentExtraAssistantId);
+                return window.getAssistantSkillOwnerKey?.(extra?.name) || '';
+            }
             if (state.currentCatalogAssistant?.name) {
                 return window.getAssistantSkillOwnerKey(state.currentCatalogAssistant.name);
             }
@@ -2018,7 +2889,11 @@
 
     function updateSupportInputPlaceholder(panel, agentId) {
         const input = getPanelEl('main-chat-input', panel);
-        if (input) input.placeholder = getSupportInputPlaceholder(agentId);
+        if (!input) return;
+        const state = getPanelState(panel);
+        const extra = state.currentExtraAssistantId ? getExtraAssistantById(state.currentExtraAssistantId) : null;
+        const name = extra?.name || getSupportInputAgentMeta(agentId)?.name || '今日任务助手';
+        input.placeholder = `向${name}发送工作指令`;
     }
 
     function ensureSupportInputTopRow(panel) {
@@ -2091,6 +2966,7 @@
     }
 
     function getSupportInputReplyAgentId(state) {
+        if (state?.currentExtraAssistantId) return state.currentExtraAssistantId;
         return state?.currentSupportInputAgent || SUPPORT_INPUT_AGENT_DAILY_TASK;
     }
 
@@ -2202,6 +3078,7 @@
     function setSupportInputAgent(panel, agentId) {
         const state = getPanelState(panel);
         state.currentSupportInputAgent = agentId;
+        state.currentExtraAssistantId = null;
         state.currentInputSkillId = null;
         const picker = panel?.querySelector('.support-input-agent-picker');
         if (picker) {
@@ -2209,6 +3086,7 @@
         } else {
             updateSupportInputPlaceholder(panel, agentId);
         }
+        updateSupportAssistantTagSelection(panel);
         refreshInputSkillPicker(panel);
     }
 
@@ -2256,7 +3134,7 @@
                 </div>
             `;
 
-            const insertTarget = topRow || container.querySelector('.input-actions-left') || container;
+            const insertTarget = topRow || container.querySelector('.input-actions-right') || container;
             insertTarget.insertBefore(picker, insertTarget.firstChild);
         } else if (topRow && picker.parentElement !== topRow) {
             topRow.insertBefore(picker, topRow.firstChild);
@@ -2302,7 +3180,8 @@
 
     if (!window.__supportInputAgentPickerDocBound) {
         window.__supportInputAgentPickerDocBound = true;
-        document.addEventListener('click', () => {
+        document.addEventListener('click', (event) => {
+            if (event.target.closest('.input-assistant-more-picker')) return;
             closeAllSupportInputAgentPickers();
             document.querySelectorAll('.support-input-agent-menu').forEach((menu) => {
                 menu.setAttribute('hidden', '');
@@ -2532,6 +3411,7 @@
         renderSupportSidebarTasks(p);
         exitSupportChatMode(p);
         updateSupportChatLayout(p);
+        window.AppShell?.collapseContextPanel?.();
     }
 
     function initSupportPanel(panel) {
@@ -2541,6 +3421,7 @@
         state.chatModeActive = false;
         state.supportWelcomeShown = false;
         initSupportInputAgentSelect(panel);
+        syncSupportAssistantTags(panel);
         updateSupportAgentButton(panel, null);
         updateTopAvatarActive(null);
         updateSupportAvatarPendingDots();
@@ -2749,6 +3630,16 @@
         const p = panel || document.getElementById('workbench-panel-support');
         const state = getPanelState(p);
         const resolvedAgentId = agentId || state.currentSupportInputAgent || state.currentTaskAgentId || state.currentSupportAgent;
+        const extra = getExtraAssistantById(resolvedAgentId);
+        if (extra) {
+            appendSupportChatMessage(
+                getAssistantReply(message, 0, p, { chatIndex: extra.chatIndex }),
+                'assistant',
+                p,
+                { agentId: resolvedAgentId }
+            );
+            return;
+        }
         if (resolvedAgentId === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
             appendSupportChatMessage(buildSupportAllExceptionsChatHtml(), 'assistant', p, {
                 html: true,
@@ -2797,6 +3688,10 @@
         }
         if (agentId === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
             return `您好，我是异常提醒助手。关于「${message}」，我将为您汇总需关注的异常并协助推进处理。请补充具体事项或相关材料。`;
+        }
+        const extra = getExtraAssistantById(agentId);
+        if (extra) {
+            return getAssistantReply(message, 0, null, { chatIndex: extra.chatIndex });
         }
         return `您好，我是${getSupportAgentDisplayLabel(agentId)}。关于「${message}」，我将结合当前任务进展为您提供支持。请补充具体事项或相关材料。`;
     }
@@ -3313,14 +4208,8 @@
             return;
         }
         initIndicatorsForPanel(panel);
-        const targetCard = panel.querySelector('.ai-card-fan[data-index="0"]');
-        if (targetCard) {
-            panel.querySelectorAll('.ai-card-fan').forEach(card => card.classList.remove('active'));
-            panel.querySelectorAll('.indicator').forEach(ind => ind.classList.remove('active'));
-            targetCard.classList.add('active');
-            const indicators = panel.querySelectorAll('.indicator');
-            if (indicators[0]) indicators[0].classList.add('active');
-        }
+        selectEmployeeAssistant(0, panel);
+        syncEmployeeAssistantTags(panel);
         panel.dataset.initialized = 'true';
     }
 
@@ -3351,6 +4240,7 @@
                 if (container) container.dataset.supportInputReady = 'false';
                 initSupportInputAgentSelect(supportPanel);
             }
+            syncSupportAssistantTags(supportPanel);
             requestAnimationFrame(() => syncSupportHomeLayout(supportPanel));
         }
     }
@@ -3363,6 +4253,7 @@
         document.body.classList.toggle('org-tab-active', tabKey === 'org');
         document.body.classList.toggle('support-tab-active', tabKey === 'support');
         syncSidebarForRole(tabKey);
+        applyAllExceptionBoardScopes();
         syncSupportTopNavLayout();
         syncEmployeeChatModeLayout();
         updateNavTitleForRole(tabKey === 'support' ? 'support' : 'employee');
@@ -3449,6 +4340,7 @@
     window.syncHomeCardsFanLayout = syncHomeCardsFanLayout;
 
     function initWorkbenchTabs() {
+        initChatPromptCardEvents();
         cloneWorkbenchPanels();
         initWorkbenchPanel(document.getElementById('workbench-panel-employee'));
         initOverlayScrollbars();
@@ -3465,7 +4357,7 @@
             name: '客户分析助手',
             emoji: '🧠',
             avatarClass: 'canmou',
-            welcomeText: `**客户分析助手**\n\n从资产、行为、交易、合作记录等维度分析客户价值与风险。\n\n输入：客户名称、客户类型或分析维度。`
+            welcomeText: `**客户分析助手**\n\n从资产、行为、交易、合作记录等维度分析客户价值与风险，并结合客户情况推荐投行业务机会。\n\n**【我能帮您】**\n1. 客户综合分析 — 描述客户情况，输出业务机会推荐\n2. 操作指引与材料清单 — 获取步骤与尽调材料要求\n3. 对接支持人员 — 查询各业务投行专业人员\n\n请直接描述您的客户情况，我开始协助您。`
         },
         {
             index: 1,
@@ -3494,35 +4386,228 @@
             emoji: '👁️',
             avatarClass: 'tianyan',
             welcomeText: `**客户服务助手**\n\n按客户服务模块匹配买方分析、信披判断、临时公告生成模型。`
+        },
+        {
+            index: 5,
+            name: '审批助手',
+            emoji: '✅',
+            avatarClass: 'shenpi',
+            welcomeText: `**审批助手**\n\n查询审批进度、发起审批申请、催办提醒与流程跟踪。\n\n输入：审批事项、单号或待办描述。`
+        },
+        {
+            index: 6,
+            name: '通知公告助手',
+            emoji: '📢',
+            avatarClass: 'tongzhi',
+            welcomeText: `**通知公告助手**\n\n起草通知公告、查询发布记录、格式校验与发布建议。\n\n输入：公告主题、受众或正文要点。`
         }
     ];
 
+    const employeeExtraAssistants = [
+        { id: 'shenpi', name: '审批助手', emoji: '✅', avatarClass: 'shenpi', chatIndex: 5 },
+        { id: 'tongzhi', name: '通知公告助手', emoji: '📢', avatarClass: 'tongzhi', chatIndex: 6 }
+    ];
+
+    function getExtraAssistantById(id) {
+        return employeeExtraAssistants.find((item) => item.id === id) || null;
+    }
+
+    function resolveEmployeeChatIndexForReply(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const state = getPanelState(p);
+        if (state.currentExtraAssistantId) {
+            return getExtraAssistantById(state.currentExtraAssistantId)?.chatIndex ?? 0;
+        }
+        return resolveEmployeeChatIndex(state.currentCardIndex ?? 0, p);
+    }
+
+    function getExtraAssistantWelcomeHtml(chatIndex) {
+        const assistant = aiAssistants[chatIndex];
+        if (!assistant?.welcomeText) {
+            return markdownToHtml(`**${assistant?.name || '助手'}**\n\n说明当前能力与操作入口。`);
+        }
+        return markdownToHtml(assistant.welcomeText);
+    }
+
     function markdownToHtml(text) {
-        const lines = text.split('\n');
+        if (!text) return '';
+        const normalizedText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        const lines = normalizedText.split('\n');
         let html = '';
         let inList = false;
+        let inOrderedList = false;
+        let inTable = false;
+
+        const closeLists = () => {
+            if (inList) {
+                html += '</ul>';
+                inList = false;
+            }
+            if (inOrderedList) {
+                html += '</ol>';
+                inOrderedList = false;
+            }
+        };
 
         lines.forEach((line) => {
-            if (line.startsWith('• ')) {
-                if (!inList) {
-                    html += '<ul class="chat-md-list">';
-                    inList = true;
+            const trimmed = line.trim();
+
+            if (trimmed.match(/^\|.*\|$/)) {
+                closeLists();
+                if (trimmed.match(/^\|[\s\-:|]+\|$/)) return;
+                if (!inTable) {
+                    html += '<table class="chat-md-table"><thead><tr>';
+                    inTable = 'thead';
+                } else if (inTable === 'thead') {
+                    html += '</tr></thead><tbody><tr>';
+                    inTable = 'tbody';
+                } else {
+                    html += '<tr>';
                 }
-                const content = line.replace(/^•\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                html += `<li>${content}</li>`;
-            } else {
+                const cells = trimmed.split('|').filter((c) => c.trim() !== '');
+                const tag = inTable === 'thead' ? 'th' : 'td';
+                cells.forEach((c) => {
+                    const content = c.trim().replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    html += `<${tag}>${content}</${tag}>`;
+                });
+                if (inTable !== 'thead') html += '</tr>';
+                return;
+            }
+            if (inTable) {
+                html += '</tbody></table>';
+                inTable = false;
+            }
+
+            if (trimmed.startsWith('# ')) {
+                closeLists();
+                const content = trimmed.replace(/^#\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                html += `<p class="chat-md-h1">${content}</p>`;
+            } else if (trimmed.startsWith('## ')) {
+                closeLists();
+                const content = trimmed.replace(/^##\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                html += `<p class="chat-md-h2">${content}</p>`;
+            } else if (trimmed.startsWith('### ')) {
+                closeLists();
+                const content = trimmed.replace(/^###\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                html += `<p class="chat-md-h3">${content}</p>`;
+            } else if (/^---+$/.test(trimmed)) {
+                closeLists();
+                html += '<hr class="chat-md-hr">';
+            } else if (trimmed.startsWith('>>> ')) {
+                closeLists();
+                const promptText = trimmed.replace(/^>>>\s*/, '');
+                const displayHtml = promptText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                html += `<div class="chat-prompt-card" role="button" tabindex="0" data-prompt="${escapeHtmlAttr(promptText)}">💬 ${displayHtml}</div>`;
+            } else if (trimmed.startsWith('> ')) {
+                closeLists();
+                const content = trimmed.replace(/^>\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                html += `<blockquote class="chat-md-quote">${content}</blockquote>`;
+            } else if (trimmed.match(/^\d+\.\s/)) {
                 if (inList) {
                     html += '</ul>';
                     inList = false;
                 }
-                if (line.trim() === '') return;
+                if (!inOrderedList) {
+                    html += '<ol class="chat-md-olist">';
+                    inOrderedList = true;
+                }
+                const content = trimmed.replace(/^\d+\.\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                html += `<li>${content}</li>`;
+            } else if (trimmed.match(/^[-•]\s/)) {
+                if (inOrderedList) {
+                    html += '</ol>';
+                    inOrderedList = false;
+                }
+                const docLinkMatch = trimmed.match(/^[-•]\s+\*\*\[(.+?)\]\((.+?)\)\*\*(.*)$/)
+                    || trimmed.match(/^[-•]\s+\[(.+?)\]\((.+?)\)(.*)$/);
+                if (docLinkMatch) {
+                    closeLists();
+                    const docName = docLinkMatch[1];
+                    const docUrl = docLinkMatch[2];
+                    const docDesc = (docLinkMatch[3] || '').replace(/^\s*[-—]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').trim();
+                    const ext = docUrl.split('.').pop().toUpperCase().replace(/[?#].*/, '') || 'FILE';
+                    const extClass = ['PDF', 'DOCX', 'DOC', 'XLSX', 'XLS'].includes(ext) ? ext.toLowerCase() : 'file';
+                    html += `<div class="chat-doc-card" data-doc-url="${escapeHtmlAttr(docUrl)}" data-doc-name="${escapeHtmlAttr(docName)}">`;
+                    html += `<span class="doc-card-icon doc-ext-${extClass}">${ext}</span>`;
+                    html += `<span class="doc-card-body"><span class="doc-card-name">${escapeHtmlText(docName)}</span>`;
+                    if (docDesc) html += `<span class="doc-card-desc">${docDesc}</span>`;
+                    html += '</span><span class="doc-card-dl">↓ 下载</span></div>';
+                } else {
+                    if (!inList) {
+                        html += '<ul class="chat-md-list">';
+                        inList = true;
+                    }
+                    const content = trimmed.replace(/^[-•]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    html += `<li>${content}</li>`;
+                }
+            } else {
+                closeLists();
+                if (trimmed === '') return;
                 const content = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                 html += `<p>${content}</p>`;
             }
         });
 
-        if (inList) html += '</ul>';
+        closeLists();
+        if (inTable) html += '</tbody></table>';
         return html;
+    }
+
+    function clickPromptCard(promptText) {
+        const panel = getActiveWorkbenchPanel();
+        const handoff = window.EmployeeCustomerIbFlow?.resolvePromptHandoff?.(promptText);
+        if (handoff?.handoff) {
+            const state = getPanelState(panel);
+            state.currentCardIndex = handoff.targetAssistantIndex;
+            state.currentExtraAssistantId = null;
+            updateEmployeeAssistantSelection(handoff.targetAssistantIndex, panel);
+            refreshInputSkillPicker(panel);
+            const sendText = handoff.sendMessage || promptText;
+            const input = getPanelEl('main-chat-input', panel);
+            if (input) {
+                input.value = sendText;
+                input.focus();
+            }
+            sendMainMessage(sendText);
+            return;
+        }
+        const input = getPanelEl('main-chat-input', panel);
+        if (input) {
+            input.value = promptText;
+            input.focus();
+        }
+        sendMainMessage(promptText);
+    }
+
+    function downloadDocFile(url, name) {
+        const panel = getActiveWorkbenchPanel();
+        appendChatMessage(`正在准备下载「${name}」...`, 'user', panel);
+        setTimeout(() => {
+            appendChatMessage(
+                `「${name}」已准备就绪。\n\n请联系支持人员张明（工号8012）获取正式文件，或可直接发送邮件至：zhangm@company.com`,
+                'assistant',
+                panel
+            );
+        }, 600);
+    }
+
+    function initChatPromptCardEvents() {
+        if (document.body.dataset.chatPromptCardBound === 'true') return;
+        document.body.dataset.chatPromptCardBound = 'true';
+
+        document.addEventListener('click', (event) => {
+            const promptCard = event.target.closest('.chat-prompt-card');
+            if (promptCard?.dataset.prompt) {
+                event.stopPropagation();
+                clickPromptCard(promptCard.dataset.prompt);
+                return;
+            }
+            const docCard = event.target.closest('.chat-doc-card');
+            if (docCard?.dataset.docUrl) {
+                event.stopPropagation();
+                downloadDocFile(docCard.dataset.docUrl, docCard.dataset.docName || '文档');
+            }
+        });
     }
 
     function getSolutionSelectHtml(blockId) {
@@ -3606,8 +4691,7 @@
             btn.title = agent.name;
             btn.innerHTML = `<span>${agent.emoji || '🤖'}</span>`;
             btn.onclick = () => {
-                getPanelState(p).currentCatalogAssistant = null;
-                selectAssistant(agent.listIndex, p);
+                handleEmployeeAssistantPick(agent.listIndex, p);
             };
             container.appendChild(btn);
         });
@@ -3623,6 +4707,476 @@
     }
 
     window.syncEmployeeMiniAvatars = syncEmployeeMiniAvatars;
+
+    function getEmployeeAssistantTagLabel(name) {
+        if (!name) return '助手';
+        return name.replace(/助手$/, '');
+    }
+
+    function syncEmployeeAssistantTags(panel) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        if (!p || getPanelKey(p) !== 'employee') return;
+        const container = getPanelEl('input-assistant-tags', p);
+        if (!container) return;
+
+        const agents = window.getInstalledEmployeeAssistantsForHome?.()
+            || aiAssistants.map((assistant) => ({
+                listIndex: assistant.index,
+                chatIndex: assistant.index,
+                name: assistant.name,
+                emoji: assistant.emoji,
+                avatarClass: assistant.avatarClass,
+                id: ''
+            }));
+
+        container.innerHTML = '';
+        agents.forEach((agent) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `input-assistant-tag ${agent.avatarClass || ''}`;
+            btn.dataset.index = String(agent.listIndex);
+            if (agent.id) btn.dataset.assistantId = agent.id;
+            btn.title = agent.name;
+            btn.setAttribute('role', 'option');
+            btn.setAttribute('aria-selected', 'false');
+            btn.innerHTML = `
+                <span class="input-assistant-tag-icon ${agent.avatarClass || ''}" aria-hidden="true">${agent.emoji || '🤖'}</span>
+                <span class="input-assistant-tag-name">${escapeHtmlText(getEmployeeAssistantTagLabel(agent.name))}</span>
+            `;
+            btn.addEventListener('click', () => {
+                handleEmployeeAssistantPick(agent.listIndex, p);
+            });
+            container.appendChild(btn);
+        });
+
+        renderEmployeeAssistantMorePicker(p);
+
+        const state = getPanelState(p);
+        if (state.currentExtraAssistantId) {
+            updateEmployeeAssistantSelection(state.currentCardIndex ?? 0, p);
+        } else if (agents.length) {
+            const maxIdx = agents.length - 1;
+            const idx = Math.min(state.currentCardIndex ?? 0, maxIdx);
+            if ((state.currentCardIndex ?? 0) > maxIdx) {
+                state.currentCardIndex = 0;
+            }
+            updateEmployeeAssistantSelection(idx, p);
+        }
+    }
+
+    function syncAssistantMorePickerState(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const key = getPanelKey(p);
+        if (key !== 'employee' && key !== 'support') return;
+        const state = getPanelState(p);
+        const picker = p?.querySelector('.input-assistant-more-picker');
+        if (!picker) return;
+
+        const trigger = picker.querySelector('.input-assistant-more-trigger');
+        const extra = state.currentExtraAssistantId ? getExtraAssistantById(state.currentExtraAssistantId) : null;
+
+        if (trigger) {
+            trigger.classList.toggle('is-active', !!extra);
+            employeeExtraAssistants.forEach((item) => trigger.classList.remove(item.avatarClass));
+            if (extra) trigger.classList.add(extra.avatarClass);
+
+            let iconEl = trigger.querySelector('.input-assistant-tag-icon');
+            const textEl = trigger.querySelector('.input-assistant-more-trigger-text');
+            if (extra) {
+                if (!iconEl) {
+                    iconEl = document.createElement('span');
+                    iconEl.className = 'input-assistant-tag-icon';
+                    iconEl.setAttribute('aria-hidden', 'true');
+                    trigger.insertBefore(iconEl, textEl);
+                }
+                iconEl.className = `input-assistant-tag-icon ${extra.avatarClass}`;
+                iconEl.textContent = extra.emoji;
+                if (textEl) textEl.textContent = getEmployeeAssistantTagLabel(extra.name);
+            } else {
+                iconEl?.remove();
+                if (textEl) textEl.textContent = '更多';
+            }
+        }
+
+        picker.querySelectorAll('.input-assistant-more-option').forEach((btn) => {
+            const isActive = btn.dataset.extraId === state.currentExtraAssistantId;
+            btn.classList.toggle('is-active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+    }
+
+    function closeAssistantMorePicker(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const picker = p?.querySelector('.input-assistant-more-picker');
+        if (!picker) return;
+        picker.classList.remove('is-open');
+        picker.querySelector('.input-assistant-more-trigger')?.setAttribute('aria-expanded', 'false');
+        const menu = picker.querySelector('.input-assistant-more-menu');
+        if (menu) menu.hidden = true;
+        p.querySelector('.enhanced-input-wrap')?.classList.remove('has-more-menu-open');
+        p.querySelector('.input-section')?.classList.remove('has-more-menu-open');
+    }
+
+    function toggleAssistantMorePicker(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const picker = p?.querySelector('.input-assistant-more-picker');
+        const trigger = picker?.querySelector('.input-assistant-more-trigger');
+        const menu = picker?.querySelector('.input-assistant-more-menu');
+        if (!picker || !trigger || !menu) return;
+
+        const willOpen = !picker.classList.contains('is-open');
+        document.querySelectorAll('.input-assistant-more-picker.is-open').forEach((el) => {
+            if (el !== picker) closeAssistantMorePicker(el.closest('.workbench-panel'));
+        });
+        document.querySelectorAll('.input-skill-picker.is-open').forEach((el) => {
+            closeInputSkillPicker(el.closest('.workbench-panel'));
+        });
+
+        picker.classList.toggle('is-open', willOpen);
+        trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        menu.hidden = !willOpen;
+        p.querySelector('.enhanced-input-wrap')?.classList.toggle('has-more-menu-open', willOpen);
+        p.querySelector('.input-section')?.classList.toggle('has-more-menu-open', willOpen);
+    }
+
+    function initAssistantMorePickerGlobalEvents() {
+        if (document.body.dataset.assistantMorePickerGlobalBound === 'true') return;
+        document.body.dataset.assistantMorePickerGlobalBound = 'true';
+
+        document.addEventListener('click', (event) => {
+            const option = event.target.closest('.input-assistant-more-option');
+            if (option) {
+                event.stopPropagation();
+                const panel = option.closest('.workbench-panel');
+                handleExtraAssistantPick(option.dataset.extraId, panel);
+                closeAssistantMorePicker(panel);
+                return;
+            }
+
+            const trigger = event.target.closest('.input-assistant-more-trigger');
+            if (trigger) {
+                event.stopPropagation();
+                toggleAssistantMorePicker(trigger.closest('.workbench-panel'));
+                return;
+            }
+
+            if (!event.target.closest('.input-assistant-more-picker')) {
+                document.querySelectorAll('.input-assistant-more-picker.is-open').forEach((el) => {
+                    closeAssistantMorePicker(el.closest('.workbench-panel'));
+                });
+            }
+        });
+    }
+
+    function handleExtraAssistantPick(extraId, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (getPanelKey(p) === 'support') {
+            handleSupportExtraAssistantPick(extraId, p);
+            return;
+        }
+        handleEmployeeExtraAssistantPick(extraId, p);
+    }
+
+    function renderAssistantMorePicker(panel) {
+        initAssistantMorePickerGlobalEvents();
+
+        const p = panel || getActiveWorkbenchPanel();
+        const key = getPanelKey(p);
+        if (key !== 'employee' && key !== 'support') return;
+        const container = getPanelEl('input-assistant-more-anchor', p)
+            || p?.querySelector('.input-assistant-more-anchor');
+        if (!container) return;
+
+        let picker = container.querySelector('.input-assistant-more-picker');
+        if (!picker) {
+            picker = document.createElement('div');
+            picker.className = 'input-assistant-more-picker';
+            picker.innerHTML = `
+                <button type="button" class="input-assistant-tag input-assistant-more-trigger" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="input-assistant-more-trigger-text">更多</span>
+                    <svg class="input-assistant-more-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="input-assistant-more-menu" role="listbox" aria-label="更多助手" hidden>
+                    <div class="input-assistant-more-menu-label">更多助手</div>
+                    ${employeeExtraAssistants.map((extra) => `
+                        <button type="button" class="input-assistant-more-option" data-extra-id="${extra.id}" role="option" aria-selected="false">
+                            <span class="input-assistant-more-option-icon ${extra.avatarClass}" aria-hidden="true">${extra.emoji}</span>
+                            <span class="input-assistant-more-option-name">${escapeHtmlText(extra.name)}</span>
+                            <svg class="input-assistant-more-check" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5L6.5 12L13 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+            container.appendChild(picker);
+        }
+
+        syncAssistantMorePickerState(p);
+    }
+
+    function syncEmployeeAssistantMorePickerState(panel) {
+        syncAssistantMorePickerState(panel);
+    }
+
+    function closeEmployeeAssistantMorePicker(panel) {
+        closeAssistantMorePicker(panel);
+    }
+
+    function toggleEmployeeAssistantMorePicker(panel) {
+        toggleAssistantMorePicker(panel);
+    }
+
+    function renderEmployeeAssistantMorePicker(panel) {
+        renderAssistantMorePicker(panel);
+    }
+
+    window.syncEmployeeAssistantTags = syncEmployeeAssistantTags;
+
+    const supportInputTagAssistants = [
+        {
+            id: SUPPORT_INPUT_AGENT_DAILY_TASK,
+            name: '今日任务助手',
+            shortName: '今日任务',
+            image: SUPPORT_DAILY_TASK_AVATAR_SRC,
+            avatarClass: 'support-daily-task-tag'
+        },
+        {
+            id: SUPPORT_INPUT_AGENT_EXCEPTIONS,
+            name: '异常提醒助手',
+            shortName: '异常提醒',
+            emoji: '⚠️',
+            avatarClass: 'support-exceptions-tag'
+        }
+    ];
+
+    function getSupportAssistantTagLabel(name, shortName) {
+        if (shortName) return shortName;
+        if (!name) return '助手';
+        return name.replace(/助手$/, '');
+    }
+
+    function buildSupportAssistantTagIconHtml(agent) {
+        if (agent.image) {
+            return `<img src="${escapeHtml(agent.image)}" alt="" class="input-assistant-tag-img">`;
+        }
+        return `<span class="input-assistant-tag-icon ${agent.avatarClass || ''}" aria-hidden="true">${agent.emoji || '🤖'}</span>`;
+    }
+
+    function updateSupportAssistantTagSelection(panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        if (!p || getPanelKey(p) !== 'support') return;
+        const state = getPanelState(p);
+        const activeExtraId = state.currentExtraAssistantId;
+        const activeId = state.currentSupportInputAgent || SUPPORT_INPUT_AGENT_DAILY_TASK;
+
+        p.querySelectorAll('.input-assistant-tag[data-support-agent-id]').forEach((tag) => {
+            const isActive = !activeExtraId && tag.dataset.supportAgentId === activeId;
+            tag.classList.toggle('is-active', isActive);
+            tag.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+
+        const activeCardType = activeId === SUPPORT_INPUT_AGENT_EXCEPTIONS ? 'exceptions' : 'tasks';
+        p.querySelectorAll('.support-home-card[data-support-card]').forEach((card) => {
+            card.classList.toggle('active', !activeExtraId && card.dataset.supportCard === activeCardType);
+        });
+
+        syncAssistantMorePickerState(p);
+        updateSupportInputPlaceholder(p, activeId);
+    }
+
+    function clearSupportExtraAssistant(panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        if (!p || getPanelKey(p) !== 'support') return;
+        const state = getPanelState(p);
+        if (!state.currentExtraAssistantId) return;
+
+        state.currentExtraAssistantId = null;
+        state.currentInputSkillId = null;
+        updateSupportAssistantTagSelection(p);
+        refreshInputSkillPicker(p);
+    }
+
+    function selectSupportExtraAssistant(extraId, panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        const extra = getExtraAssistantById(extraId);
+        if (!p || !extra) return;
+        const state = getPanelState(p);
+
+        state.currentExtraAssistantId = extraId;
+        state.currentInputSkillId = null;
+        updateSupportAssistantTagSelection(p);
+        refreshInputSkillPicker(p);
+    }
+
+    function appendSupportExtraAssistantWelcome(extraId, panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        const extra = getExtraAssistantById(extraId);
+        if (!p || !extra) return;
+        appendSupportChatMessage(getExtraAssistantWelcomeHtml(extra.chatIndex), 'assistant', p, {
+            html: true,
+            agentId: extraId
+        });
+    }
+
+    function handleSupportExtraAssistantPick(extraId, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (getPanelKey(p) !== 'support') return;
+        const extra = getExtraAssistantById(extraId);
+        if (!extra) return;
+
+        const state = getPanelState(p);
+        if (state.currentExtraAssistantId === extraId) {
+            clearSupportExtraAssistant(p);
+            return;
+        }
+
+        if (state.chatModeActive) {
+            state.currentExtraAssistantId = extraId;
+            state.currentInputSkillId = null;
+            updateSupportAssistantTagSelection(p);
+            refreshInputSkillPicker(p);
+            return;
+        }
+        selectSupportExtraAssistant(extraId, p);
+    }
+
+    function syncSupportAssistantTags(panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        if (!p || getPanelKey(p) !== 'support') return;
+
+        const container = getPanelEl('input-assistant-tags', p);
+        if (!container) return;
+
+        container.innerHTML = '';
+        supportInputTagAssistants.forEach((agent) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `input-assistant-tag ${agent.avatarClass || ''}`;
+            btn.dataset.supportAgentId = agent.id;
+            btn.title = agent.name;
+            btn.setAttribute('role', 'option');
+            btn.setAttribute('aria-selected', 'false');
+            btn.innerHTML = `
+                ${buildSupportAssistantTagIconHtml(agent)}
+                <span class="input-assistant-tag-name">${escapeHtmlText(getSupportAssistantTagLabel(agent.name, agent.shortName))}</span>
+            `;
+            btn.addEventListener('click', () => {
+                setSupportInputAgent(p, agent.id);
+            });
+            container.appendChild(btn);
+        });
+
+        renderAssistantMorePicker(p);
+        updateSupportAssistantTagSelection(p);
+    }
+
+    window.syncSupportAssistantTags = syncSupportAssistantTags;
+
+    function updateEmployeeAssistantSelection(index, panel) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        if (!p || getPanelKey(p) !== 'employee') return;
+        const state = getPanelState(p);
+        const activeExtraId = state.currentExtraAssistantId;
+
+        p.querySelectorAll('.ai-card-fan[data-index]').forEach((card) => {
+            card.classList.toggle('active', !activeExtraId && parseInt(card.dataset.index, 10) === index);
+        });
+        p.querySelectorAll('.indicator').forEach((ind) => {
+            ind.classList.toggle('active', !activeExtraId && parseInt(ind.dataset.index, 10) === index);
+        });
+        p.querySelectorAll('.input-assistant-tag:not(.input-assistant-more-trigger)').forEach((tag) => {
+            const isActive = !activeExtraId && parseInt(tag.dataset.index, 10) === index;
+            tag.classList.toggle('is-active', isActive);
+            tag.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        syncAssistantMorePickerState(p);
+        if (activeExtraId) {
+            p.querySelectorAll('.ai-mini-avatar').forEach((avatar) => avatar.classList.remove('active'));
+        } else {
+            updateMiniAvatarActive(index, p);
+        }
+    }
+
+    function clearEmployeeExtraAssistant(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (getPanelKey(p) !== 'employee') return;
+        const state = getPanelState(p);
+        if (!state.currentExtraAssistantId) return;
+
+        state.currentExtraAssistantId = null;
+        state.currentInputSkillId = null;
+        updateEmployeeAssistantSelection(state.currentCardIndex ?? 0, p);
+        collapseTopSections(p);
+        refreshInputSkillPicker(p);
+    }
+
+    function selectEmployeeExtraAssistant(extraId, panel) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        const extra = getExtraAssistantById(extraId);
+        if (!p || !extra) return;
+        const state = getPanelState(p);
+
+        state.currentExtraAssistantId = extraId;
+        state.currentCatalogAssistant = null;
+        state.currentInputSkillId = null;
+
+        updateEmployeeAssistantSelection(state.currentCardIndex ?? 0, p);
+        collapseTopSections(p);
+        refreshInputSkillPicker(p);
+    }
+
+    function handleEmployeeExtraAssistantPick(extraId, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (getPanelKey(p) !== 'employee') return;
+        const extra = getExtraAssistantById(extraId);
+        if (!extra) return;
+
+        const state = getPanelState(p);
+        if (state.currentExtraAssistantId === extraId) {
+            clearEmployeeExtraAssistant(p);
+            return;
+        }
+
+        if (state.chatModeActive) {
+            state.currentExtraAssistantId = extraId;
+            state.currentCatalogAssistant = null;
+            state.currentInputSkillId = null;
+            updateEmployeeAssistantSelection(state.currentCardIndex ?? 0, p);
+            collapseTopSections(p);
+            refreshInputSkillPicker(p);
+            return;
+        }
+        selectEmployeeExtraAssistant(extraId, p);
+    }
+
+    function selectEmployeeAssistant(index, panel) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        if (!p || getPanelKey(p) !== 'employee') return;
+        const state = getPanelState(p);
+        const agents = window.getInstalledEmployeeAssistantsForHome?.() || [];
+        const maxIdx = Math.max(agents.length, totalCards) - 1;
+        const safeIndex = Math.max(0, Math.min(index, maxIdx));
+
+        state.currentExtraAssistantId = null;
+        state.currentCatalogAssistant = null;
+        state.currentInputSkillId = null;
+        state.currentCardIndex = safeIndex;
+        state.exceptionChatActive = false;
+
+        updateEmployeeAssistantSelection(safeIndex, p);
+        collapseTopSections(p);
+        refreshInputSkillPicker(p);
+    }
+
+    function handleEmployeeAssistantPick(index, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (getPanelKey(p) !== 'employee') return;
+        const state = getPanelState(p);
+        state.exceptionChatActive = false;
+        if (state.chatModeActive && !state.currentExtraAssistantId && index === state.currentCardIndex) return;
+        selectEmployeeAssistant(index, p);
+    }
+
+    window.selectEmployeeAssistant = selectEmployeeAssistant;
 
     function syncEmployeeChatModeLayout() {
         const employeePanel = document.getElementById('workbench-panel-employee');
@@ -3652,6 +5206,20 @@
         persistEmployeeChat(panel);
     }
 
+    function shouldSkipGuidedWelcome(index, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const listIndex = typeof index === 'number' ? index : (getPanelState(p).currentCardIndex ?? 0);
+        const chatIndex = resolveEmployeeChatIndex(listIndex, p);
+        return window.EmployeeCustomerIbFlow?.usesGuidedFlow?.(chatIndex) === true;
+    }
+
+    function clearEmployeeChatMessages(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (messagesEl) messagesEl.innerHTML = '';
+        getPanelState(p).chatMessages = [];
+    }
+
     function restoreChatFromSession(panel, session) {
         const p = panel || document.getElementById('workbench-panel-employee');
         const state = getPanelState(p);
@@ -3663,24 +5231,40 @@
         messagesEl.innerHTML = '';
         state.chatMessages = Array.isArray(session?.messages) ? session.messages.slice() : [];
         state.currentCardIndex = typeof session?.assistantIndex === 'number' ? session.assistantIndex : 0;
-        updateMiniAvatarActive(state.currentCardIndex, p);
+        const isExceptionSession = String(session?.title || '').startsWith('异常提醒·')
+            || state.chatMessages.some((msg) => msg.agentId === SUPPORT_INPUT_AGENT_EXCEPTIONS);
+        if (isExceptionSession) {
+            clearEmployeeAssistantInputSelection(p);
+        } else {
+            state.exceptionChatActive = false;
+            updateMiniAvatarActive(state.currentCardIndex, p);
+            updateEmployeeAssistantSelection(state.currentCardIndex, p);
+        }
 
         if (!state.chatMessages.length) {
-            appendAssistantConversation(state.currentCardIndex, p);
+            if (!shouldSkipGuidedWelcome(state.currentCardIndex, p)) {
+                appendAssistantConversation(state.currentCardIndex, p);
+            }
             return;
         }
 
+        let lastUserMessage = '';
         state.chatMessages.forEach((msg) => {
             if (msg.type === 'welcome') {
+                if (shouldSkipGuidedWelcome(msg.assistantIndex ?? 0, p)) return;
                 appendAssistantConversation(msg.assistantIndex ?? 0, p, { skipPersist: true });
                 return;
             }
             if (msg.role === 'user') {
+                lastUserMessage = msg.text || '';
                 appendChatMessage(msg.text, 'user', p, { skipPersist: true });
             } else if (msg.role === 'assistant') {
                 appendChatMessage(msg.text, 'assistant', p, {
                     skipPersist: true,
-                    assistantIndex: msg.assistantIndex
+                    assistantIndex: msg.assistantIndex,
+                    userMessage: lastUserMessage,
+                    html: !!msg.html,
+                    agentId: msg.agentId || undefined
                 });
             }
         });
@@ -3695,7 +5279,9 @@
         const createHistory = options.createHistory !== false;
 
         state.chatModeActive = true;
-        state.currentCardIndex = index;
+        if (!options.skipAssistantSelection) {
+            state.currentCardIndex = index;
+        }
 
         const hero = document.getElementById('center-hero');
         const carousel = getPanelEl('ai-carousel-view', p);
@@ -3721,10 +5307,19 @@
 
         collapseTopSections(p);
         syncEmployeeMiniAvatars(p);
-        updateMiniAvatarActive(index, p);
+        if (options.skipAssistantSelection) {
+            clearEmployeeAssistantInputSelection(p);
+        } else {
+            state.exceptionChatActive = false;
+            updateEmployeeAssistantSelection(index, p);
+        }
 
         if (createHistory && window.AppShell?.createSession) {
-            const assistant = getEmployeeAssistant(index, p);
+            const assistant = options.skipAssistantSelection
+                ? getSupportInputAgentMeta(SUPPORT_INPUT_AGENT_EXCEPTIONS)
+                : state.currentExtraAssistantId
+                ? getExtraAssistantById(state.currentExtraAssistantId)
+                : getEmployeeAssistant(index, p);
             const title = options.sessionTitle || `${assistant?.name || '助手'}对话`;
             const session = window.AppShell.createSession(title, index);
             state.currentSessionId = session.id;
@@ -3735,11 +5330,16 @@
             window.AppShell?.highlightSessionInSidebar?.(options.sessionId);
         }
 
+        if (options.clearMessages || showWelcome) {
+            clearEmployeeChatMessages(p);
+        }
+
         if (showWelcome) {
-            const messagesEl = getPanelEl('ai-chat-messages', p);
-            if (messagesEl) messagesEl.innerHTML = '';
-            state.chatMessages = [];
-            appendAssistantConversation(index, p);
+            if (state.currentExtraAssistantId) {
+                appendExtraAssistantConversation(state.currentExtraAssistantId, p);
+            } else {
+                appendAssistantConversation(index, p);
+            }
         }
 
         syncEmployeeChatModeLayout();
@@ -3747,7 +5347,14 @@
     }
 
     function enterChatMode(index, panel) {
-        applyEmployeeChatModeUI(panel, { index, showWelcome: true, createHistory: true });
+        const p = panel || getActiveWorkbenchPanel();
+        const skipWelcome = shouldSkipGuidedWelcome(index, p);
+        applyEmployeeChatModeUI(p, {
+            index,
+            showWelcome: !skipWelcome,
+            clearMessages: skipWelcome,
+            createHistory: true
+        });
     }
 
     function toggleSection(sectionName) {
@@ -3784,16 +5391,23 @@
     function selectAssistant(index, panel) {
         const p = panel || getActiveWorkbenchPanel();
         const state = getPanelState(p);
-        if (index === state.currentCardIndex) return;
+        if (!state.currentExtraAssistantId && index === state.currentCardIndex) return;
 
+        state.currentExtraAssistantId = null;
         state.currentCatalogAssistant = null;
         state.currentInputSkillId = null;
         state.currentCardIndex = index;
-        updateMiniAvatarActive(index, p);
         if (getPanelKey(p) === 'employee') {
+            updateEmployeeAssistantSelection(index, p);
             collapseTopSections(p);
+        } else {
+            updateMiniAvatarActive(index, p);
         }
-        appendAssistantConversation(index, p);
+        if (shouldSkipGuidedWelcome(index, p)) {
+            clearEmployeeChatMessages(p);
+        } else {
+            appendAssistantConversation(index, p);
+        }
         refreshInputSkillPicker(p);
     }
 
@@ -3815,6 +5429,12 @@
         if (state.currentCatalogAssistant) {
             return buildEmployeeCatalogChatAvatarHtml(state.currentCatalogAssistant);
         }
+        if (state.currentExtraAssistantId) {
+            const extra = getExtraAssistantById(state.currentExtraAssistantId);
+            if (extra) {
+                return `<div class="chat-avatar employee-chat-avatar ${extra.avatarClass}" title="${escapeHtmlText(extra.name)}"><span>${extra.emoji}</span></div>`;
+            }
+        }
         const homeAgent = getEmployeeHomeAssistant(index, p);
         if (homeAgent) {
             return `<div class="chat-avatar employee-chat-avatar ${homeAgent.avatarClass}" title="${escapeHtmlText(homeAgent.name)}"><span>${homeAgent.emoji || '🤖'}</span></div>`;
@@ -3823,12 +5443,51 @@
         return `<div class="chat-avatar employee-chat-avatar ${assistant.avatarClass}" title="${assistant.name}"><span>${assistant.emoji}</span></div>`;
     }
 
+    function appendExtraAssistantConversation(extraId, panel, options = {}) {
+        const p = panel || getActiveWorkbenchPanel();
+        const extra = getExtraAssistantById(extraId);
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (!extra || !messagesEl) return;
+
+        const blockId = `chat-block-${Date.now()}`;
+        const block = document.createElement('div');
+        block.className = 'chat-conversation-block';
+        block.id = blockId;
+        block.dataset.extraAssistantId = extraId;
+
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'chat-row chat-row-assistant';
+        const contentHtml = getExtraAssistantWelcomeHtml(extra.chatIndex);
+        aiMsg.innerHTML = `
+            <div class="chat-avatar employee-chat-avatar ${extra.avatarClass}" title="${escapeHtmlText(extra.name)}"><span>${extra.emoji}</span></div>
+            <div class="chat-bubble chat-bubble-assistant">${contentHtml}</div>
+        `;
+        block.appendChild(aiMsg);
+
+        messagesEl.appendChild(block);
+        scrollLastChatCardIntoView(p, {
+            card: block.querySelector('.chat-row-assistant') || block,
+            padding: 8
+        });
+
+        if (getPanelKey(p) === 'employee' && !options.skipPersist) {
+            recordEmployeeChatMessage(p, {
+                role: 'assistant',
+                type: 'welcome',
+                extraAssistantId: extraId,
+                text: extra.name
+            });
+        }
+    }
+
     function appendAssistantConversation(index, panel, options = {}) {
         const p = panel || getActiveWorkbenchPanel();
         const chatIndex = resolveEmployeeChatIndex(index, p);
         const assistant = aiAssistants[chatIndex];
         const messagesEl = getPanelEl('ai-chat-messages', p);
         if (!messagesEl) return;
+
+        if (shouldSkipGuidedWelcome(index, p)) return;
 
         const blockId = `chat-block-${Date.now()}`;
         if (EmployeeModelGuide.usesIbModelGuide(chatIndex)) {
@@ -3865,6 +5524,34 @@
         }
     }
 
+    function resolveChatContextBundle(replyText, options = {}) {
+        const assistantIndex = options.assistantIndex;
+        const userMessage = options.userMessage || '';
+        const fromFlow = window.EmployeeCustomerIbFlow?.resolveContextBundle?.(
+            replyText,
+            assistantIndex,
+            userMessage
+        );
+        if (window.ContextPanel?.bundleHasItems?.(fromFlow)) {
+            return fromFlow;
+        }
+        const extracted = window.ContextPanel?.extractBundleFromMarkdown?.(replyText, {
+            assistantIndex,
+            userMessage
+        });
+        if (window.ContextPanel?.bundleHasItems?.(extracted)) {
+            return extracted;
+        }
+        return null;
+    }
+
+    function syncAssistantMessageContext(bubble, replyText, options = {}) {
+        if (!bubble || !window.ContextPanel?.attachSnapshotToBubble) return;
+        const bundle = resolveChatContextBundle(replyText, options);
+        if (!bundle) return;
+        window.ContextPanel.attachSnapshotToBubble(bubble, bundle);
+    }
+
     function appendChatMessage(text, role, panel, options = {}) {
         const p = panel || getActiveWorkbenchPanel();
         const messagesEl = getPanelEl('ai-chat-messages', p);
@@ -3879,11 +5566,20 @@
                 collapseTopSections(p);
             }
         } else {
-            const index = options.assistantIndex ?? getPanelState(p).currentCardIndex ?? 0;
-            const catalogAgent = getPanelState(p).currentCatalogAssistant;
+            let avatarHtml;
+            if (options.agentId === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
+                avatarHtml = buildEmployeeExceptionChatAvatarHtml();
+            } else {
+                const index = options.assistantIndex ?? getPanelState(p).currentCardIndex ?? 0;
+                const catalogAgent = getPanelState(p).currentCatalogAssistant;
+                avatarHtml = catalogAgent
+                    ? buildEmployeeCatalogChatAvatarHtml(catalogAgent)
+                    : buildEmployeeChatAvatarHtml(index, p);
+            }
+            const assistantBody = options.html ? text : markdownToHtml(text);
             row.innerHTML = `
-                ${catalogAgent ? buildEmployeeCatalogChatAvatarHtml(catalogAgent) : buildEmployeeChatAvatarHtml(index, p)}
-                <div class="chat-bubble chat-bubble-assistant">${markdownToHtml(text)}</div>
+                ${avatarHtml}
+                <div class="chat-bubble chat-bubble-assistant">${assistantBody}</div>
             `;
         }
 
@@ -3891,11 +5587,23 @@
         (lastBlock || messagesEl).appendChild(row);
         scrollWorkbenchChatToBottom(p);
 
+        if (role === 'assistant') {
+            const bubble = row.querySelector('.chat-bubble-assistant');
+            syncAssistantMessageContext(bubble, text, {
+                assistantIndex: options.assistantIndex ?? getPanelState(p).currentCardIndex ?? 0,
+                userMessage: options.userMessage || ''
+            });
+        }
+
         if (getPanelKey(p) === 'employee' && !options.skipPersist) {
             recordEmployeeChatMessage(p, {
                 role,
                 text,
-                assistantIndex: role === 'assistant' ? (options.assistantIndex ?? getPanelState(p).currentCardIndex ?? 0) : undefined
+                html: !!options.html,
+                agentId: options.agentId || null,
+                assistantIndex: role === 'assistant' && !options.agentId
+                    ? (options.assistantIndex ?? getPanelState(p).currentCardIndex ?? 0)
+                    : undefined
             });
         }
     }
@@ -3906,9 +5614,11 @@
         return div.innerHTML;
     }
 
-    function getAssistantReply(message, index, panel) {
+    function getAssistantReply(message, index, panel, options = {}) {
         const p = panel || getActiveWorkbenchPanel();
-        const chatIndex = resolveEmployeeChatIndex(index, p);
+        const chatIndex = typeof options.chatIndex === 'number'
+            ? options.chatIndex
+            : resolveEmployeeChatIndexForReply(p);
         const assistant = aiAssistants[chatIndex];
         const lowerMsg = message.toLowerCase();
 
@@ -3930,8 +5640,52 @@
         if (chatIndex === 4) {
             return `**客户服务助手**\n\n任务：处理「${message}」。\n\n操作：选择买方分析、信披判断或临时公告生成模型。`;
         }
+        if (chatIndex === 5) {
+            if (lowerMsg.includes('进度') || lowerMsg.includes('查询') || lowerMsg.includes('单号')) {
+                return `**审批助手**\n\n任务：查询「${message}」相关审批进度。\n\n结果：当前节点为部门负责人审批，预计 1 个工作日内完成。`;
+            }
+            if (lowerMsg.includes('催办') || lowerMsg.includes('提醒')) {
+                return `**审批助手**\n\n任务：对「${message}」发起催办提醒。\n\n操作：已通知当前审批人，并记录催办时间。`;
+            }
+            return `**审批助手**\n\n任务：处理「${message}」。\n\n操作：查询审批进度、发起审批申请或催办提醒。`;
+        }
+        if (chatIndex === 6) {
+            if (lowerMsg.includes('起草') || lowerMsg.includes('编写') || lowerMsg.includes('撰写')) {
+                return `**通知公告助手**\n\n任务：根据「${message}」起草通知公告。\n\n建议结构：标题、发布范围、正文要点、生效时间与联系人。`;
+            }
+            if (lowerMsg.includes('发布') || lowerMsg.includes('记录')) {
+                return `**通知公告助手**\n\n任务：查询「${message}」相关发布记录。\n\n操作：可按时间、部门或关键词筛选历史公告。`;
+            }
+            return `**通知公告助手**\n\n任务：处理「${message}」。\n\n操作：起草通知公告、查询发布记录或格式校验。`;
+        }
 
-        return `**${assistant.name}**\n\n任务：处理「${message}」。`;
+        return `**${assistant?.name || '助手'}**\n\n任务：处理「${message}」。`;
+    }
+
+    function handleEmployeeAssistantMessage(message, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const state = getPanelState(p);
+        if (state.currentExtraAssistantId) {
+            setTimeout(() => {
+                const assistantIndex = state.currentCardIndex ?? 0;
+                appendChatMessage(
+                    getAssistantReply(message, assistantIndex, p),
+                    'assistant',
+                    p,
+                    { assistantIndex, userMessage: message }
+                );
+            }, 400);
+            return;
+        }
+        const assistantIndex = state.currentCardIndex ?? 0;
+        if (window.EmployeeCustomerIbFlow?.usesGuidedFlow?.(assistantIndex)) {
+            setTimeout(() => {
+                const reply = sanitizeTaoLanguageText(window.EmployeeCustomerIbFlow.getReply(message, assistantIndex));
+                appendChatMessage(reply, 'assistant', p, { assistantIndex, userMessage: message });
+            }, 400);
+            return;
+        }
+        EmployeeModelGuide.handleUserMessage(message, p);
     }
 
     function cancelSolutionSelect(blockId) {
@@ -3951,8 +5705,11 @@
     function bringToFront(clickedCard) {
         const panel = clickedCard.closest('.workbench-panel');
         if (getPanelKey(panel) === 'employee') {
-            getPanelState(panel).currentCatalogAssistant = null;
-            collapseTopSections(panel);
+            const clickedIndex = parseInt(clickedCard.dataset.index, 10);
+            if (!Number.isNaN(clickedIndex)) {
+                selectEmployeeAssistant(clickedIndex, panel);
+            }
+            return;
         }
         const state = getPanelState(panel);
         const clickedIndex = parseInt(clickedCard.dataset.index);
@@ -3968,7 +5725,7 @@
         if (!state.chatModeActive) {
             setTimeout(() => enterChatMode(clickedIndex, panel), 150);
         } else {
-            selectAssistant(clickedIndex, panel);
+            selectEmployeeAssistant(clickedIndex, panel);
         }
     }
 
@@ -3980,7 +5737,7 @@
             enterChatMode(index, panel);
             return;
         }
-        selectAssistant(index, panel);
+        selectEmployeeAssistant(index, panel);
     }
     
     // ========== 军师方案设计功能 ==========
@@ -4064,21 +5821,31 @@
 
     function startEmployeeChatFromMainInput(message, panel) {
         const p = panel || getActiveWorkbenchPanel();
-        const targetIndex = resolveEmployeeAssistantIndexFromMessage(message);
-        const assistantName = aiAssistants[targetIndex]?.name || '客户分析助手';
+        const state = getPanelState(p);
+        const selectedIndex = typeof state.currentCardIndex === 'number' ? state.currentCardIndex : 0;
+        const routedIndex = resolveEmployeeAssistantIndexFromMessage(message);
+        const targetIndex = selectedIndex;
+        const extraAssistant = state.currentExtraAssistantId ? getExtraAssistantById(state.currentExtraAssistantId) : null;
+        const assistantName = extraAssistant?.name
+            || aiAssistants[resolveEmployeeChatIndex(targetIndex, p)]?.name
+            || aiAssistants[targetIndex]?.name
+            || '客户分析助手';
 
-        if (shouldShowEmployeeRoutingToast(message)) {
-            showRecognitionToast(assistantName, message);
+        if (routedIndex !== selectedIndex && shouldShowEmployeeRoutingToast(message)) {
+            showRecognitionToast(aiAssistants[routedIndex]?.name || assistantName, message);
         }
 
+        const skipWelcome = shouldSkipGuidedWelcome(targetIndex, p);
         applyEmployeeChatModeUI(p, {
             index: targetIndex,
-            showWelcome: true,
+            showWelcome: !skipWelcome,
+            clearMessages: true,
             createHistory: true,
             sessionTitle: message.length > 30 ? `${message.slice(0, 30)}…` : message
         });
+        updateEmployeeAssistantSelection(targetIndex, p);
         appendChatMessage(message, 'user', p);
-        EmployeeModelGuide.handleUserMessage(message, p);
+        handleEmployeeAssistantMessage(message, p);
     }
 
     // 处理主输入框回车键
@@ -4090,16 +5857,16 @@
     }
     
     // 发送消息并智能路由
-    function sendMainMessage() {
+    function sendMainMessage(overrideMsg) {
         const panel = getActiveWorkbenchPanel();
         const input = getPanelEl('main-chat-input', panel);
-        const raw = input?.value.trim();
+        const raw = (overrideMsg || input?.value || '').trim();
         if (!raw) {
             return;
         }
         const message = formatMessageWithSelectedSkill(raw, panel);
         
-        input.value = '';
+        if (input) input.value = '';
 
         if (getPanelKey(panel) === 'org') {
             appendOrgChatMessage(message, 'user', panel);
@@ -4126,7 +5893,7 @@
         if (getPanelState(panel).chatModeActive) {
             appendChatMessage(message, 'user', panel);
             if (getPanelKey(panel) === 'employee') {
-                EmployeeModelGuide.handleUserMessage(message, panel);
+                handleEmployeeAssistantMessage(message, panel);
             } else {
                 setTimeout(() => {
                     appendChatMessage(getAssistantReply(message, getPanelState(panel).currentCardIndex, panel), 'assistant', panel);
@@ -6255,6 +8022,14 @@
         [/高净值客户/g, '客户（账户资产待补录万元）'],
         [/高净值/g, ''],
         [/客户画像/g, '客户分析'],
+        [/核心画像/g, '核心量化结论'],
+        [/画像如下/g, '量化结论如下'],
+        [/交易活跃度/g, '近12月交易频次'],
+        [/合作评价/g, '合作记录'],
+        [/关注度高/g, '近12月有沟通记录'],
+        [/战略客户/g, '营业部A类清单客户'],
+        [/核心诉求/g, '合作意图'],
+        [/行业赛道/g, '行业分类'],
         [/需求偏好/g, '待确认合作项'],
         [/待确认需求项/g, '待确认合作项'],
         [/需求挖掘/g, '意图识别'],
@@ -6276,6 +8051,8 @@
         [/需求/g, '意图'],
         [/产品偏好/g, '已购产品/持仓结构'],
         [/风险偏好/g, '风险测评结果'],
+        [/（积极型）/g, ''],
+        [/积极型/g, ''],
         [/竞争格局/g, '同业对比维度'],
         [/行业景气度/g, '可验证行业指标'],
         [/景气度/g, '可验证指标'],
@@ -6904,12 +8681,29 @@
         syncEmployeeChatModeLayout();
     };
 
+    window.restoreEmployeeSessionView = function () {
+        const panel = document.getElementById('workbench-panel-employee');
+        if (!panel || !panel.classList.contains('active')) return;
+        const state = getPanelState(panel);
+        if (!state.chatModeActive) {
+            syncEmployeeChatModeLayout();
+            return;
+        }
+        applyEmployeeChatModeUI(panel, {
+            index: state.currentCardIndex ?? 0,
+            showWelcome: false,
+            createHistory: false,
+            sessionId: state.currentSessionId || undefined
+        });
+    };
+
     window.resetEmployeeChat = function () {
         const panel = document.getElementById('workbench-panel-employee');
         if (!panel) return;
         const state = getPanelState(panel);
         state.chatModeActive = false;
         state.currentCardIndex = 0;
+        state.currentExtraAssistantId = null;
         state.currentCatalogAssistant = null;
         state.currentSessionId = null;
         state.chatMessages = [];
@@ -6942,9 +8736,12 @@
         panel.querySelectorAll('.indicator').forEach((ind, i) => {
             ind.classList.toggle('active', i === 0);
         });
+        selectEmployeeAssistant(0, panel);
+        syncEmployeeAssistantTags(panel);
 
         document.getElementById('session-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
         syncEmployeeChatModeLayout();
+        window.AppShell?.collapseContextPanel?.();
     };
 
     window.showLoginPage = showLoginPage;
@@ -6986,16 +8783,19 @@
         }, 400);
     };
     window.openExceptionAlertDetail = function (title) {
-        window.AppShell?.returnToMainSessionView?.();
         sendSupportExceptionQuick(title);
     };
     window.sendSupportExceptionQuick = sendSupportExceptionQuick;
+    window.sendSupportExceptionAlert = sendSupportExceptionAlert;
     window.openSupportHomeCardInChat = openSupportHomeCardInChat;
     window.openSupportFunctionalAssistantInChat = openSupportFunctionalAssistantInChat;
     window.openEmployeeAssistantInChat = openEmployeeAssistantInChat;
     window.getSupportTotalTaskCount = getSupportTotalTaskCount;
     window.collectSupportExceptionAlerts = collectSupportExceptionAlerts;
     window.renderSupportSessionHistory = renderSupportSessionHistory;
+    window.markdownToHtml = markdownToHtml;
+    window.clickPromptCard = clickPromptCard;
+    window.appendChatMessage = appendChatMessage;
 
     // 页面加载时初始化（app-shell.js 也会初始化，此处保留兼容）
     document.addEventListener('DOMContentLoaded', function() {

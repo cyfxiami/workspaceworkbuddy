@@ -338,7 +338,132 @@
         state.models = [];
         state.customers = [];
         render();
+    }
+
+    function bundleHasItems(bundle) {
+        if (!bundle) return false;
+        return (bundle.outputs?.length || 0) + (bundle.models?.length || 0) + (bundle.customers?.length || 0) > 0;
+    }
+
+    function inferFileKindFromUrl(url, title) {
+        const source = `${url || ''} ${title || ''}`.toLowerCase();
+        if (/\.pdf|pdf/.test(source)) return 'pdf';
+        if (/\.docx?|word/.test(source)) return 'word';
+        if (/\.pptx?|ppt/.test(source)) return 'ppt';
+        if (/\.txt/.test(source)) return 'txt';
+        return 'txt';
+    }
+
+    function extractBundleFromMarkdown(text, options = {}) {
+        const bundle = { outputs: [], models: [], customers: [] };
+        const source = String(text || '');
+        if (!source.trim()) return bundle;
+
+        const linkPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
+        let match;
+        const ts = new Date().toLocaleString('zh-CN', { hour12: false });
+        while ((match = linkPattern.exec(source)) !== null) {
+            const title = match[1].replace(/\*\*/g, '').trim();
+            const url = match[2].trim();
+            if (!title || !url || url.startsWith('#')) continue;
+            const tail = source.slice(match.index, match.index + 160);
+            const kind = inferFileKindFromUrl(url, `${title} ${tail}`);
+            bundle.outputs.push({
+                title,
+                type: kind.toUpperCase(),
+                fileKind: kind,
+                fileName: title.includes('.') ? title : `${title}.${kind === 'word' ? 'docx' : (kind === 'ppt' ? 'pptx' : kind)}`,
+                modifiedAt: ts,
+                content: `来源：会话卡片\n链接：${url}`,
+                downloadText: `来源：会话卡片\n链接：${url}`
+            });
+        }
+
+        const customerQuote = source.match(/客户[「「]([^」」]+)[」」]/);
+        if (customerQuote?.[1]) {
+            bundle.customers.push({
+                name: customerQuote[1],
+                type: '企业客户',
+                source: '会话分析卡片',
+                time: ts
+            });
+        }
+
+        const headingModel = source.match(/^##\s+(.+?)(?:发行条件|业务操作指引|客户材料清单)/m);
+        const designBiz = (source.match(/^#\s*(.+?)方案设计模板/m) || [])[1];
+        const resolveModels = window.EmployeeCustomerIbFlow?.resolveContextModels;
+
+        if (/方案设计模板/.test(source) && resolveModels) {
+            bundle.models.push(...resolveModels((designBiz || '定增').trim(), 'design', { limit: 4 }));
+        } else if (/发行条件与准入标准/.test(source) && resolveModels) {
+            const biz = (source.match(/^##\s*(.+?)发行条件与准入标准/m) || [])[1] || '定增';
+            bundle.models.push(...resolveModels(biz.trim(), 'analysis', { section: '基本标准', limit: 4 }));
+        } else if (/业务操作指引/.test(source) && resolveModels) {
+            const biz = (source.match(/^##\s*(.+?)业务操作指引/m) || [])[1] || '定增';
+            bundle.models.push(...resolveModels(biz.trim(), 'analysis', { section: '公司标准', limit: 4 }));
+        } else if (/客户材料清单/.test(source) && resolveModels) {
+            const biz = (source.match(/^##\s*(.+?)客户材料清单/m) || [])[1] || '定增';
+            bundle.models.push(...resolveModels(biz.trim(), 'analysis', { limit: 4 }));
+        } else if (headingModel?.[1]) {
+            bundle.models.push({
+                name: headingModel[1].trim(),
+                category: options.category || '业务分析 / 会话识别'
+            });
+        } else if (/多维量化分析|客户分析/.test(source)) {
+            bundle.models.push({
+                name: '客户多维分析模型',
+                category: '客户分析 / 多维量化'
+            });
+        }
+
+        return bundle;
+    }
+
+    function normalizeSnapshotModel(item, index) {
+        if (typeof item === 'string') {
+            return {
+                id: `mod-snap-${index}-${Date.now()}`,
+                name: item,
+                category: ''
+            };
+        }
+        return {
+            id: item.id || `mod-snap-${index}-${Date.now()}`,
+            name: item.name || '未命名模型',
+            category: item.category || ''
+        };
+    }
+
+    function loadSnapshot(bundle) {
+        if (!bundleHasItems(bundle)) return;
+        state.outputs = (bundle.outputs || []).map((item) => normalizeOutput(item));
+        state.models = (bundle.models || []).map((item, index) => normalizeSnapshotModel(item, index));
+        state.customers = (bundle.customers || []).map((item) => normalizeCustomer(item));
+        render();
         syncContextPanelVisibility();
+    }
+
+    function attachSnapshotToBubble(bubble, bundle) {
+        if (!bubble || !bundleHasItems(bundle)) return;
+        bubble.dataset.contextSnapshot = JSON.stringify(bundle);
+        bubble.classList.add('has-context-snapshot', 'is-context-clickable');
+        loadSnapshot(bundle);
+    }
+
+    function restoreSnapshotFromBubble(bubble) {
+        if (!bubble?.dataset?.contextSnapshot) return;
+        try {
+            const bundle = JSON.parse(bubble.dataset.contextSnapshot);
+            loadSnapshot(bundle);
+        } catch (err) {
+            console.warn('restoreSnapshotFromBubble failed', err);
+        }
+    }
+
+    function isInteractiveChatTarget(target) {
+        return !!target?.closest?.(
+            '.chat-prompt-card, .chat-doc-card, .ib-guide-feedback-btn, .ib-guide-feedback-actions, .ib-guide-option, button, a, input, textarea, select, label'
+        );
     }
 
     function patchSendMessage() {
@@ -380,6 +505,12 @@
             patchDashboard();
             setTimeout(patchModelGuide, 800);
 
+            document.addEventListener('click', (event) => {
+                const bubble = event.target.closest('.chat-bubble-assistant.has-context-snapshot');
+                if (!bubble || isInteractiveChatTarget(event.target)) return;
+                restoreSnapshotFromBubble(bubble);
+            });
+
             document.getElementById('context-panel')?.addEventListener('click', (event) => {
                 const previewBtn = event.target.closest('[data-action="preview"][data-output-id]');
                 if (previewBtn) {
@@ -414,6 +545,11 @@
         addModel,
         addCustomer,
         reset,
+        loadSnapshot,
+        attachSnapshotToBubble,
+        restoreSnapshotFromBubble,
+        extractBundleFromMarkdown,
+        bundleHasItems,
         openOutputPreview,
         downloadOutput,
         openCustomerDetail,

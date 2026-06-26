@@ -8,7 +8,7 @@ const path = require('path');
 const root = path.resolve(__dirname, '..');
 const outDir = path.join(root, 'build');
 
-const files = ['index.html'];
+const files = ['index.html', '投行业务模型清单文件-v5.2.html'];
 const dirs = ['images', 'scripts', 'styles', 'partials'];
 
 if (fs.existsSync(outDir)) {

@@ -46,6 +46,7 @@
 
 .wb-app:has(.workbench-panel[data-panel="employee"].active #center-view-performance:not([hidden])) .main-area-header,
 .wb-app:has(.workbench-panel[data-panel="employee"].active #center-view-travel:not([hidden])) .main-area-header,
+.wb-app:has(.workbench-panel[data-panel="employee"].active #center-view-exceptions:not([hidden])) .main-area-header,
 .wb-app:has(.workbench-panel[data-panel="employee"].active #center-view-manage-biz-agents:not([hidden])) .main-area-header,
 .wb-app:has(.workbench-panel[data-panel="employee"].active #center-view-manage-assistants:not([hidden])) .main-area-header {
     display: none;
@@ -440,6 +441,58 @@ body.support-exceptions-view-active .workbench-panel[data-panel="support"] #cent
     min-height: 0;
     display: flex;
     flex-direction: column;
+}
+
+/* 业务团队：异常提醒二级页与差旅分析一致，中栏模块铺满到顶 */
+body.employee-performance-view-active .workbench-panel[data-panel="employee"] .center-exceptions-view {
+    width: 100%;
+    max-width: none;
+}
+
+body.employee-performance-view-active .workbench-panel[data-panel="employee"] .center-workspace {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+body.employee-performance-view-active .workbench-panel[data-panel="employee"] #center-view-exceptions {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+body.employee-performance-view-active .workbench-panel[data-panel="employee"] .center-exceptions-view .module-page-scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 4px 20px;
+}
+
+body.employee-performance-view-active .workbench-panel[data-panel="employee"] .exceptions-section-page,
+body.employee-performance-view-active .workbench-panel[data-panel="employee"] .exception-reminder-board {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+body.employee-performance-view-active .workbench-panel[data-panel="employee"] .exception-board-header {
+    flex-shrink: 0;
+}
+
+body.employee-performance-view-active .workbench-panel[data-panel="employee"] .exception-tab-panel.is-active:not([hidden]) {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+body.employee-performance-view-active .workbench-panel[data-panel="employee"] .exception-alert-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .wb-app .center-performance-view .performance-section-page .section-collapsible-body,

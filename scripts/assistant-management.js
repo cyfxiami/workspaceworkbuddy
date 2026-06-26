@@ -12,7 +12,9 @@
     const STORAGE_ASSISTANT_ORDER = 'wb-assistants-order-v1';
     const STORAGE_ASSISTANT_ORDER_SUPPORT = 'wb-assistants-order-support-v1';
 
-    const DEFAULT_BIZ_IDS = ['ib', 'asset', 'retail', 'invest', 'sales', 'institution', 'research', 'credit', 'verify'];
+    const DEFAULT_BIZ_IDS = ['ib', 'asset', 'retail', 'invest', 'sales', 'institution', 'research', 'credit'];
+    /** 顶部业务助理栏不展示的 ID（两工作台共用） */
+    const HIDDEN_TOP_BIZ_AGENT_IDS = ['verify'];
     const DEFAULT_ASSISTANT_IDS = ['canmou', 'tanma', 'junshi', 'jiaocha', 'tianyan'];
     const DEFAULT_SUPPORT_ASSISTANT_IDS = ['support-tasks', 'support-exceptions'];
     const DEFAULT_SKILL_IDS = ['skill-customer-portrait', 'skill-business-match', 'skill-solution-gen', 'skill-cross-verify', 'skill-service-reply'];
@@ -119,7 +121,8 @@
 
     function getInstalledBizIds(panelKey) {
         const key = panelKey || getPanelKey(getActiveWorkbenchPanel());
-        return readStorage(getBizStorageKey(key), DEFAULT_BIZ_IDS);
+        return readStorage(getBizStorageKey(key), DEFAULT_BIZ_IDS)
+            .filter((id) => !HIDDEN_TOP_BIZ_AGENT_IDS.includes(id));
     }
 
     function getInstalledAssistantIds(panelKey) {
@@ -471,6 +474,7 @@
 
         requestAnimationFrame(() => window.syncHomeCardsFanLayout?.(p));
         window.syncSupportInputAgentPickers?.();
+        window.syncSupportAssistantTags?.(p);
     }
 
     function getInstalledSupportAssistantsForHome() {
@@ -528,6 +532,7 @@
         const employeePanel = document.getElementById('workbench-panel-employee');
         if (employeePanel) window.refreshInputSkillPickers?.(employeePanel);
         window.syncEmployeeMiniAvatars?.();
+        window.syncEmployeeAssistantTags?.();
     }
 
     function getInstalledEmployeeAssistantsForHome() {

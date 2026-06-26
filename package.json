@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node proxy-server.js",
     "dev": "nodemon proxy-server.js",
-    "build": "node scripts/build-static.js"
+    "build": "node scripts/build-static.js",
+    "extract-ib-models": "node scripts/extract-ib-models.js"
   },
   "keywords": [
     "AI",

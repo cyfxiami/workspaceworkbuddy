@@ -1,6 +1,6 @@
 /**
  * 员工工作台 - 投行业务模型引导对话
- * 依赖 window.IB_MODEL_KNOWLEDGE（由 scripts/ib-model-knowledge.js 提供）
+ * 依赖 window.IB_MODEL_KNOWLEDGE（由 scripts/extract-ib-models.js 从根目录投行业务模型清单文件-v5.2.html 生成）
  */
 (function () {
     const KNOWLEDGE = () => window.IB_MODEL_KNOWLEDGE;
@@ -8,9 +8,9 @@
 
     const PROMPT_SUGGESTIONS = {
         0: [
+            '帮我分析陈明这个客户',
             '分析客户张某：资产888万、近3月变动15%、持仓结构',
-            '对比客户合作记录与近12个月交易行为',
-            '输出客户风险测评结果与跟进动作清单'
+            '对比客户合作记录与近12个月交易行为'
         ],
         1: [
             '分析定增项目是否符合基本标准',
@@ -274,6 +274,34 @@
         };
     }
 
+    function findBusinessByName(name) {
+        if (!name) return null;
+        return getKnowledge().businesses.find((biz) => biz.name === name) || null;
+    }
+
+    function formatContextModelCategory(assistantIndex, payload) {
+        const biz = findBusinessByName(payload.bizName);
+        const bizLabel = biz?.category ? `${payload.bizName}（${biz.category}）` : (payload.bizName || '业务');
+        const columnLabel = getAssistantModelLabel(assistantIndex);
+        return payload.category
+            ? `${bizLabel} · ${columnLabel} / ${payload.category}`
+            : `${bizLabel} · ${columnLabel}`;
+    }
+
+    function pickResolvedModelName(biz, assistantIndex, preferredModel, preferredCategoryIndex) {
+        if (preferredModel) return preferredModel;
+        const categories = getCategoriesForAssistant(biz, assistantIndex);
+        const column = getAssistantColumn(assistantIndex);
+        const rawIndex = typeof preferredCategoryIndex === 'number' ? preferredCategoryIndex : 0;
+        const safeIndex = categories.length
+            ? Math.min(Math.max(rawIndex, 0), categories.length - 1)
+            : 0;
+        const category = categories[safeIndex];
+        if (category?.models?.[0]) return category.models[0];
+        const fromCatalog = window.EmployeeCustomerIbFlow?.resolveContextModels?.(biz?.name || '定增', column, { limit: 1 });
+        return fromCatalog?.[0]?.name || category?.section || biz?.name || column;
+    }
+
     function resolveAnalysisPayloadFromIntent(assistantIndex, intent) {
         const { businesses } = getKnowledge();
         const column = getAssistantColumn(assistantIndex);
@@ -281,21 +309,15 @@
         const resolveFromBusiness = (biz, preferredCategoryIndex, preferredModel) => {
             if (!biz) return null;
             const categories = getCategoriesForAssistant(biz, assistantIndex);
-            if (!categories.length) {
-                return {
-                    bizName: biz.name,
-                    category: null,
-                    model: preferredModel || `${getAssistantModelLabel(assistantIndex)}识别结果`
-                };
-            }
-
             const rawIndex = typeof preferredCategoryIndex === 'number' ? preferredCategoryIndex : 0;
-            const safeIndex = Math.min(Math.max(rawIndex, 0), categories.length - 1);
+            const safeIndex = categories.length
+                ? Math.min(Math.max(rawIndex, 0), categories.length - 1)
+                : 0;
             const category = categories[safeIndex];
-            const model = preferredModel || category?.models?.[0] || `${getAssistantModelLabel(assistantIndex)}识别结果`;
+            const model = pickResolvedModelName(biz, assistantIndex, preferredModel, safeIndex);
             return {
                 bizName: biz.name,
-                category: formatCategoryLabel(category || {}),
+                category: category ? formatCategoryLabel(category) : null,
                 model
             };
         };
@@ -311,10 +333,10 @@
             return getCategoriesForAssistant(biz, assistantIndex).length > 0;
         }) || businesses[0];
 
-        return resolveFromBusiness(fallbackBiz, 0, intent?.model) || {
-            bizName: fallbackBiz?.name || '业务识别',
+        return resolveFromBusiness(fallbackBiz, intent?.categoryIndex ?? 0, intent?.model) || {
+            bizName: fallbackBiz?.name || '定增',
             category: null,
-            model: intent?.model || `${getAssistantModelLabel(assistantIndex)}识别结果`
+            model: pickResolvedModelName(fallbackBiz, assistantIndex, intent?.model, 0)
         };
     }
 
@@ -731,7 +753,7 @@
                                 { label: '客户类型', value: '个人客户' },
                                 { label: '客户编号', value: 'P202406180012' },
                                 { label: '开户日期', value: '2022-08-09' },
-                                { label: '风险偏好', value: 'C3（稳健型）' },
+                                { label: '风险测评等级', value: 'C3（稳健型）' },
                                 { label: '服务经理', value: '王经理（工号 E1026）' }
                             ]
                         },
@@ -783,7 +805,7 @@
                                 { label: '客户类型', value: '个人客户' },
                                 { label: '客户编号', value: 'P202503220087' },
                                 { label: '开户日期', value: '2023-11-02' },
-                                { label: '风险偏好', value: 'C4（积极型）' }
+                                { label: '风险测评等级', value: 'C4' }
                             ]
                         },
                         {
@@ -1058,18 +1080,43 @@
         ].slice(0, 3);
     }
 
-    function syncContextArtifacts(assistantIndex, payload, userMessage) {
-        const contextPanel = window.ContextPanel;
-        if (!contextPanel) return;
+    function buildContextBundleFromPayload(assistantIndex, payload, userMessage) {
+        const column = getAssistantColumn(assistantIndex);
+        const hasCatalogModel = payload.model
+            && !String(payload.model).includes('识别结果')
+            && payload.model !== '模型识别结果'
+            && payload.model !== '客户服务处理模型';
 
-        const modelLabel = payload.model || '模型识别结果';
-        contextPanel.addModel?.(modelLabel, `${payload.bizName || '业务'} / ${payload.category || '自动识别'}`);
+        let models = [];
+        if (hasCatalogModel) {
+            models = [{
+                name: payload.model,
+                category: formatContextModelCategory(assistantIndex, payload)
+            }];
+        } else if (column === 'customer') {
+            models = CUSTOMER_ANALYSIS_MODELS.slice(0, 3).map((item) => ({
+                name: item.model,
+                category: `${item.bizName} / ${item.desc}`
+            }));
+        } else if (column === 'service') {
+            const service = getServiceModels().find((item) => item.name === payload.model) || getServiceModels()[0];
+            models = [{
+                name: service?.sections?.[0]?.models?.[0] || payload.model || service?.name || '产业投资人匹配',
+                category: `${service?.name || payload.bizName || '客户服务'} / ${payload.category || service?.sections?.[0]?.section || '买方筛选'}`
+            }];
+        } else {
+            models = window.EmployeeCustomerIbFlow?.resolveContextModels?.(
+                payload.bizName || '定增',
+                column,
+                { limit: 4 }
+            ) || [];
+        }
 
-        const outputs = getDemoOutputsByAssistant(assistantIndex, payload, userMessage);
-        outputs.forEach((item) => contextPanel.addOutput?.(item));
-
-        const customers = getDemoCustomersByAssistant(assistantIndex, userMessage);
-        customers.forEach((item) => contextPanel.addCustomer?.(item));
+        return {
+            models,
+            outputs: getDemoOutputsByAssistant(assistantIndex, payload, userMessage),
+            customers: getDemoCustomersByAssistant(assistantIndex, userMessage)
+        };
     }
 
     function deliverResult(panel, assistantIndex, payload, userMessage, options) {
@@ -1082,10 +1129,13 @@
         }
         const variant = guide.regenerateCount || 0;
         const html = buildResultCardHtml(assistantIndex, payload, userMessage, variant);
-        setGuideContent(panel, html);
+        const blockId = setGuideContent(panel, html);
         guide.step = 'result';
         if (!options?.skipContextSync) {
-            syncContextArtifacts(assistantIndex, payload, userMessage);
+            const row = document.getElementById(blockId);
+            const bubble = row?.querySelector('.chat-bubble-assistant');
+            const bundle = buildContextBundleFromPayload(assistantIndex, payload, userMessage);
+            window.ContextPanel?.attachSnapshotToBubble?.(bubble, bundle);
         }
     }
 
@@ -1123,6 +1173,15 @@
     }
 
     function processUserMessage(message, panel, assistantIndex) {
+        if (window.EmployeeCustomerIbFlow?.usesGuidedFlow?.(assistantIndex)) {
+            window.collapseTopSections?.(panel);
+            setTimeout(() => {
+                const reply = window.EmployeeCustomerIbFlow.getReply(message, assistantIndex);
+                window.appendChatMessage?.(reply, 'assistant', panel, { assistantIndex, userMessage: message });
+            }, 400);
+            return;
+        }
+
         const guide = getEmployeeGuideState(panel);
         guide.pendingUserMessage = message;
         guide.lastResultRowId = null;
@@ -1147,7 +1206,7 @@
     function getGuideWelcomeText(assistantIndex) {
         const tagline = getKnowledge().assistantConfig?.find((item) => item.index === assistantIndex)?.tagline || '';
         const lines = {
-            0: `**客户分析助手**\n\n从资产、行为、交易、合作记录等维度分析客户价值与风险。点选提示词或输入事项，直接生成分析结果。`,
+            0: `**客户分析助手**\n\n从资产、行为、交易、合作记录等维度量化分析客户价值与风险。\n\n输入示例：帮我分析陈明这个客户`,
             1: `**业务分析助手**\n\n基于业务分析模型（${tagline}）自动识别意图并直接生成结果卡片。`,
             2: `**方案生成助手**\n\n基于方案设计模型（${tagline}）自动识别意图并直接生成结果卡片。`,
             3: `**交叉验证助手**\n\n基于交叉验证模型（${tagline}）自动识别意图并直接生成结果卡片。`,

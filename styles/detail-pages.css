@@ -4268,23 +4268,54 @@ body.support-tab-active .top-nav-avatars-host.is-support-mode .support-category-
     box-shadow: 0 3px 10px rgba(0,0,0,0.1);
 }
 
-.ai-card-fan-avatar.tanma {
-    background: linear-gradient(135deg, #FF6B6B 0%, #EE5A6F 100%);
-}
-
-.ai-card-fan-avatar.canmou {
+/* 助手头像统一渐变色（首页卡片 / 聊天 / 小头像 / 支持中心输入框） */
+.ai-card-fan-avatar.canmou,
+.employee-chat-avatar.canmou,
+.ai-mini-avatar.canmou,
+.manage-item-avatar-emoji.canmou,
+body.support-tab-active .workbench-panel[data-panel="support"] .support-home-card-avatar.canmou,
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-trigger-emoji.canmou,
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-option-emoji.canmou {
     background: linear-gradient(135deg, #4ECDC4 0%, #44A3AA 100%);
 }
 
-.ai-card-fan-avatar.junshi {
+.ai-card-fan-avatar.tanma,
+.employee-chat-avatar.tanma,
+.ai-mini-avatar.tanma,
+.manage-item-avatar-emoji.tanma,
+body.support-tab-active .workbench-panel[data-panel="support"] .support-home-card-avatar.tanma,
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-trigger-emoji.tanma,
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-option-emoji.tanma {
+    background: linear-gradient(135deg, #FF6B6B 0%, #EE5A6F 100%);
+}
+
+.ai-card-fan-avatar.junshi,
+.employee-chat-avatar.junshi,
+.ai-mini-avatar.junshi,
+.manage-item-avatar-emoji.junshi,
+body.support-tab-active .workbench-panel[data-panel="support"] .support-home-card-avatar.junshi,
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-trigger-emoji.junshi,
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-option-emoji.junshi {
     background: linear-gradient(135deg, #FFD93D 0%, #F6AD55 100%);
 }
 
-.ai-card-fan-avatar.tianyan {
+.ai-card-fan-avatar.tianyan,
+.employee-chat-avatar.tianyan,
+.ai-mini-avatar.tianyan,
+.manage-item-avatar-emoji.tianyan,
+body.support-tab-active .workbench-panel[data-panel="support"] .support-home-card-avatar.tianyan,
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-trigger-emoji.tianyan,
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-option-emoji.tianyan {
     background: linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%);
 }
 
-.ai-card-fan-avatar.jiaocha {
+.ai-card-fan-avatar.jiaocha,
+.employee-chat-avatar.jiaocha,
+.ai-mini-avatar.jiaocha,
+.manage-item-avatar-emoji.jiaocha,
+body.support-tab-active .workbench-panel[data-panel="support"] .support-home-card-avatar.jiaocha,
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-trigger-emoji.jiaocha,
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-option-emoji.jiaocha {
     background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
 }
 
@@ -4363,8 +4394,8 @@ body.employee-chat-mode .workbench-panel[data-panel="employee"] {
     box-sizing: border-box;
 }
 
-/* 顶部模块任一展开：面板按内容撑开，页面整体可滚动 */
-body.employee-chat-mode .workbench-panels:has(
+/* 顶部模块任一展开：面板按内容撑开，页面整体可滚动（仅旧版单列布局；三栏 wb-workbench-active 见 components.css） */
+body.employee-chat-mode:not(.wb-workbench-active) .workbench-panels:has(
     .workbench-panel[data-panel="employee"] .work-tips-section:not(.collapsed),
     .workbench-panel[data-panel="employee"] .performance-section:not(.collapsed)
 ) {
@@ -4372,7 +4403,7 @@ body.employee-chat-mode .workbench-panels:has(
     min-height: auto;
 }
 
-body.employee-chat-mode .workbench-panel[data-panel="employee"]:has(
+body.employee-chat-mode:not(.wb-workbench-active) .workbench-panel[data-panel="employee"]:has(
     .work-tips-section:not(.collapsed),
     .performance-section:not(.collapsed)
 ) {
@@ -4391,7 +4422,7 @@ body.employee-chat-mode .workbench-panel[data-panel="employee"] .ai-workbench-se
     border-radius: 16px;
 }
 
-body.employee-chat-mode .workbench-panel[data-panel="employee"]:has(
+body.employee-chat-mode:not(.wb-workbench-active) .workbench-panel[data-panel="employee"]:has(
     .work-tips-section:not(.collapsed),
     .performance-section:not(.collapsed)
 ) .ai-workbench-section.chat-mode {
@@ -4414,7 +4445,8 @@ body.employee-chat-mode .workbench-panel[data-panel="employee"] .ai-workbench-se
 
 /* 三栏布局：滚动落在消息列表，滚动条默认隐藏、滚动时显示 */
 body.wb-workbench-active.employee-chat-mode .workbench-panel[data-panel="employee"] .ai-workbench-section.chat-mode .ai-chat-view {
-    flex: 1;
+    flex: 1 1 0 !important;
+    height: auto !important;
     min-height: 0;
     max-height: none !important;
     overflow: hidden;
@@ -4427,8 +4459,8 @@ body.wb-workbench-active.employee-chat-mode .workbench-panel[data-panel="employe
     overflow-y: auto;
 }
 
-/* 顶部模块展开时：聊天列表固定高度区间，不再被 flex 压缩 */
-body.employee-chat-mode .workbench-panel[data-panel="employee"]:has(
+/* 顶部模块展开时：聊天列表固定高度区间，不再被 flex 压缩（仅旧版单列布局） */
+body.employee-chat-mode:not(.wb-workbench-active) .workbench-panel[data-panel="employee"]:has(
     .work-tips-section:not(.collapsed),
     .performance-section:not(.collapsed)
 ) .ai-workbench-section.chat-mode .ai-chat-view {
@@ -4440,6 +4472,7 @@ body.employee-chat-mode .workbench-panel[data-panel="employee"]:has(
 
 body.employee-chat-mode .workbench-panel[data-panel="employee"] .ai-chat-messages {
     padding-top: 4px;
+    padding-bottom: 28px;
 }
 
 body.employee-chat-mode .workbench-panel[data-panel="employee"] .work-tips-section,
@@ -4458,7 +4491,7 @@ body.employee-chat-mode .workbench-panel[data-panel="employee"] .input-section.c
     flex-shrink: 0;
     width: 100%;
     max-width: none;
-    margin: 24px 0 0;
+    margin: 0;
     padding: 18px 16px 18px;
     display: flex;
     justify-content: center;
@@ -4471,7 +4504,7 @@ body.employee-chat-mode .workbench-panel[data-panel="employee"] .input-section.c
 
 body.employee-chat-mode .workbench-panel[data-panel="employee"] .input-section.chat-mode .input-section-inner {
     width: 100%;
-    max-width: min(1160px, 100%);
+    max-width: min(860px, 100%);
     margin: 0 auto;
 }
 
@@ -4544,12 +4577,6 @@ body.employee-chat-mode .workbench-panel[data-panel="employee"] .input-section.c
     color: inherit;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
-
-.employee-chat-avatar.canmou { background: linear-gradient(135deg, #4ECDC4 0%, #44A3AA 100%); }
-.employee-chat-avatar.tanma { background: linear-gradient(135deg, #FF6B6B 0%, #EE5A6F 100%); }
-.employee-chat-avatar.junshi { background: linear-gradient(135deg, #FFD93D 0%, #F6AD55 100%); }
-.employee-chat-avatar.tianyan { background: linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%); }
-.employee-chat-avatar.jiaocha { background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%); }
 
 .employee-chat-avatar span {
     display: flex;
@@ -4922,8 +4949,8 @@ body.employee-chat-mode .workbench-panel[data-panel="employee"] .input-section.c
     min-width: 96px;
 }
 
-/* 小头像栏（输入框左上方） */
-.input-section.chat-mode {
+/* 小头像栏（输入框左上方）——三栏聊天模式由 components.css 控制间距 */
+body.employee-chat-mode:not(.wb-workbench-active) .input-section.chat-mode {
     margin-top: 0;
     padding-top: 8px;
     position: relative;
@@ -4950,12 +4977,6 @@ body.employee-chat-mode .workbench-panel[data-panel="employee"] .input-section.c
     transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
-
-.ai-mini-avatar.canmou { background: linear-gradient(135deg, #4ECDC4 0%, #44A3AA 100%); }
-.ai-mini-avatar.tanma { background: linear-gradient(135deg, #FF6B6B 0%, #EE5A6F 100%); }
-.ai-mini-avatar.junshi { background: linear-gradient(135deg, #FFD93D 0%, #F6AD55 100%); }
-.ai-mini-avatar.tianyan { background: linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%); }
-.ai-mini-avatar.jiaocha { background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%); }
 
 .ai-mini-avatar:hover {
     transform: scale(1.1);
@@ -5101,6 +5122,26 @@ body.support-tab-active .workbench-panel[data-panel="support"] .support-input-ag
     font-size: 16px;
     line-height: 1;
     border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-option-avatar:has(.canmou),
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-option-avatar:has(.tanma),
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-option-avatar:has(.junshi),
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-option-avatar:has(.tianyan),
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-option-avatar:has(.jiaocha) {
+    background: transparent;
+    border-color: transparent;
+}
+
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-trigger:has(.support-input-agent-trigger-emoji.canmou),
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-trigger:has(.support-input-agent-trigger-emoji.tanma),
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-trigger:has(.support-input-agent-trigger-emoji.junshi),
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-trigger:has(.support-input-agent-trigger-emoji.tianyan),
+body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-trigger:has(.support-input-agent-trigger-emoji.jiaocha) {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
 }
 
 body.support-tab-active .workbench-panel[data-panel="support"] .support-input-agent-option-name {
@@ -5113,8 +5154,8 @@ body.support-tab-active .workbench-panel[data-panel="support"] .support-input-ag
     text-overflow: ellipsis;
 }
 
-/* 业务支持中心 - 底部输入框 */
-body.support-tab-active .workbench-panel[data-panel="support"] .enhanced-input-wrap {
+/* 业务支持中心 - 底部输入框（首页） */
+body.support-tab-active .workbench-panel[data-panel="support"] .input-section:not(.chat-mode) .enhanced-input-wrap {
     border-radius: 12px;
     border: 1px solid var(--input-gold-border);
     box-shadow:
@@ -5125,7 +5166,7 @@ body.support-tab-active .workbench-panel[data-panel="support"] .enhanced-input-w
     min-height: 132px;
 }
 
-body.support-tab-active .workbench-panel[data-panel="support"] .support-input-top-row {
+body.support-tab-active .workbench-panel[data-panel="support"] .input-section:not(.chat-mode) .support-input-top-row {
     display: flex;
     align-items: flex-start;
     gap: 10px;
@@ -6394,7 +6435,7 @@ body.support-tab-active .workbench-panel[data-panel="support"] .support-input-se
         max-height: 320px;
     }
 
-    body.employee-chat-mode .workbench-panel[data-panel="employee"] .ai-workbench-section.chat-mode .ai-chat-view {
+    body.employee-chat-mode:not(.wb-workbench-active) .workbench-panel[data-panel="employee"] .ai-workbench-section.chat-mode .ai-chat-view {
         flex: 1 1 0;
         min-height: 180px;
         max-height: 450px;
@@ -6402,7 +6443,7 @@ body.support-tab-active .workbench-panel[data-panel="support"] .support-input-se
         overflow-x: hidden;
     }
 
-    body.employee-chat-mode .workbench-panel[data-panel="employee"]:has(
+    body.employee-chat-mode:not(.wb-workbench-active) .workbench-panel[data-panel="employee"]:has(
         .work-tips-section:not(.collapsed),
         .performance-section:not(.collapsed)
     ) .ai-workbench-section.chat-mode .ai-chat-view {

@@ -90,10 +90,17 @@
                         </button>
                     </div>
                     <div class="sidebar-nav-cards employee-only-nav">
-                        <div class="bc-item bc-item-nav bc-nav-card" data-bc="performance" data-center-view="performance">
+                        <div class="bc-item bc-item-nav bc-nav-card wb-nav-entry-hidden" data-bc="performance" data-center-view="performance" id="employee-nav-performance" hidden>
                             <button type="button" class="bc-trigger" id="bc-trigger-performance">
                                 <span class="bc-nav-icon">📊</span>
                                 <span class="bc-label">业绩绩效</span>
+                                <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                        </div>
+                        <div class="bc-item bc-item-nav bc-nav-card" data-bc="exceptions" data-center-view="exceptions">
+                            <button type="button" class="bc-trigger" id="bc-trigger-exceptions-employee">
+                                <span class="bc-nav-icon">⚠️</span>
+                                <span class="bc-label">异常提醒</span>
                                 <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             </button>
                         </div>
@@ -177,7 +184,6 @@
                                                 <div class="avatar-item" data-avatar-type="institution" onclick="handleTopAvatarClick('institution')"><div class="avatar-img-wrap"><img src="images/Avatar6.png" alt="" class="avatar-img"></div><span class="avatar-name">机构业务助理</span></div>
                                                 <div class="avatar-item" data-avatar-type="research" onclick="handleTopAvatarClick('research')"><div class="avatar-img-wrap"><img src="images/Avatar8.png" alt="" class="avatar-img"></div><span class="avatar-name">研究业务助理</span></div>
                                                 <div class="avatar-item" data-avatar-type="credit" onclick="handleTopAvatarClick('credit')"><div class="avatar-img-wrap"><img src="images/Avatar9.png" alt="" class="avatar-img"></div><span class="avatar-name">信用业务助理</span></div>
-                                                <div class="avatar-item" data-avatar-type="verify" onclick="handleTopAvatarClick('verify')"><div class="avatar-img-wrap"><img src="images/Avatar7.png" alt="" class="avatar-img"></div><span class="avatar-name">交叉验证助理</span></div>
                                             </div>
                                         </div>
                                         <button type="button" class="digital-avatars-scroll-btn digital-avatars-scroll-right" aria-label="向右滑动" hidden>
@@ -190,7 +196,7 @@
                     </div>
                     <div class="sidebar-footer">
                         <span class="nav-title nav-title-multiline" id="nav-page-title" hidden><span class="nav-title-line-main">业务团队</span><span class="nav-title-line-sub">工作台</span></span>
-                        <span class="sidebar-user-avatar">业</span>
+                        <span class="sidebar-user-avatar" id="sidebar-user-avatar">陈</span>
                         <span class="sidebar-user-name" id="sidebar-user-name">业务团队人员</span>
                         <button type="button" class="workbench-logout-btn" id="sidebar-logout-btn" onclick="window.logoutWorkbench && window.logoutWorkbench()">
                             <svg class="workbench-logout-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -228,7 +234,6 @@
                                         <div class="avatar-item" data-avatar-type="institution" onclick="handleTopAvatarClick('institution')"><div class="avatar-img-wrap"><img src="images/Avatar6.png" alt="" class="avatar-img"></div><span class="avatar-name">机构业务助理</span></div>
                                         <div class="avatar-item" data-avatar-type="research" onclick="handleTopAvatarClick('research')"><div class="avatar-img-wrap"><img src="images/Avatar8.png" alt="" class="avatar-img"></div><span class="avatar-name">研究业务助理</span></div>
                                         <div class="avatar-item" data-avatar-type="credit" onclick="handleTopAvatarClick('credit')"><div class="avatar-img-wrap"><img src="images/Avatar9.png" alt="" class="avatar-img"></div><span class="avatar-name">信用业务助理</span></div>
-                                        <div class="avatar-item" data-avatar-type="verify" onclick="handleTopAvatarClick('verify')"><div class="avatar-img-wrap"><img src="images/Avatar7.png" alt="" class="avatar-img"></div><span class="avatar-name">交叉验证助理</span></div>
                                     </div>
                                     <button type="button" class="center-agents-add-btn" id="center-agents-add-btn" aria-label="管理业务助理">
                                         <span class="center-agents-add-plus" aria-hidden="true">+</span>
@@ -321,7 +326,18 @@
                 <div class="enhanced-input-wrap">
                     <textarea id="main-chat-input" class="chat-input enhanced-textarea" rows="1" placeholder="开启我的工作" onkeydown="handleMainInput(event)"></textarea>
                     <div class="input-container input-bottom-bar">
-                        <div class="input-actions-left">
+                        <div class="input-assistant-tags-wrap">
+                            <div class="input-assistant-tags" id="input-assistant-tags" role="listbox" aria-label="选择助手"></div>
+                            <div class="input-assistant-more-anchor" id="input-assistant-more-anchor"></div>
+                        </div>
+                        <div class="input-actions-right">
+                            <div class="input-skill-picker" id="input-skill-picker">
+                                <button type="button" class="input-skill-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="选择技能" disabled>
+                                    <span class="input-skill-trigger-text">技能</span>
+                                    <svg class="input-skill-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </button>
+                                <div class="input-skill-menu" role="listbox" aria-label="已安装技能" hidden></div>
+                            </div>
                             <button type="button" class="input-action-btn upload-btn" onclick="startMainFileUpload()" aria-label="上传文件" title="上传文件">
                                 <svg class="input-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
@@ -336,15 +352,6 @@
                                     <line x1="8" y1="22" x2="16" y2="22"></line>
                                 </svg>
                             </button>
-                        </div>
-                        <div class="input-actions-right">
-                            <div class="input-skill-picker" id="input-skill-picker">
-                                <button type="button" class="input-skill-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="选择技能" disabled>
-                                    <span class="input-skill-trigger-text">技能</span>
-                                    <svg class="input-skill-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                </button>
-                                <div class="input-skill-menu" role="listbox" aria-label="已安装技能" hidden></div>
-                            </div>
                             <button type="button" class="send-btn" onclick="sendMainMessage()" aria-label="发送" title="发送">➤</button>
                         </div>
                     </div>
@@ -354,7 +361,7 @@
                             </div>
                             </section>
 
-                            <div class="center-module-view center-exceptions-view support-only-center" id="center-view-exceptions" hidden>
+                            <div class="center-module-view center-exceptions-view" id="center-view-exceptions" hidden>
                                 <div class="module-page-header performance-page-header">
                                     <button type="button" class="performance-back-btn exceptions-back-btn" id="exceptions-back-btn" aria-label="返回主会话">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
@@ -368,29 +375,48 @@
                                 <div class="module-page-scroll">
                                     <section class="exceptions-section-page performance-section-page">
                                         <div class="exception-reminder-board" id="exception-reminder-board">
-                                            <div class="exception-stats-row" aria-label="异常统计">
-                                                <div class="exception-stat-card exception-stat-card--new">
-                                                    <div class="exception-stat-value">2</div>
-                                                    <div class="exception-stat-label">今日新增</div>
+                                            <div class="exception-board-header">
+                                                <div class="exception-tab-bar" role="tablist" aria-label="异常类型">
+                                                    <button type="button" class="exception-tab is-active" role="tab" aria-selected="true" data-exception-tab="behavior">行为异常</button>
+                                                    <button type="button" class="exception-tab" role="tab" aria-selected="false" data-exception-tab="employee">员工异常</button>
                                                 </div>
-                                                <div class="exception-stat-card exception-stat-card--processing">
-                                                    <div class="exception-stat-value">1</div>
-                                                    <div class="exception-stat-label">处理中</div>
-                                                </div>
-                                                <div class="exception-stat-card exception-stat-card--done">
-                                                    <div class="exception-stat-value">1</div>
-                                                    <div class="exception-stat-label">已处理</div>
-                                                </div>
+                                                <button type="button" class="exception-all-btn" aria-label="查看全部异常">全部异常</button>
                                             </div>
 
-                                            <div class="exception-tab-bar" role="tablist" aria-label="异常类型">
-                                                <button type="button" class="exception-tab is-active" role="tab" aria-selected="true" data-exception-tab="behavior">行为异常</button>
-                                                <button type="button" class="exception-tab" role="tab" aria-selected="false" data-exception-tab="employee">员工异常</button>
-                                            </div>
-
-                                            <div class="exception-tab-panel is-active" role="tabpanel" data-exception-panel="behavior">
+                                            <div class="exception-tab-panel is-active" role="tabpanel" data-exception-panel="behavior" data-panel-title="行为异常">
+                                                <div class="exception-stats-row" aria-label="行为异常统计">
+                                                    <div class="exception-stat-card exception-stat-card--new">
+                                                        <div class="exception-stat-value" data-stat="new">2</div>
+                                                        <div class="exception-stat-label">今日新增</div>
+                                                    </div>
+                                                    <div class="exception-stat-card exception-stat-card--processing">
+                                                        <div class="exception-stat-value" data-stat="processing">1</div>
+                                                        <div class="exception-stat-label">处理中</div>
+                                                    </div>
+                                                    <div class="exception-stat-card exception-stat-card--done">
+                                                        <div class="exception-stat-value" data-stat="done">1</div>
+                                                        <div class="exception-stat-label">已处理</div>
+                                                    </div>
+                                                </div>
                                                 <div class="exception-alert-list">
-                                                    <article class="exception-alert-card exception-alert-card--danger" role="button" tabindex="0" onclick="openExceptionAlertDetail('疑似代客理财')">
+                                                    <article class="exception-alert-card exception-alert-card--processing" role="button" tabindex="0" data-exception-id="client-suitability" data-exception-assignee="陈小明" data-exception-desc-employee="监测到您近期推介的理财产品风险等级高于客户风险承受能力，请及时补充适当性匹配说明并重新确认客户签约意愿。" data-exception-desc-support="监测到投行一部陈小明近期推介的理财产品风险等级高于客户风险承受能力，请及时督促其补充适当性匹配说明并重新确认客户签约意愿。">
+                                                        <div class="exception-alert-accent" aria-hidden="true"></div>
+                                                        <div class="exception-alert-body">
+                                                            <div class="exception-alert-head">
+                                                                <div class="exception-alert-title-line">
+                                                                    <h3 class="exception-alert-title">客户适当性不匹配</h3>
+                                                                    <span class="exception-alert-dept">投行一部-陈小明</span>
+                                                                </div>
+                                                            </div>
+                                                            <p class="exception-alert-desc">监测到您近期推介的理财产品风险等级高于客户风险承受能力，请及时补充适当性匹配说明并重新确认客户签约意愿。</p>
+                                                            <div class="exception-alert-footer">
+                                                                <span class="exception-status-tag exception-status-tag--processing">处理中</span>
+                                                                <time class="exception-alert-time" datetime="2026-06-22T15:30">2026-06-22 15:30</time>
+                                                            </div>
+                                                        </div>
+                                                        <span class="exception-alert-arrow" aria-hidden="true">›</span>
+                                                    </article>
+                                                    <article class="exception-alert-card exception-alert-card--pending" role="button" tabindex="0" data-exception-demo-today="true" data-exception-id="proxy-wealth" data-exception-assignee="周强" data-exception-support-only="true">
                                                         <div class="exception-alert-accent" aria-hidden="true"></div>
                                                         <div class="exception-alert-body">
                                                             <div class="exception-alert-head">
@@ -402,12 +428,12 @@
                                                             <p class="exception-alert-desc">经分析，城东营业部周强正在使用本人电子设备登录客户金汇理财平台账户买卖理财产品，疑似代客交易，相关情况已同步推送公司合规与风控部门，请及时处理。</p>
                                                             <div class="exception-alert-footer">
                                                                 <span class="exception-status-tag exception-status-tag--pending">待处理</span>
-                                                                <time class="exception-alert-time" datetime="2026-06-25T09:32">2026-06-25 09:32</time>
+                                                                <time class="exception-alert-time" datetime="2026-06-26T09:32">2026-06-26 09:32</time>
                                                             </div>
                                                         </div>
                                                         <span class="exception-alert-arrow" aria-hidden="true">›</span>
                                                     </article>
-                                                    <article class="exception-alert-card exception-alert-card--danger" role="button" tabindex="0" onclick="openExceptionAlertDetail('两融余额大幅波动')">
+                                                    <article class="exception-alert-card exception-alert-card--pending" role="button" tabindex="0" data-exception-demo-today="true" data-exception-id="margin-volatility" data-exception-support-only="true">
                                                         <div class="exception-alert-accent" aria-hidden="true"></div>
                                                         <div class="exception-alert-body">
                                                             <div class="exception-alert-head">
@@ -419,12 +445,12 @@
                                                             <p class="exception-alert-desc">5月19日至6月15日，两融余额下降超过30%，请组织研判，20个工作日提交解决方案。</p>
                                                             <div class="exception-alert-footer">
                                                                 <span class="exception-status-tag exception-status-tag--pending">待处理</span>
-                                                                <time class="exception-alert-time" datetime="2026-06-24T14:18">2026-06-24 14:18</time>
+                                                                <time class="exception-alert-time" datetime="2026-06-26T14:18">2026-06-26 14:18</time>
                                                             </div>
                                                         </div>
                                                         <span class="exception-alert-arrow" aria-hidden="true">›</span>
                                                     </article>
-                                                    <article class="exception-alert-card exception-alert-card--warning" role="button" tabindex="0" onclick="openExceptionAlertDetail('止盈止损预警')">
+                                                    <article class="exception-alert-card exception-alert-card--processing" role="button" tabindex="0" data-exception-id="stop-loss-alert" data-exception-support-only="true">
                                                         <div class="exception-alert-accent" aria-hidden="true"></div>
                                                         <div class="exception-alert-body">
                                                             <div class="exception-alert-head">
@@ -435,8 +461,25 @@
                                                             </div>
                                                             <p class="exception-alert-desc">截至6月15日，权益投资部盈亏比例为-16.05%，已触发盈亏预警（预警线0.84），请及时组织研判并提交应对方案。</p>
                                                             <div class="exception-alert-footer">
-                                                                <span class="exception-status-tag exception-status-tag--pending">待处理</span>
+                                                                <span class="exception-status-tag exception-status-tag--processing">处理中</span>
                                                                 <time class="exception-alert-time" datetime="2026-06-23T11:05">2026-06-23 11:05</time>
+                                                            </div>
+                                                        </div>
+                                                        <span class="exception-alert-arrow" aria-hidden="true">›</span>
+                                                    </article>
+                                                    <article class="exception-alert-card exception-alert-card--success" role="button" tabindex="0" data-exception-id="trade-concentration" data-exception-assignee="李航" data-exception-support-only="true">
+                                                        <div class="exception-alert-accent" aria-hidden="true"></div>
+                                                        <div class="exception-alert-body">
+                                                            <div class="exception-alert-head">
+                                                                <div class="exception-alert-title-line">
+                                                                    <h3 class="exception-alert-title">交易集中度过高</h3>
+                                                                    <span class="exception-alert-dept">投资交易部-李航</span>
+                                                                </div>
+                                                            </div>
+                                                            <p class="exception-alert-desc">6月12日监测到某账户单笔交易占部门同类交易比重超过红线阈值，负责人已提交情况说明，合规团队已完成复核归档。</p>
+                                                            <div class="exception-alert-footer">
+                                                                <span class="exception-status-tag exception-status-tag--done">已处理</span>
+                                                                <time class="exception-alert-time" datetime="2026-06-12T15:20">2026-06-12 15:20</time>
                                                             </div>
                                                         </div>
                                                         <span class="exception-alert-arrow" aria-hidden="true">›</span>
@@ -444,27 +487,41 @@
                                                 </div>
                                             </div>
 
-                                            <div class="exception-tab-panel" role="tabpanel" data-exception-panel="employee" hidden>
+                                            <div class="exception-tab-panel" role="tabpanel" data-exception-panel="employee" data-panel-title="员工异常" hidden>
+                                                <div class="exception-stats-row" aria-label="员工异常统计">
+                                                    <div class="exception-stat-card exception-stat-card--new">
+                                                        <div class="exception-stat-value" data-stat="new">1</div>
+                                                        <div class="exception-stat-label">今日新增</div>
+                                                    </div>
+                                                    <div class="exception-stat-card exception-stat-card--processing">
+                                                        <div class="exception-stat-value" data-stat="processing">1</div>
+                                                        <div class="exception-stat-label">处理中</div>
+                                                    </div>
+                                                    <div class="exception-stat-card exception-stat-card--done">
+                                                        <div class="exception-stat-value" data-stat="done">1</div>
+                                                        <div class="exception-stat-label">已处理</div>
+                                                    </div>
+                                                </div>
                                                 <div class="exception-alert-list">
-                                                    <article class="exception-alert-card exception-alert-card--warning" role="button" tabindex="0" onclick="openExceptionAlertDetail('员工高频费报销')">
+                                                    <article class="exception-alert-card exception-alert-card--pending" role="button" tabindex="0" data-exception-demo-today="true" data-exception-id="meal-expense" data-exception-assignee="陈小明" data-exception-desc-employee="您6月用餐报销金额超过部门均值50%，请补充相关说明并及时提交处理。" data-exception-desc-support="投行一部陈小明6月用餐报销超过部门均值50%，陈小明已提交相关说明情况，请审阅。">
                                                         <div class="exception-alert-accent" aria-hidden="true"></div>
                                                         <div class="exception-alert-body">
                                                             <div class="exception-alert-head">
                                                                 <div class="exception-alert-title-line">
-                                                                    <h3 class="exception-alert-title">员工高频费报销</h3>
+                                                                    <h3 class="exception-alert-title">员工高频餐费报销</h3>
                                                                     <span class="exception-category-tag">投行</span>
-                                                                    <span class="exception-alert-dept">投行一部-陈明</span>
+                                                                    <span class="exception-alert-dept">投行一部-陈小明</span>
                                                                 </div>
                                                             </div>
-                                                            <p class="exception-alert-desc">投行一部陈明6月用餐报销超过部门均值50%，陈明已提交相关说明情况，请审阅。</p>
+                                                            <p class="exception-alert-desc">您6月用餐报销金额超过部门均值50%，请补充相关说明并及时提交处理。</p>
                                                             <div class="exception-alert-footer">
                                                                 <span class="exception-status-tag exception-status-tag--pending">待处理</span>
-                                                                <time class="exception-alert-time" datetime="2026-06-25T08:15">2026-06-25 08:15</time>
+                                                                <time class="exception-alert-time" datetime="2026-06-26T08:15">2026-06-26 08:15</time>
                                                             </div>
                                                         </div>
                                                         <span class="exception-alert-arrow" aria-hidden="true">›</span>
                                                     </article>
-                                                    <article class="exception-alert-card exception-alert-card--warning" role="button" tabindex="0" onclick="openExceptionAlertDetail('员工高频超标报销')">
+                                                    <article class="exception-alert-card exception-alert-card--processing" role="button" tabindex="0" data-exception-id="overlimit-expense" data-exception-assignee="王磊" data-exception-support-only="true">
                                                         <div class="exception-alert-accent" aria-hidden="true"></div>
                                                         <div class="exception-alert-body">
                                                             <div class="exception-alert-head">
@@ -482,7 +539,7 @@
                                                         </div>
                                                         <span class="exception-alert-arrow" aria-hidden="true">›</span>
                                                     </article>
-                                                    <article class="exception-alert-card exception-alert-card--success" role="button" tabindex="0" onclick="openExceptionAlertDetail('关联交易行为异常')">
+                                                    <article class="exception-alert-card exception-alert-card--success" role="button" tabindex="0" data-exception-id="related-party" data-exception-assignee="赵静" data-exception-support-only="true">
                                                         <div class="exception-alert-accent" aria-hidden="true"></div>
                                                         <div class="exception-alert-body">
                                                             <div class="exception-alert-head">
@@ -1829,6 +1886,7 @@
 
     <script src="scripts/ib-model-knowledge.js"></script>
     <script src="scripts/employee-model-guide.js"></script>
+    <script src="scripts/employee-customer-ib-flow.js"></script>
     <script src="scripts/workbench-app.js"></script>
     <script src="scripts/context-panel.js"></script>
     <script src="scripts/travel-analysis.js"></script>
