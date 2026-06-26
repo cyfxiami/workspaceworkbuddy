@@ -412,44 +412,48 @@
         return ibGenerateRecommend(message);
     }
 
-    const CUSTOMER_DEMO_NAME = '陈明';
-    const BUSINESS_HANDOFF_PROMPT = '请业务分析助手分析该客户的投行业务机会';
-    const BUSINESS_HANDOFF_SEND_MESSAGE = '我手头有个制造业上市公司客户，营收20亿，想融资扩产';
+    const COMPANY_DEMO_FULL = '陈明精工股份有限公司';
+    const COMPANY_DEMO_SHORT = '陈明精工';
+    const BUSINESS_HANDOFF_PROMPT = '请业务分析助手分析该企业的投行业务机会';
+    const BUSINESS_HANDOFF_SEND_MESSAGE = '我手头有陈明精工这家制造业上市公司，营收20亿，想融资扩产';
     const BUSINESS_ANALYSIS_ASSISTANT_INDEX = 1;
 
     function normalizeAnalysisQuery(text) {
         return (text || '').trim().replace(/\s+/g, '').replace(/[？?！!。，,、]/g, '');
     }
 
-    /** 用户明确输入「分析陈明」，无需再追问 */
-    function isExplicitChenmingAnalysisRequest(message) {
+    /** 用户明确输入企业名称，无需再追问 */
+    function isExplicitCompanyAnalysisRequest(message) {
         const normalized = normalizeAnalysisQuery(message);
         if (!normalized) return false;
-        return normalized === '分析陈明' || normalized === '陈明分析';
+        return normalized === '分析陈明精工'
+            || normalized === '陈明精工分析'
+            || normalized === '分析陈明精工股份有限公司'
+            || normalized === '陈明精工股份有限公司分析';
     }
 
-    /** 识别客户分析意图：含陈明，或泛化「分析客户」类表述（demo 默认落到陈明） */
-    function isChenmingAnalysisRequest(message) {
+    /** 识别企业分析意图：含陈明精工，或泛化「分析客户/公司」类表述（demo 默认落到陈明精工） */
+    function isCompanyAnalysisRequest(message) {
         const text = (message || '').trim();
         if (!text) return false;
-        if (/陈明/.test(text) && (/(分析|画像|评估|看看|了解)/.test(text) || /客户/.test(text))) {
+        if (/陈明精工/.test(text) && (/(分析|画像|评估|看看|了解)/.test(text) || /(客户|公司|企业)/.test(text))) {
             return true;
         }
-        if (/(分析|画像|评估|看看|了解)/.test(text) && /(客户|这位|这个|该)/.test(text)) {
+        if (/(分析|画像|评估|看看|了解)/.test(text) && /(客户|公司|企业|这位|这个|该)/.test(text)) {
             return true;
         }
-        if (/分析.*客户|客户.*分析/.test(text)) {
+        if (/分析.*(客户|公司|企业)|(客户|公司|企业).*分析/.test(text)) {
             return true;
         }
         return false;
     }
 
-    function buildChenmingIntentConfirmPrefix(message) {
+    function buildCompanyIntentConfirmPrefix(message) {
         const text = (message || '').trim();
-        if (/陈明/.test(text)) {
-            return '**你要分析的是不是陈明？**\n\n';
+        if (/陈明精工/.test(text)) {
+            return '**你要分析的是不是陈明精工这家公司？**\n\n';
         }
-        return '**根据您的描述，推测您要分析的客户是陈明，对吗？**\n\n';
+        return '**根据您的描述，推测您要分析的企业是陈明精工，对吗？**\n\n';
     }
 
     function isBusinessHandoffPrompt(promptText) {
@@ -461,21 +465,21 @@
         return false;
     }
 
-    function generateChenmingCustomerAnalysis(options = {}) {
+    function generateCompanyCustomerAnalysis(options = {}) {
         const intentConfirm = options.intentConfirm === true;
         const L = [];
         if (intentConfirm) {
-            L.push(buildChenmingIntentConfirmPrefix(options.message).trimEnd());
+            L.push(buildCompanyIntentConfirmPrefix(options.message).trimEnd());
             L.push('');
         }
-        L.push('## 客户「' + CUSTOMER_DEMO_NAME + '」多维量化分析');
+        L.push('## 企业「' + COMPANY_DEMO_SHORT + '」多维量化分析');
         L.push('');
         L.push('> 已综合资产、行为、交易、合作记录等维度完成分析，核心量化结论如下：');
         L.push('');
-        L.push('### 一、客户基础维度');
+        L.push('### 一、企业基础维度');
         L.push('| 维度 | 分析结果 |');
         L.push('|------|----------|');
-        L.push('| 客户名称 | ' + CUSTOMER_DEMO_NAME + '（上市公司实控人/核心对接人） |');
+        L.push('| 企业名称 | ' + COMPANY_DEMO_FULL + '（证券代码：603882） |');
         L.push('| 企业性质 | **A股制造业上市公司** |');
         L.push('| 年营收规模 | **20.00亿元**（2025年报） |');
         L.push('| 行业分类 | 先进制造 / 装备制造（证监会行业代码待补录） |');
@@ -510,16 +514,16 @@
         L.push('| 舆情与合规 | 近三年监管处罚记录：0条 |');
         L.push('');
         L.push('### 六、综合结论');
-        L.push('**' + CUSTOMER_DEMO_NAME + '** 所属企业为**A股制造业上市公司**，年营收**20.00亿元**，当前合作意图为**融资扩产**（募投项目已备案，资本性支出缺口约**3.2亿元**）。托管资产**8,880万元**、合作年限**5年**、近12月成交**2.3亿元**，具备推进**定增、可转债、公司债**三类投行业务的准入数据基础。');
+        L.push('**' + COMPANY_DEMO_FULL + '** 为**A股制造业上市公司**，年营收**20.00亿元**，当前合作意图为**融资扩产**（募投项目已备案，资本性支出缺口约**3.2亿元**）。托管资产**8,880万元**、合作年限**5年**、近12月成交**2.3亿元**，具备推进**定增、可转债、公司债**三类投行业务的准入数据基础。');
         L.push('');
         L.push('---');
-        L.push('💡 **下一步建议**：交由业务分析助手，基于上述客户分析结果匹配投行业务机会。');
+        L.push('💡 **下一步建议**：交由业务分析助手，基于上述企业分析结果匹配投行业务机会。');
         L.push('');
         L.push('>>> ' + BUSINESS_HANDOFF_PROMPT);
         return L.join('\n');
     }
 
-    function buildChenmingContextBundle() {
+    function buildCompanyContextBundle() {
         const ts = new Date().toLocaleString('zh-CN', { hour12: false });
         return {
             models: [{
@@ -527,15 +531,15 @@
                 category: '客户分析 / 多维量化'
             }],
             customers: [{
-                name: CUSTOMER_DEMO_NAME,
-                type: '企业客户',
+                name: COMPANY_DEMO_FULL,
+                type: '上市公司',
                 source: '客户分析助手会话卡片',
                 time: ts,
                 dimensions: [
                     {
-                        section: '客户基础维度',
+                        section: '企业基础维度',
                         items: [
-                            { label: '客户名称', value: '陈明（上市公司实控人/核心对接人）' },
+                            { label: '企业名称', value: COMPANY_DEMO_FULL + '（证券代码：603882）' },
                             { label: '企业性质', value: 'A股制造业上市公司' },
                             { label: '年营收规模', value: '20.00亿元（2025年报）' },
                             { label: '行业分类', value: '先进制造 / 装备制造' },
@@ -561,13 +565,13 @@
                 ]
             }],
             outputs: [{
-                title: '陈明客户多维分析报告',
+                title: '陈明精工企业多维分析报告',
                 type: 'PDF',
                 fileKind: 'pdf',
-                fileName: '陈明-客户多维分析报告.pdf',
+                fileName: '陈明精工-企业多维分析报告.pdf',
                 modifiedAt: ts,
-                content: '基于资产、行为、交易、合作记录等维度形成的客户量化分析摘要。',
-                downloadText: '基于资产、行为、交易、合作记录等维度形成的客户量化分析摘要。'
+                content: '基于资产、行为、交易、合作记录等维度形成的企业量化分析摘要。',
+                downloadText: '基于资产、行为、交易、合作记录等维度形成的企业量化分析摘要。'
             }]
         };
     }
@@ -651,8 +655,8 @@
             models: ibResolveContextModels('定增', 'analysis', { limit: 3 }),
             outputs: [],
             customers: [{
-                name: CUSTOMER_DEMO_NAME,
-                type: '企业客户',
+                name: COMPANY_DEMO_FULL,
+                type: '上市公司',
                 source: '业务推荐结果卡片'
             }]
         };
@@ -662,8 +666,8 @@
         const text = String(replyText || '');
         if (!text.trim()) return null;
 
-        if (/客户「陈明」多维量化分析/.test(text)) {
-            return buildChenmingContextBundle();
+        if (/企业「陈明精工」多维量化分析/.test(text)) {
+            return buildCompanyContextBundle();
         }
         if (/方案设计模板/.test(text) || /可下载文档/.test(text)) {
             const biz = (text.match(/^#\s*(.+?)方案设计模板/m) || [])[1]
@@ -687,19 +691,19 @@
             return buildRecommendContextBundle();
         }
 
-        if (assistantIndex === 0 && userMessage && isChenmingAnalysisRequest(userMessage)) {
-            return buildChenmingContextBundle();
+        if (assistantIndex === 0 && userMessage && isCompanyAnalysisRequest(userMessage)) {
+            return buildCompanyContextBundle();
         }
 
         return null;
     }
 
     function getCustomerAnalysisReply(message) {
-        if (isChenmingAnalysisRequest(message)) {
-            const intentConfirm = !isExplicitChenmingAnalysisRequest(message);
-            return generateChenmingCustomerAnalysis({ intentConfirm, message });
+        if (isCompanyAnalysisRequest(message)) {
+            const intentConfirm = !isExplicitCompanyAnalysisRequest(message);
+            return generateCompanyCustomerAnalysis({ intentConfirm, message });
         }
-        return '**客户分析助手**\n\n请输入「帮我分析陈明这个客户」，我将从资产、行为、交易、合作记录等维度为您量化分析。';
+        return '**客户分析助手**\n\n请输入「帮我分析陈明精工这家公司」，我将从资产、行为、交易、合作记录等维度为您量化分析。';
     }
 
     function getReply(message, assistantIndex) {
@@ -730,8 +734,11 @@
         usesGuidedFlow(assistantIndex) {
             return assistantIndex === 0 || assistantIndex === BUSINESS_ANALYSIS_ASSISTANT_INDEX;
         },
-        isChenmingAnalysisRequest,
-        isExplicitChenmingAnalysisRequest,
+        isCompanyAnalysisRequest,
+        isExplicitCompanyAnalysisRequest,
+        // 兼容旧引用
+        isChenmingAnalysisRequest: isCompanyAnalysisRequest,
+        isExplicitChenmingAnalysisRequest: isExplicitCompanyAnalysisRequest,
         BUSINESS_HANDOFF_PROMPT,
         BUSINESS_ANALYSIS_ASSISTANT_INDEX
     };

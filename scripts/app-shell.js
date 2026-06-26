@@ -374,6 +374,8 @@
         return days + ' 天前';
     }
 
+    const SESSION_ITEM_ICON_HTML = '<span class="session-item-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 3.5h10a1 1 0 0 1 1 1v5.5a1 1 0 0 1-1 1H7l-2.5 2V10.5H3a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/><circle cx="5.5" cy="7" r="0.55" fill="currentColor"/><circle cx="8" cy="7" r="0.55" fill="currentColor"/><circle cx="10.5" cy="7" r="0.55" fill="currentColor"/></svg></span>';
+
     function renderSessionHistory() {
         const list = document.getElementById('sidebar-sessions-list');
         if (!list) return;
@@ -384,8 +386,11 @@
         }
         list.innerHTML = sessions.map((s) =>
             `<button type="button" class="session-item${s.id === currentSessionId ? ' active' : ''}" data-session-id="${s.id}">
-                <span class="session-item-title">${escapeHtml(s.title)}</span>
-                <span class="session-item-time">${formatRelativeTime(s.timestamp)}</span>
+                ${SESSION_ITEM_ICON_HTML}
+                <span class="session-item-body">
+                    <span class="session-item-title">${escapeHtml(s.title)}</span>
+                    <span class="session-item-time">${formatRelativeTime(s.timestamp)}</span>
+                </span>
             </button>`
         ).join('');
     }
@@ -398,13 +403,14 @@
         return createSession(title);
     }
 
-    function createSession(title, assistantIndex) {
+    function createSession(title, assistantIndex, options = {}) {
         const sessions = getSessions();
         const entry = {
             id: 's-' + Date.now(),
             title: (title || '新对话').slice(0, 40),
             timestamp: Date.now(),
-            assistantIndex: typeof assistantIndex === 'number' ? assistantIndex : 0,
+            assistantIndex: typeof assistantIndex === 'number' ? assistantIndex : null,
+            workbenchAssistant: options.workbenchAssistant === true,
             messages: []
         };
         sessions.unshift(entry);
@@ -430,7 +436,7 @@
         highlightSessionInSidebar(currentSessionId);
     }
 
-    function saveSessionMessages(sessionId, messages, assistantIndex) {
+    function saveSessionMessages(sessionId, messages, assistantIndex, options = {}) {
         if (!sessionId) return;
         const sessions = getSessions();
         const session = sessions.find((s) => s.id === sessionId);
@@ -438,6 +444,13 @@
         session.messages = Array.isArray(messages) ? messages.slice(-100) : [];
         if (typeof assistantIndex === 'number') {
             session.assistantIndex = assistantIndex;
+            session.workbenchAssistant = false;
+        } else if (assistantIndex === null || assistantIndex === undefined) {
+            session.assistantIndex = null;
+        }
+        if (options.workbenchAssistant === true) {
+            session.workbenchAssistant = true;
+            session.assistantIndex = null;
         }
         session.timestamp = Date.now();
         saveSessions(sessions);

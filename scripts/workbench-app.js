@@ -247,7 +247,7 @@
     const workbenchPanelState = {
         support: { chatModeActive: false, currentCardIndex: 0, miniAvatarsInitialized: false, currentSupportAgent: null, currentSupportInputAgent: 'daily-task', currentTaskAgentId: null, currentTask: null, currentTodoStep: null, supportWelcomeShown: false, currentSessionId: null, supportChatMessages: [], currentInputSkillId: null, currentExtraAssistantId: null },
         org: { chatModeActive: true, currentCardIndex: 0, miniAvatarsInitialized: false, currentOrgAgent: null, currentInputSkillId: null },
-        employee: { chatModeActive: false, currentCardIndex: 0, miniAvatarsInitialized: false, currentSessionId: null, chatMessages: [], employeeModelGuide: null, currentInputSkillId: null, currentExtraAssistantId: null, exceptionChatActive: false }
+        employee: { chatModeActive: false, currentCardIndex: null, miniAvatarsInitialized: false, currentSessionId: null, chatMessages: [], employeeModelGuide: null, currentInputSkillId: null, currentExtraAssistantId: null, exceptionChatActive: false }
     };
 
     const supportCategoryAgentTasks = {
@@ -1880,6 +1880,7 @@
         });
         syncAssistantMorePickerState(p);
         refreshInputSkillPicker(p);
+        updateEmployeeInputPlaceholder(p);
     }
 
     function sendEmployeeExceptionAlert(item, action) {
@@ -2406,10 +2407,14 @@
             list.innerHTML = '<div class="context-empty">暂无历史会话</div>';
             return;
         }
+        const sessionItemIconHtml = '<span class="session-item-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 3.5h10a1 1 0 0 1 1 1v5.5a1 1 0 0 1-1 1H7l-2.5 2V10.5H3a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/><circle cx="5.5" cy="7" r="0.55" fill="currentColor"/><circle cx="8" cy="7" r="0.55" fill="currentColor"/><circle cx="10.5" cy="7" r="0.55" fill="currentColor"/></svg></span>';
         list.innerHTML = sessions.map((s) =>
             `<button type="button" class="session-item${s.id === state.currentSessionId ? ' active' : ''}" data-session-id="${escapeHtmlAttr(s.id)}">
-                <span class="session-item-title">${escapeHtmlText(s.title)}</span>
-                <span class="session-item-time">${formatSupportRelativeTime(s.timestamp)}</span>
+                ${sessionItemIconHtml}
+                <span class="session-item-body">
+                    <span class="session-item-title">${escapeHtmlText(s.title)}</span>
+                    <span class="session-item-time">${formatSupportRelativeTime(s.timestamp)}</span>
+                </span>
             </button>`
         ).join('');
     }
@@ -4208,8 +4213,9 @@
             return;
         }
         initIndicatorsForPanel(panel);
-        selectEmployeeAssistant(0, panel);
+        deselectEmployeeInputAssistant(panel);
         syncEmployeeAssistantTags(panel);
+        initEmployeeMainInputPromptBehavior(panel);
         panel.dataset.initialized = 'true';
     }
 
@@ -4407,6 +4413,243 @@
         { id: 'shenpi', name: '审批助手', emoji: '✅', avatarClass: 'shenpi', chatIndex: 5 },
         { id: 'tongzhi', name: '通知公告助手', emoji: '📢', avatarClass: 'tongzhi', chatIndex: 6 }
     ];
+
+    const WORKBENCH_ASSISTANT = {
+        name: '工作台助手',
+        emoji: '💼',
+        avatarClass: 'workbench',
+        welcomeText: `**工作台助手**\n\n我是您的工作台助手，可帮您协调各业务助手、处理通用工作台事务。\n\n如需专业分析，可点选下方助手标签切换；也可直接描述需求，我来协助您。`
+    };
+
+    const EMPLOYEE_ASSISTANT_INPUT_PROMPTS = {
+        canmou: '分析你名下的【陈明精工这家公司】',
+        tanma: '帮我分析本季度投行业务的目标完成进度',
+        junshi: '为陈明精工生成一套融资扩产方案草案',
+        jiaocha: '核查单笔银证转入≥100万是否存在异常',
+        tianyan: '帮我梳理陈明精工待跟进的客户服务事项',
+        shenpi: '查询我名下待审批的进度',
+        tongzhi: '起草一份面向全体员工的业务通知公告'
+    };
+
+    function resolveEmployeeAssistantAvatarClass(index, panel) {
+        const agents = window.getInstalledEmployeeAssistantsForHome?.() || [];
+        const agent = agents.find((item) => item.listIndex === index);
+        if (agent?.avatarClass) return agent.avatarClass;
+        const assistant = aiAssistants.find((item) => item.index === index);
+        return assistant?.avatarClass || '';
+    }
+
+    function getEmployeeAssistantInputPrompt(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (!p || getPanelKey(p) !== 'employee') return '';
+        const state = getPanelState(p);
+        if (state.currentExtraAssistantId) {
+            return EMPLOYEE_ASSISTANT_INPUT_PROMPTS[state.currentExtraAssistantId] || '';
+        }
+        if (typeof state.currentCardIndex === 'number' && state.currentCardIndex >= 0) {
+            const avatarClass = resolveEmployeeAssistantAvatarClass(state.currentCardIndex, p);
+            return EMPLOYEE_ASSISTANT_INPUT_PROMPTS[avatarClass] || '';
+        }
+        return '';
+    }
+
+    function updateEmployeeInputPlaceholder(panel) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        if (!p || getPanelKey(p) !== 'employee') return;
+        const input = getPanelEl('main-chat-input', p);
+        if (!input) return;
+
+        const prevPrompt = input.dataset.suggestedPrompt || '';
+        const prompt = getEmployeeAssistantInputPrompt(p);
+        if (!input.value.trim() || (prevPrompt && input.value === prevPrompt)) {
+            input.value = '';
+        }
+        input.placeholder = prompt || getMainInputDefaultPlaceholder(p);
+        input.dataset.suggestedPrompt = prompt;
+    }
+
+    function fillEmployeeMainInputPrompt(panel) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        if (!p || getPanelKey(p) !== 'employee') return;
+        const input = getPanelEl('main-chat-input', p);
+        const prompt = getEmployeeAssistantInputPrompt(p);
+        if (!input || !prompt || input.value.trim()) return;
+        input.value = prompt;
+        autoResizeTextarea(input);
+    }
+
+    function initEmployeeMainInputPromptBehavior(panel) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        if (!p || getPanelKey(p) !== 'employee') return;
+        const input = getPanelEl('main-chat-input', p);
+        if (!input || input.dataset.employeePromptBound === 'true') return;
+        input.dataset.employeePromptBound = 'true';
+        input.addEventListener('focus', () => fillEmployeeMainInputPrompt(p));
+        input.addEventListener('click', () => fillEmployeeMainInputPrompt(p));
+    }
+
+    function isWorkbenchAssistantMode(state) {
+        if (!state || state.exceptionChatActive) return false;
+        if (state.currentExtraAssistantId) return false;
+        return !(typeof state.currentCardIndex === 'number' && state.currentCardIndex >= 0);
+    }
+
+    function isEmployeeInputAssistantSelected(state) {
+        if (!state || state.exceptionChatActive) return false;
+        if (state.currentExtraAssistantId) return true;
+        return typeof state.currentCardIndex === 'number' && state.currentCardIndex >= 0;
+    }
+
+    function buildWorkbenchChatAvatarHtml() {
+        return `<div class="chat-avatar employee-chat-avatar ${WORKBENCH_ASSISTANT.avatarClass}" title="${escapeHtmlText(WORKBENCH_ASSISTANT.name)}"><span>${WORKBENCH_ASSISTANT.emoji}</span></div>`;
+    }
+
+    function parseAssistantTitleFromMarkdown(text) {
+        const match = String(text || '').trim().match(/^\*\*(.+?)\*\*/);
+        return match ? match[1].trim() : '';
+    }
+
+    function buildAvatarHtmlFromAiAssistant(assistant) {
+        if (!assistant) return buildWorkbenchChatAvatarHtml();
+        return `<div class="chat-avatar employee-chat-avatar ${assistant.avatarClass || ''}" title="${escapeHtmlText(assistant.name)}"><span>${assistant.emoji || '🤖'}</span></div>`;
+    }
+
+    function buildAvatarHtmlFromExtraAssistant(extra) {
+        if (!extra) return buildWorkbenchChatAvatarHtml();
+        return `<div class="chat-avatar employee-chat-avatar ${extra.avatarClass || ''}" title="${escapeHtmlText(extra.name)}"><span>${extra.emoji || '🤖'}</span></div>`;
+    }
+
+    function resolveEmployeeMessageAvatarMeta(options = {}, text = '', panel) {
+        if (options.agentId === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
+            return { kind: 'exception' };
+        }
+
+        if (options.extraAssistantId) {
+            const extra = getExtraAssistantById(options.extraAssistantId);
+            if (extra) return { kind: 'extra', extra };
+        }
+
+        if (options.workbenchAssistant) {
+            return { kind: 'workbench' };
+        }
+
+        const titleName = parseAssistantTitleFromMarkdown(text);
+        if (titleName) {
+            if (titleName === WORKBENCH_ASSISTANT.name || isWorkbenchAssistantReplyText(text)) {
+                return { kind: 'workbench' };
+            }
+            const extraByName = employeeExtraAssistants.find((item) => item.name === titleName);
+            if (extraByName) return { kind: 'extra', extra: extraByName };
+            const assistantByName = aiAssistants.find((item) => item.name === titleName);
+            if (assistantByName) return { kind: 'main', assistant: assistantByName };
+        }
+
+        if (typeof options.chatIndex === 'number' && aiAssistants[options.chatIndex]) {
+            return { kind: 'main', assistant: aiAssistants[options.chatIndex] };
+        }
+
+        if (typeof options.assistantIndex === 'number') {
+            const chatIndex = options.assistantIndex;
+            if (aiAssistants[chatIndex]) {
+                return { kind: 'main', assistant: aiAssistants[chatIndex] };
+            }
+            const homeAgent = getEmployeeHomeAssistant(chatIndex, panel);
+            if (homeAgent) {
+                return {
+                    kind: 'main',
+                    assistant: {
+                        name: homeAgent.name,
+                        emoji: homeAgent.emoji,
+                        avatarClass: homeAgent.avatarClass,
+                        index: homeAgent.chatIndex,
+                        chatIndex: homeAgent.chatIndex
+                    }
+                };
+            }
+        }
+
+        if (!options.skipPersist) {
+            const state = getPanelState(panel);
+            if (isWorkbenchAssistantMode(state)) return { kind: 'workbench' };
+            if (state.currentExtraAssistantId) {
+                const extra = getExtraAssistantById(state.currentExtraAssistantId);
+                if (extra) return { kind: 'extra', extra };
+            }
+            if (typeof state.currentCardIndex === 'number') {
+                return { kind: 'main', assistant: getEmployeeAssistant(state.currentCardIndex, panel) };
+            }
+        }
+
+        return { kind: 'workbench' };
+    }
+
+    function buildEmployeeMessageAvatarHtml(options = {}, text = '', panel) {
+        const meta = resolveEmployeeMessageAvatarMeta(options, text, panel);
+        if (meta.kind === 'exception') return buildEmployeeExceptionChatAvatarHtml();
+        if (meta.kind === 'workbench') return buildWorkbenchChatAvatarHtml();
+        if (meta.kind === 'extra') return buildAvatarHtmlFromExtraAssistant(meta.extra);
+        return buildAvatarHtmlFromAiAssistant(meta.assistant);
+    }
+
+    function buildEmployeeChatPersistMeta(role, options = {}, text = '', panel) {
+        if (role !== 'assistant' || options.agentId) {
+            return {
+                agentId: options.agentId || null
+            };
+        }
+
+        const meta = resolveEmployeeMessageAvatarMeta(options, text, panel);
+        const persist = {};
+
+        if (meta.kind === 'workbench') {
+            persist.workbenchAssistant = true;
+            return persist;
+        }
+        if (meta.kind === 'extra' && meta.extra) {
+            persist.extraAssistantId = meta.extra.id;
+            persist.chatIndex = meta.extra.chatIndex;
+            return persist;
+        }
+        if (meta.kind === 'main' && meta.assistant) {
+            const chatIndex = typeof meta.assistant.chatIndex === 'number'
+                ? meta.assistant.chatIndex
+                : meta.assistant.index;
+            if (typeof chatIndex === 'number') {
+                persist.chatIndex = chatIndex;
+                persist.assistantIndex = chatIndex;
+            }
+            return persist;
+        }
+        return persist;
+    }
+
+    function getWorkbenchAssistantReply(message) {
+        const routedIndex = resolveEmployeeAssistantIndexFromMessage(message);
+        const routedName = aiAssistants[routedIndex]?.name;
+        if (routedName && shouldShowEmployeeRoutingToast(message)) {
+            return `**工作台助手**\n\n您的问题更适合由「${routedName}」处理。可点选下方对应助手标签切换。\n\n关于「${message}」，我已记录需求，请补充更多背景信息以便跟进。`;
+        }
+        return `**工作台助手**\n\n关于「${message}」，我已收到您的需求。\n\n如需专业分析，可选下方助手标签；也可继续描述，我帮您协调处理。`;
+    }
+
+    function isWorkbenchAssistantReplyText(text) {
+        return typeof text === 'string' && /^\*\*工作台助手\*\*/.test(text.trim());
+    }
+
+    function isWorkbenchAssistantSession(session) {
+        if (!session) return false;
+        if (session.workbenchAssistant === true) return true;
+        const messages = Array.isArray(session.messages) ? session.messages : [];
+        return messages.some((msg) => msg?.workbenchAssistant || isWorkbenchAssistantReplyText(msg?.text));
+    }
+
+    function appendWorkbenchAssistantWelcome(panel, options = {}) {
+        appendChatMessage(markdownToHtml(WORKBENCH_ASSISTANT.welcomeText), 'assistant', panel, {
+            html: true,
+            workbenchAssistant: true,
+            skipPersist: !!options.skipPersist
+        });
+    }
 
     function getExtraAssistantById(id) {
         return employeeExtraAssistants.find((item) => item.id === id) || null;
@@ -4697,12 +4940,14 @@
         });
 
         const state = getPanelState(p);
-        if (state.chatModeActive && agents.length) {
+        if (state.chatModeActive && typeof state.currentCardIndex === 'number') {
             const maxIdx = agents.length - 1;
-            if ((state.currentCardIndex ?? 0) > maxIdx) {
+            if (state.currentCardIndex > maxIdx) {
                 state.currentCardIndex = 0;
             }
-            updateMiniAvatarActive(state.currentCardIndex ?? 0, p);
+            updateMiniAvatarActive(state.currentCardIndex, p);
+        } else if (state.chatModeActive) {
+            p.querySelectorAll('.ai-mini-avatar').forEach((avatar) => avatar.classList.remove('active'));
         }
     }
 
@@ -4711,6 +4956,91 @@
     function getEmployeeAssistantTagLabel(name) {
         if (!name) return '助手';
         return name.replace(/助手$/, '');
+    }
+
+    function createInputAssistantTagCloseBtn(onClose) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'input-assistant-tag-close';
+        btn.setAttribute('aria-label', '取消选中');
+        btn.title = '取消选中';
+        btn.innerHTML = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+        btn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            onClose();
+        });
+        return btn;
+    }
+
+    function syncEmployeeTagCloseButtons(panel) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        if (!p || getPanelKey(p) !== 'employee') return;
+
+        p.querySelectorAll('.input-assistant-tag:not(.input-assistant-more-trigger)').forEach((tag) => {
+            const isActive = tag.classList.contains('is-active');
+            let closeBtn = tag.querySelector('.input-assistant-tag-close');
+            if (isActive) {
+                if (!closeBtn) {
+                    closeBtn = createInputAssistantTagCloseBtn(() => {
+                        if (tag.dataset.extraId) {
+                            clearEmployeeExtraAssistant(p);
+                        } else {
+                            deselectEmployeeInputAssistant(p);
+                        }
+                    });
+                    tag.appendChild(closeBtn);
+                }
+            } else if (closeBtn) {
+                closeBtn.remove();
+            }
+        });
+    }
+
+    function syncEmployeeExtraInputTag(panel) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        const container = getPanelEl('input-assistant-tags', p);
+        if (!container) return;
+        const state = getPanelState(p);
+
+        container.querySelector('.input-assistant-tag-extra')?.remove();
+        if (!state.currentExtraAssistantId) return;
+
+        const extra = getExtraAssistantById(state.currentExtraAssistantId);
+        if (!extra) return;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `input-assistant-tag input-assistant-tag-extra is-active ${extra.avatarClass || ''}`;
+        btn.dataset.extraId = extra.id;
+        btn.title = extra.name;
+        btn.setAttribute('role', 'option');
+        btn.setAttribute('aria-selected', 'true');
+        btn.innerHTML = `
+            <span class="input-assistant-tag-icon ${extra.avatarClass || ''}" aria-hidden="true">${extra.emoji || '🤖'}</span>
+            <span class="input-assistant-tag-name">${escapeHtmlText(getEmployeeAssistantTagLabel(extra.name))}</span>
+        `;
+        btn.addEventListener('click', () => {
+            if (state.currentExtraAssistantId !== extra.id) {
+                handleEmployeeExtraAssistantPick(extra.id, p);
+            }
+        });
+        container.insertBefore(btn, container.firstChild);
+        syncEmployeeTagCloseButtons(p);
+    }
+
+    function deselectEmployeeInputAssistant(panel) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        if (!p || getPanelKey(p) !== 'employee') return;
+        const state = getPanelState(p);
+
+        state.currentCardIndex = null;
+        state.currentCatalogAssistant = null;
+        state.currentInputSkillId = null;
+        state.exceptionChatActive = false;
+
+        updateEmployeeAssistantSelection(null, p);
+        collapseTopSections(p);
+        refreshInputSkillPicker(p);
     }
 
     function syncEmployeeAssistantTags(panel) {
@@ -4752,15 +5082,13 @@
         renderEmployeeAssistantMorePicker(p);
 
         const state = getPanelState(p);
-        if (state.currentExtraAssistantId) {
-            updateEmployeeAssistantSelection(state.currentCardIndex ?? 0, p);
-        } else if (agents.length) {
-            const maxIdx = agents.length - 1;
-            const idx = Math.min(state.currentCardIndex ?? 0, maxIdx);
-            if ((state.currentCardIndex ?? 0) > maxIdx) {
-                state.currentCardIndex = 0;
-            }
-            updateEmployeeAssistantSelection(idx, p);
+        if (state.currentExtraAssistantId || (typeof state.currentCardIndex === 'number' && state.currentCardIndex >= 0)) {
+            updateEmployeeAssistantSelection(
+                typeof state.currentCardIndex === 'number' ? state.currentCardIndex : null,
+                p
+            );
+        } else {
+            updateEmployeeAssistantSelection(null, p);
         }
     }
 
@@ -4773,6 +5101,23 @@
         if (!picker) return;
 
         const trigger = picker.querySelector('.input-assistant-more-trigger');
+
+        if (key === 'employee') {
+            if (trigger) {
+                trigger.classList.remove('is-active');
+                employeeExtraAssistants.forEach((item) => trigger.classList.remove(item.avatarClass));
+                trigger.querySelector('.input-assistant-tag-icon')?.remove();
+                const textEl = trigger.querySelector('.input-assistant-more-trigger-text');
+                if (textEl) textEl.textContent = '更多';
+            }
+            picker.querySelectorAll('.input-assistant-more-option').forEach((btn) => {
+                const isActive = btn.dataset.extraId === state.currentExtraAssistantId;
+                btn.classList.toggle('is-active', isActive);
+                btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
+            return;
+        }
+
         const extra = state.currentExtraAssistantId ? getExtraAssistantById(state.currentExtraAssistantId) : null;
 
         if (trigger) {
@@ -5076,24 +5421,30 @@
         if (!p || getPanelKey(p) !== 'employee') return;
         const state = getPanelState(p);
         const activeExtraId = state.currentExtraAssistantId;
+        const hasMainSelection = typeof index === 'number' && index >= 0;
 
         p.querySelectorAll('.ai-card-fan[data-index]').forEach((card) => {
-            card.classList.toggle('active', !activeExtraId && parseInt(card.dataset.index, 10) === index);
+            card.classList.toggle('active', !activeExtraId && hasMainSelection && parseInt(card.dataset.index, 10) === index);
         });
         p.querySelectorAll('.indicator').forEach((ind) => {
-            ind.classList.toggle('active', !activeExtraId && parseInt(ind.dataset.index, 10) === index);
+            ind.classList.toggle('active', !activeExtraId && hasMainSelection && parseInt(ind.dataset.index, 10) === index);
         });
-        p.querySelectorAll('.input-assistant-tag:not(.input-assistant-more-trigger)').forEach((tag) => {
-            const isActive = !activeExtraId && parseInt(tag.dataset.index, 10) === index;
+        p.querySelectorAll('.input-assistant-tag:not(.input-assistant-more-trigger):not(.input-assistant-tag-extra)').forEach((tag) => {
+            const isActive = !activeExtraId && hasMainSelection && parseInt(tag.dataset.index, 10) === index;
             tag.classList.toggle('is-active', isActive);
             tag.setAttribute('aria-selected', isActive ? 'true' : 'false');
         });
+        syncEmployeeExtraInputTag(p);
         syncAssistantMorePickerState(p);
         if (activeExtraId) {
             p.querySelectorAll('.ai-mini-avatar').forEach((avatar) => avatar.classList.remove('active'));
-        } else {
+        } else if (hasMainSelection) {
             updateMiniAvatarActive(index, p);
+        } else {
+            p.querySelectorAll('.ai-mini-avatar').forEach((avatar) => avatar.classList.remove('active'));
         }
+        syncEmployeeTagCloseButtons(p);
+        updateEmployeeInputPlaceholder(p);
     }
 
     function clearEmployeeExtraAssistant(panel) {
@@ -5104,7 +5455,10 @@
 
         state.currentExtraAssistantId = null;
         state.currentInputSkillId = null;
-        updateEmployeeAssistantSelection(state.currentCardIndex ?? 0, p);
+        updateEmployeeAssistantSelection(
+            typeof state.currentCardIndex === 'number' ? state.currentCardIndex : null,
+            p
+        );
         collapseTopSections(p);
         refreshInputSkillPicker(p);
     }
@@ -5119,7 +5473,7 @@
         state.currentCatalogAssistant = null;
         state.currentInputSkillId = null;
 
-        updateEmployeeAssistantSelection(state.currentCardIndex ?? 0, p);
+        updateEmployeeAssistantSelection(state.currentCardIndex ?? null, p);
         collapseTopSections(p);
         refreshInputSkillPicker(p);
     }
@@ -5132,7 +5486,6 @@
 
         const state = getPanelState(p);
         if (state.currentExtraAssistantId === extraId) {
-            clearEmployeeExtraAssistant(p);
             return;
         }
 
@@ -5140,7 +5493,7 @@
             state.currentExtraAssistantId = extraId;
             state.currentCatalogAssistant = null;
             state.currentInputSkillId = null;
-            updateEmployeeAssistantSelection(state.currentCardIndex ?? 0, p);
+            updateEmployeeAssistantSelection(state.currentCardIndex ?? null, p);
             collapseTopSections(p);
             refreshInputSkillPicker(p);
             return;
@@ -5190,7 +5543,12 @@
         if (getPanelKey(p) !== 'employee') return;
         const state = getPanelState(p);
         if (!state.currentSessionId || !window.AppShell?.saveSessionMessages) return;
-        window.AppShell.saveSessionMessages(state.currentSessionId, state.chatMessages || [], state.currentCardIndex);
+        window.AppShell.saveSessionMessages(
+            state.currentSessionId,
+            state.chatMessages || [],
+            state.currentCardIndex,
+            { workbenchAssistant: isWorkbenchAssistantMode(state) }
+        );
     }
 
     function recordEmployeeChatMessage(panel, message) {
@@ -5230,15 +5588,27 @@
 
         messagesEl.innerHTML = '';
         state.chatMessages = Array.isArray(session?.messages) ? session.messages.slice() : [];
-        state.currentCardIndex = typeof session?.assistantIndex === 'number' ? session.assistantIndex : 0;
+        const workbenchSession = isWorkbenchAssistantSession(session);
+        state.currentCardIndex = workbenchSession
+            ? null
+            : (typeof session?.assistantIndex === 'number' ? session.assistantIndex : null);
         const isExceptionSession = String(session?.title || '').startsWith('异常提醒·')
             || state.chatMessages.some((msg) => msg.agentId === SUPPORT_INPUT_AGENT_EXCEPTIONS);
         if (isExceptionSession) {
             clearEmployeeAssistantInputSelection(p);
+        } else if (workbenchSession) {
+            state.exceptionChatActive = false;
+            state.currentExtraAssistantId = null;
+            updateEmployeeAssistantSelection(null, p);
         } else {
             state.exceptionChatActive = false;
-            updateMiniAvatarActive(state.currentCardIndex, p);
-            updateEmployeeAssistantSelection(state.currentCardIndex, p);
+            if (typeof state.currentCardIndex === 'number') {
+                updateMiniAvatarActive(state.currentCardIndex, p);
+            }
+            updateEmployeeAssistantSelection(
+                typeof state.currentCardIndex === 'number' ? state.currentCardIndex : null,
+                p
+            );
         }
 
         if (!state.chatMessages.length) {
@@ -5251,6 +5621,10 @@
         let lastUserMessage = '';
         state.chatMessages.forEach((msg) => {
             if (msg.type === 'welcome') {
+                if (msg.extraAssistantId) {
+                    appendExtraAssistantConversation(msg.extraAssistantId, p, { skipPersist: true });
+                    return;
+                }
                 if (shouldSkipGuidedWelcome(msg.assistantIndex ?? 0, p)) return;
                 appendAssistantConversation(msg.assistantIndex ?? 0, p, { skipPersist: true });
                 return;
@@ -5262,9 +5636,12 @@
                 appendChatMessage(msg.text, 'assistant', p, {
                     skipPersist: true,
                     assistantIndex: msg.assistantIndex,
+                    chatIndex: msg.chatIndex,
+                    extraAssistantId: msg.extraAssistantId,
                     userMessage: lastUserMessage,
                     html: !!msg.html,
-                    agentId: msg.agentId || undefined
+                    agentId: msg.agentId || undefined,
+                    workbenchAssistant: !!msg.workbenchAssistant
                 });
             }
         });
@@ -5274,13 +5651,21 @@
     function applyEmployeeChatModeUI(panel, options = {}) {
         const p = panel || getActiveWorkbenchPanel();
         const state = getPanelState(p);
-        const index = typeof options.index === 'number' ? options.index : (state.currentCardIndex ?? 0);
+        const useWorkbench = options.useWorkbenchAssistant === true || (
+            !options.skipAssistantSelection
+            && !state.currentExtraAssistantId
+            && !(typeof options.index === 'number')
+            && isWorkbenchAssistantMode(state)
+        );
+        const index = typeof options.index === 'number'
+            ? options.index
+            : (typeof state.currentCardIndex === 'number' ? state.currentCardIndex : null);
         const showWelcome = options.showWelcome !== false;
         const createHistory = options.createHistory !== false;
 
         state.chatModeActive = true;
-        if (!options.skipAssistantSelection) {
-            state.currentCardIndex = index;
+        if (!options.skipAssistantSelection && typeof options.index === 'number') {
+            state.currentCardIndex = options.index;
         }
 
         const hero = document.getElementById('center-hero');
@@ -5311,7 +5696,10 @@
             clearEmployeeAssistantInputSelection(p);
         } else {
             state.exceptionChatActive = false;
-            updateEmployeeAssistantSelection(index, p);
+            updateEmployeeAssistantSelection(
+                useWorkbench ? null : (typeof index === 'number' ? index : null),
+                p
+            );
         }
 
         if (createHistory && window.AppShell?.createSession) {
@@ -5319,9 +5707,13 @@
                 ? getSupportInputAgentMeta(SUPPORT_INPUT_AGENT_EXCEPTIONS)
                 : state.currentExtraAssistantId
                 ? getExtraAssistantById(state.currentExtraAssistantId)
-                : getEmployeeAssistant(index, p);
+                : useWorkbench
+                ? WORKBENCH_ASSISTANT
+                : (typeof index === 'number' ? getEmployeeAssistant(index, p) : WORKBENCH_ASSISTANT);
             const title = options.sessionTitle || `${assistant?.name || '助手'}对话`;
-            const session = window.AppShell.createSession(title, index);
+            const session = window.AppShell.createSession(title, typeof index === 'number' ? index : null, {
+                workbenchAssistant: useWorkbench
+            });
             state.currentSessionId = session.id;
             window.AppShell.setCurrentSessionId(session.id);
         } else if (options.sessionId) {
@@ -5337,7 +5729,9 @@
         if (showWelcome) {
             if (state.currentExtraAssistantId) {
                 appendExtraAssistantConversation(state.currentExtraAssistantId, p);
-            } else {
+            } else if (useWorkbench) {
+                appendWorkbenchAssistantWelcome(p);
+            } else if (typeof index === 'number') {
                 appendAssistantConversation(index, p);
             }
         }
@@ -5426,6 +5820,9 @@
     function buildEmployeeChatAvatarHtml(index, panel) {
         const p = panel || getActiveWorkbenchPanel();
         const state = getPanelState(p);
+        if (isWorkbenchAssistantMode(state)) {
+            return buildWorkbenchChatAvatarHtml();
+        }
         if (state.currentCatalogAssistant) {
             return buildEmployeeCatalogChatAvatarHtml(state.currentCatalogAssistant);
         }
@@ -5566,16 +5963,7 @@
                 collapseTopSections(p);
             }
         } else {
-            let avatarHtml;
-            if (options.agentId === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
-                avatarHtml = buildEmployeeExceptionChatAvatarHtml();
-            } else {
-                const index = options.assistantIndex ?? getPanelState(p).currentCardIndex ?? 0;
-                const catalogAgent = getPanelState(p).currentCatalogAssistant;
-                avatarHtml = catalogAgent
-                    ? buildEmployeeCatalogChatAvatarHtml(catalogAgent)
-                    : buildEmployeeChatAvatarHtml(index, p);
-            }
+            const avatarHtml = buildEmployeeMessageAvatarHtml(options, text, p);
             const assistantBody = options.html ? text : markdownToHtml(text);
             row.innerHTML = `
                 ${avatarHtml}
@@ -5596,14 +5984,12 @@
         }
 
         if (getPanelKey(p) === 'employee' && !options.skipPersist) {
+            const persistMeta = buildEmployeeChatPersistMeta(role, options, text, p);
             recordEmployeeChatMessage(p, {
                 role,
                 text,
                 html: !!options.html,
-                agentId: options.agentId || null,
-                assistantIndex: role === 'assistant' && !options.agentId
-                    ? (options.assistantIndex ?? getPanelState(p).currentCardIndex ?? 0)
-                    : undefined
+                ...persistMeta
             });
         }
     }
@@ -5665,23 +6051,38 @@
     function handleEmployeeAssistantMessage(message, panel) {
         const p = panel || getActiveWorkbenchPanel();
         const state = getPanelState(p);
-        if (state.currentExtraAssistantId) {
+        if (isWorkbenchAssistantMode(state)) {
             setTimeout(() => {
-                const assistantIndex = state.currentCardIndex ?? 0;
+                appendChatMessage(getWorkbenchAssistantReply(message), 'assistant', p, { workbenchAssistant: true });
+            }, 400);
+            return;
+        }
+        if (state.currentExtraAssistantId) {
+            const extra = getExtraAssistantById(state.currentExtraAssistantId);
+            setTimeout(() => {
                 appendChatMessage(
-                    getAssistantReply(message, assistantIndex, p),
+                    getAssistantReply(message, 0, p, { chatIndex: extra?.chatIndex ?? 5 }),
                     'assistant',
                     p,
-                    { assistantIndex, userMessage: message }
+                    {
+                        chatIndex: extra?.chatIndex ?? 5,
+                        extraAssistantId: extra?.id,
+                        userMessage: message
+                    }
                 );
             }, 400);
             return;
         }
-        const assistantIndex = state.currentCardIndex ?? 0;
+        const assistantIndex = typeof state.currentCardIndex === 'number' ? state.currentCardIndex : 0;
         if (window.EmployeeCustomerIbFlow?.usesGuidedFlow?.(assistantIndex)) {
             setTimeout(() => {
                 const reply = sanitizeTaoLanguageText(window.EmployeeCustomerIbFlow.getReply(message, assistantIndex));
-                appendChatMessage(reply, 'assistant', p, { assistantIndex, userMessage: message });
+                const chatIndex = resolveEmployeeChatIndex(assistantIndex, p);
+                appendChatMessage(reply, 'assistant', p, {
+                    assistantIndex,
+                    chatIndex,
+                    userMessage: message
+                });
             }, 400);
             return;
         }
@@ -5822,23 +6223,50 @@
     function startEmployeeChatFromMainInput(message, panel) {
         const p = panel || getActiveWorkbenchPanel();
         const state = getPanelState(p);
-        const selectedIndex = typeof state.currentCardIndex === 'number' ? state.currentCardIndex : 0;
+        const hasMainSelection = typeof state.currentCardIndex === 'number' && state.currentCardIndex >= 0;
+        const extraAssistant = state.currentExtraAssistantId ? getExtraAssistantById(state.currentExtraAssistantId) : null;
+        const workbenchMode = !extraAssistant && !hasMainSelection;
+
+        if (workbenchMode) {
+            applyEmployeeChatModeUI(p, {
+                useWorkbenchAssistant: true,
+                showWelcome: false,
+                clearMessages: true,
+                createHistory: true,
+                sessionTitle: message.length > 30 ? `${message.slice(0, 30)}…` : message
+            });
+            appendChatMessage(message, 'user', p);
+            handleEmployeeAssistantMessage(message, p);
+            return;
+        }
+
+        if (extraAssistant) {
+            applyEmployeeChatModeUI(p, {
+                showWelcome: false,
+                clearMessages: true,
+                createHistory: true,
+                sessionTitle: message.length > 30 ? `${message.slice(0, 30)}…` : message
+            });
+            appendChatMessage(message, 'user', p);
+            handleEmployeeAssistantMessage(message, p);
+            return;
+        }
+
+        const selectedIndex = state.currentCardIndex;
         const routedIndex = resolveEmployeeAssistantIndexFromMessage(message);
         const targetIndex = selectedIndex;
-        const extraAssistant = state.currentExtraAssistantId ? getExtraAssistantById(state.currentExtraAssistantId) : null;
         const assistantName = extraAssistant?.name
             || aiAssistants[resolveEmployeeChatIndex(targetIndex, p)]?.name
             || aiAssistants[targetIndex]?.name
             || '客户分析助手';
 
-        if (routedIndex !== selectedIndex && shouldShowEmployeeRoutingToast(message)) {
+        if (hasMainSelection && routedIndex !== selectedIndex && shouldShowEmployeeRoutingToast(message)) {
             showRecognitionToast(aiAssistants[routedIndex]?.name || assistantName, message);
         }
 
-        const skipWelcome = shouldSkipGuidedWelcome(targetIndex, p);
         applyEmployeeChatModeUI(p, {
             index: targetIndex,
-            showWelcome: !skipWelcome,
+            showWelcome: false,
             clearMessages: true,
             createHistory: true,
             sessionTitle: message.length > 30 ? `${message.slice(0, 30)}…` : message
@@ -8671,8 +9099,10 @@
         const panel = document.getElementById('workbench-panel-employee');
         if (!panel || !session) return;
 
+        const workbenchSession = isWorkbenchAssistantSession(session);
         applyEmployeeChatModeUI(panel, {
-            index: session.assistantIndex ?? 0,
+            index: workbenchSession ? undefined : (typeof session.assistantIndex === 'number' ? session.assistantIndex : undefined),
+            useWorkbenchAssistant: workbenchSession,
             showWelcome: false,
             createHistory: false,
             sessionId: session.id
@@ -8702,7 +9132,7 @@
         if (!panel) return;
         const state = getPanelState(panel);
         state.chatModeActive = false;
-        state.currentCardIndex = 0;
+        state.currentCardIndex = null;
         state.currentExtraAssistantId = null;
         state.currentCatalogAssistant = null;
         state.currentSessionId = null;
@@ -8730,13 +9160,12 @@
         if (sessionScroll) sessionScroll.classList.remove('is-chat-active');
         if (messagesEl) messagesEl.innerHTML = '';
 
-        panel.querySelectorAll('.ai-card-fan').forEach((card, i) => {
-            card.classList.toggle('active', i === 0);
+        panel.querySelectorAll('.ai-card-fan').forEach((card) => {
+            card.classList.remove('active');
         });
-        panel.querySelectorAll('.indicator').forEach((ind, i) => {
-            ind.classList.toggle('active', i === 0);
+        panel.querySelectorAll('.indicator').forEach((ind) => {
+            ind.classList.remove('active');
         });
-        selectEmployeeAssistant(0, panel);
         syncEmployeeAssistantTags(panel);
 
         document.getElementById('session-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });

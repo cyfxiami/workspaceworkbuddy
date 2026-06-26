@@ -8,7 +8,7 @@
 
     const PROMPT_SUGGESTIONS = {
         0: [
-            '帮我分析陈明这个客户',
+            '帮我分析陈明精工这家公司',
             '分析客户张某：资产888万、近3月变动15%、持仓结构',
             '对比客户合作记录与近12个月交易行为'
         ],
@@ -1206,7 +1206,7 @@
     function getGuideWelcomeText(assistantIndex) {
         const tagline = getKnowledge().assistantConfig?.find((item) => item.index === assistantIndex)?.tagline || '';
         const lines = {
-            0: `**客户分析助手**\n\n从资产、行为、交易、合作记录等维度量化分析客户价值与风险。\n\n输入示例：帮我分析陈明这个客户`,
+            0: `**客户分析助手**\n\n从资产、行为、交易、合作记录等维度量化分析客户价值与风险。\n\n输入示例：帮我分析陈明精工这家公司`,
             1: `**业务分析助手**\n\n基于业务分析模型（${tagline}）自动识别意图并直接生成结果卡片。`,
             2: `**方案生成助手**\n\n基于方案设计模型（${tagline}）自动识别意图并直接生成结果卡片。`,
             3: `**交叉验证助手**\n\n基于交叉验证模型（${tagline}）自动识别意图并直接生成结果卡片。`,
