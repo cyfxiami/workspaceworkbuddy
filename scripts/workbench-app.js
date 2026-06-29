@@ -2509,12 +2509,17 @@
         state.supportChatMessages = Array.isArray(session.messages) ? session.messages.slice() : [];
         highlightSupportSessionInSidebar(session.id);
 
-        state.supportChatMessages.forEach((msg) => {
+        state.supportChatMessages.forEach((msg, index, arr) => {
+            const prevUser = arr.slice(0, index).reverse().find((item) => item.role === 'user');
+            const extra = msg.agentId ? getExtraAssistantById(msg.agentId) : null;
             appendSupportChatMessage(msg.text, msg.role, p, {
                 skipPersist: true,
                 html: msg.html,
                 agentId: msg.agentId,
-                workbenchAssistant: !!msg.workbenchAssistant
+                workbenchAssistant: !!msg.workbenchAssistant,
+                chatIndex: extra?.chatIndex,
+                extraAssistantId: extra?.id,
+                userMessage: prevUser?.text || ''
             });
         });
         if (state.supportChatMessages.length) {
@@ -3077,8 +3082,18 @@
             return;
         }
         if (state.currentExtraAssistantId) {
+            const extra = getExtraAssistantById(state.currentExtraAssistantId);
             setTimeout(() => {
-                appendSupportAssistantReply(message, state.currentExtraAssistantId, p);
+                appendSupportChatMessage(
+                    getAssistantReply(message, 0, p, { chatIndex: extra?.chatIndex ?? 5 }),
+                    'assistant',
+                    p,
+                    {
+                        chatIndex: extra?.chatIndex ?? 5,
+                        extraAssistantId: extra?.id,
+                        userMessage: message
+                    }
+                );
             }, 400);
             return;
         }
@@ -3671,6 +3686,17 @@
         }
 
         messagesEl.appendChild(row);
+        if (role === 'assistant') {
+            const bubble = row.querySelector('.chat-bubble-assistant');
+            const extra = options.extraAssistantId
+                ? getExtraAssistantById(options.extraAssistantId)
+                : getExtraAssistantById(agentId);
+            syncAssistantMessageContext(bubble, text, {
+                chatIndex: options.chatIndex ?? extra?.chatIndex,
+                extraAssistantId: options.extraAssistantId || extra?.id,
+                userMessage: options.userMessage || ''
+            });
+        }
         if (!options.skipPersist) {
             recordSupportChatMessage(p, {
                 role,
@@ -3790,7 +3816,12 @@
                 getAssistantReply(message, 0, p, { chatIndex: extra.chatIndex }),
                 'assistant',
                 p,
-                { agentId: resolvedAgentId }
+                {
+                    agentId: resolvedAgentId,
+                    chatIndex: extra.chatIndex,
+                    extraAssistantId: extra.id,
+                    userMessage: message
+                }
             );
             return;
         }
@@ -4571,14 +4602,116 @@
     };
 
     const EMPLOYEE_ASSISTANT_INPUT_PROMPTS = {
-        canmou: '分析你名下的【陈明精工这家公司】',
+        canmou: '分析我名下的【陈明精工这家公司】',
         tanma: '帮我分析本季度投行业务的目标完成进度',
         junshi: '为陈明精工生成一套融资扩产方案草案',
         jiaocha: '核查单笔银证转入≥100万是否存在异常',
         tianyan: '帮我梳理陈明精工待跟进的客户服务事项',
         shenpi: '查询我名下待审批的进度',
-        tongzhi: '起草一份面向全体员工的业务通知公告'
+        tongzhi: '帮我看看公司最新的通知公告和正式发文'
     };
+
+    function isApprovalProgressPrompt(message) {
+        const text = (message || '').trim();
+        if (!text) return false;
+        if (text === EMPLOYEE_ASSISTANT_INPUT_PROMPTS.shenpi) return true;
+        return /查询.*待审批.*进度|待审批.*进度/.test(text);
+    }
+
+    function isNoticeDocumentSummaryPrompt(message) {
+        const text = (message || '').trim();
+        if (!text) return false;
+        if (text === EMPLOYEE_ASSISTANT_INPUT_PROMPTS.tongzhi) return true;
+        return /通知公告/.test(text) && /正式发文/.test(text);
+    }
+
+    function buildApprovalProgressReply(message) {
+        return `**审批助手**
+
+任务：查询「${message}」相关审批进度。
+
+**名下待审批事项（3项）**
+
+| 事项 | 当前节点 | 预计完成 |
+|------|----------|----------|
+| 机构客户「测试科技」开户绿色通道申请 | 运营部加急处理 | 今日内 |
+| 陈明精工融资扩产配套材料提交 | 部门负责人审批 | 1 个工作日内 |
+| 零售团队差异化费率方案 | 合规复核 | 2 个工作日内 |
+
+如需催办某一事项，请直接告知事项名称。`;
+    }
+
+    function buildNoticeDocumentSummaryReply(message) {
+        return `**通知公告助手**
+
+任务：汇总「${message}」相关最新内容。
+
+**最新通知公告**
+
+- **《关于2026年二季度投行业务协同专项安排的通知》**（6月20日发布）：明确投行业务、研究、销交三条线协同分工，要求 T+1 响应客户经理协同请求。
+- **《员工工作台功能升级说明》**（6月18日发布）：上线助手标签联动、客户分析引导对话等功能，请各团队于6月25日前完成试用反馈。
+
+**最新正式发文**
+
+- **《投行业务材料报送管理办法（2026修订）》**（投行〔2026〕12号）：更新尽调材料清单、电子归档路径及报送时限，6月24日起执行。
+- **《业务支持中心异常提醒处置指引》**（运管〔2026〕08号）：明确异常分级标准与闭环时限，要求一线于收到提醒后2个工作日内反馈处置进展。
+
+如需查看全文或起草新公告，请继续说明。`;
+    }
+
+    function buildApprovalContextBundle() {
+        const ts = new Date().toLocaleString('zh-CN', { hour12: false });
+        return {
+            models: [{
+                name: '审批进度查询模型',
+                category: '审批协同 / 进度跟踪'
+            }],
+            customers: [],
+            outputs: [{
+                title: '名下待审批事项进度清单',
+                type: 'PDF',
+                fileKind: 'pdf',
+                fileName: '待审批事项进度清单.pdf',
+                modifiedAt: ts,
+                sizeBytes: 245760,
+                content: '汇总测试科技开户绿色通道、陈明精工融资扩产配套材料、零售差异化费率方案等3项待审批事项的当前节点与预计完成时间。',
+                downloadText: '汇总测试科技开户绿色通道、陈明精工融资扩产配套材料、零售差异化费率方案等3项待审批事项的当前节点与预计完成时间。'
+            }]
+        };
+    }
+
+    function buildNoticeDocumentContextBundle() {
+        const ts = new Date().toLocaleString('zh-CN', { hour12: false });
+        return {
+            models: [{
+                name: '通知公告与正式发文检索模型',
+                category: '信息发布 / 公告检索'
+            }],
+            customers: [],
+            outputs: [
+                {
+                    title: '公司最新通知公告摘要',
+                    type: 'PDF',
+                    fileKind: 'pdf',
+                    fileName: '公司最新通知公告摘要.pdf',
+                    modifiedAt: ts,
+                    sizeBytes: 184320,
+                    content: '包含《2026年二季度投行业务协同专项安排的通知》《员工工作台功能升级说明》等最新通知公告要点摘要。',
+                    downloadText: '包含《2026年二季度投行业务协同专项安排的通知》《员工工作台功能升级说明》等最新通知公告要点摘要。'
+                },
+                {
+                    title: '公司最新正式发文摘要',
+                    type: 'PDF',
+                    fileKind: 'pdf',
+                    fileName: '公司最新正式发文摘要.pdf',
+                    modifiedAt: ts,
+                    sizeBytes: 204800,
+                    content: '包含《投行业务材料报送管理办法（2026修订）》《业务支持中心异常提醒处置指引》等最新正式发文要点摘要。',
+                    downloadText: '包含《投行业务材料报送管理办法（2026修订）》《业务支持中心异常提醒处置指引》等最新正式发文要点摘要。'
+                }
+            ]
+        };
+    }
 
     function resolveEmployeeAssistantAvatarClass(index, panel) {
         const agents = window.getInstalledEmployeeAssistantsForHome?.() || [];
@@ -6132,18 +6265,35 @@
     }
 
     function resolveChatContextBundle(replyText, options = {}) {
-        const assistantIndex = options.assistantIndex;
+        const text = String(replyText || '');
+        const chatIndex = typeof options.chatIndex === 'number'
+            ? options.chatIndex
+            : (typeof options.assistantIndex === 'number' ? options.assistantIndex : null);
         const userMessage = options.userMessage || '';
+
+        if (/^\*\*审批助手\*\*/.test(text.trim()) && /名下待审批事项|待审批事项/.test(text)) {
+            return buildApprovalContextBundle();
+        }
+        if (/^\*\*通知公告助手\*\*/.test(text.trim()) && /最新通知公告/.test(text)) {
+            return buildNoticeDocumentContextBundle();
+        }
+        if (isApprovalProgressPrompt(userMessage) && chatIndex === 5) {
+            return buildApprovalContextBundle();
+        }
+        if (isNoticeDocumentSummaryPrompt(userMessage) && chatIndex === 6) {
+            return buildNoticeDocumentContextBundle();
+        }
+
         const fromFlow = window.EmployeeCustomerIbFlow?.resolveContextBundle?.(
             replyText,
-            assistantIndex,
+            chatIndex ?? 0,
             userMessage
         );
         if (window.ContextPanel?.bundleHasItems?.(fromFlow)) {
             return fromFlow;
         }
         const extracted = window.ContextPanel?.extractBundleFromMarkdown?.(replyText, {
-            assistantIndex,
+            assistantIndex: chatIndex ?? 0,
             userMessage
         });
         if (window.ContextPanel?.bundleHasItems?.(extracted)) {
@@ -6188,7 +6338,8 @@
         if (role === 'assistant') {
             const bubble = row.querySelector('.chat-bubble-assistant');
             syncAssistantMessageContext(bubble, text, {
-                assistantIndex: options.assistantIndex ?? getPanelState(p).currentCardIndex ?? 0,
+                assistantIndex: options.assistantIndex,
+                chatIndex: options.chatIndex,
                 userMessage: options.userMessage || ''
             });
         }
@@ -6237,6 +6388,9 @@
             return `**客户服务助手**\n\n任务：处理「${message}」。\n\n操作：选择买方分析、信披判断或临时公告生成模型。`;
         }
         if (chatIndex === 5) {
+            if (isApprovalProgressPrompt(message)) {
+                return buildApprovalProgressReply(message);
+            }
             if (lowerMsg.includes('进度') || lowerMsg.includes('查询') || lowerMsg.includes('单号')) {
                 return `**审批助手**\n\n任务：查询「${message}」相关审批进度。\n\n结果：当前节点为部门负责人审批，预计 1 个工作日内完成。`;
             }
@@ -6246,6 +6400,9 @@
             return `**审批助手**\n\n任务：处理「${message}」。\n\n操作：查询审批进度、发起审批申请或催办提醒。`;
         }
         if (chatIndex === 6) {
+            if (isNoticeDocumentSummaryPrompt(message)) {
+                return buildNoticeDocumentSummaryReply(message);
+            }
             if (lowerMsg.includes('起草') || lowerMsg.includes('编写') || lowerMsg.includes('撰写')) {
                 return `**通知公告助手**\n\n任务：根据「${message}」起草通知公告。\n\n建议结构：标题、发布范围、正文要点、生效时间与联系人。`;
             }

@@ -418,24 +418,19 @@
     const BUSINESS_HANDOFF_SEND_MESSAGE = '我手头有陈明精工这家制造业上市公司，营收20亿，想融资扩产';
     const BUSINESS_ANALYSIS_ASSISTANT_INDEX = 1;
 
-    function normalizeAnalysisQuery(text) {
-        return (text || '').trim().replace(/\s+/g, '').replace(/[？?！!。，,、]/g, '');
-    }
-
-    /** 用户明确输入企业名称，无需再追问 */
+    /** 用户输入已包含企业名称，无需再追问确认 */
     function isExplicitCompanyAnalysisRequest(message) {
-        const normalized = normalizeAnalysisQuery(message);
-        if (!normalized) return false;
-        return normalized === '分析陈明精工'
-            || normalized === '陈明精工分析'
-            || normalized === '分析陈明精工股份有限公司'
-            || normalized === '陈明精工股份有限公司分析';
+        const text = (message || '').trim();
+        if (!text) return false;
+        return /陈明精工/.test(text);
     }
 
     /** 识别企业分析意图：含陈明精工，或泛化「分析客户/公司」类表述（demo 默认落到陈明精工） */
     function isCompanyAnalysisRequest(message) {
         const text = (message || '').trim();
         if (!text) return false;
+        if (/通知公告|正式发文/.test(text)) return false;
+        if (/待审批|审批进度/.test(text)) return false;
         if (/陈明精工/.test(text) && (/(分析|画像|评估|看看|了解)/.test(text) || /(客户|公司|企业)/.test(text))) {
             return true;
         }
@@ -451,9 +446,9 @@
     function buildCompanyIntentConfirmPrefix(message) {
         const text = (message || '').trim();
         if (/陈明精工/.test(text)) {
-            return '**你要分析的是不是陈明精工这家公司？**\n\n';
+            return '**你要分析的是不是陈明精工股份有限公司这家公司？**\n\n';
         }
-        return '**根据您的描述，推测您要分析的企业是陈明精工，对吗？**\n\n';
+        return '**根据你的描述，推测你要分析的企业是陈明精工股份有限公司，对吗？**\n\n';
     }
 
     function isBusinessHandoffPrompt(promptText) {
@@ -692,6 +687,9 @@
         }
 
         if (assistantIndex === 0 && userMessage && isCompanyAnalysisRequest(userMessage)) {
+            if (/^\*\*审批助手\*\*|^\*\*通知公告助手\*\*/.test(text.trim())) {
+                return null;
+            }
             return buildCompanyContextBundle();
         }
 
