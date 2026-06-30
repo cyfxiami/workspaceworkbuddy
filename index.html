@@ -83,87 +83,186 @@
             <div class="sidebar-shell" id="sidebar-shell">
                 <aside class="sidebar">
                     <div class="sidebar-brand">
-                        <span class="sidebar-logo">📊</span>
-                        <div class="sidebar-title" id="sidebar-title">业务团队工作台</div>
+                        <span class="sidebar-logo" aria-hidden="true">
+                            <img class="sidebar-logo-image" src="images/system-logo.svg" alt="">
+                        </span>
+                        <div class="sidebar-title" id="sidebar-title">员工工作台</div>
                         <button type="button" class="panel-collapse-btn sidebar-collapse-btn" id="sidebar-collapse-btn" aria-expanded="true" aria-label="收起侧栏" title="收起侧栏">
-                            <svg class="layout-toggle-icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+                            <svg class="layout-toggle-icon sidebar-toggle-icon-expanded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                                <path d="M9 3v18"></path>
+                                <path d="m16 15-3-3 3-3"></path>
+                            </svg>
+                            <svg class="layout-toggle-icon sidebar-toggle-icon-collapsed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect>
+                                <path d="M9 3v18"></path>
+                                <path d="m14 9 3 3-3 3"></path>
+                            </svg>
                         </button>
                     </div>
-                    <div class="sidebar-nav-cards employee-only-nav">
-                        <div class="bc-item bc-item-nav bc-nav-card wb-nav-entry-hidden" data-bc="performance" data-center-view="performance" id="employee-nav-performance" hidden>
-                            <button type="button" class="bc-trigger" id="bc-trigger-performance">
-                                <span class="bc-nav-icon">📊</span>
-                                <span class="bc-label">业绩绩效</span>
+                    <button type="button" class="sidebar-action-btn employee-only-nav sidebar-new-chat-top" id="new-chat-btn" title="新建会话">
+                        <svg class="sidebar-new-chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M8 12h8"></path>
+                            <path d="M12 8v8"></path>
+                        </svg>
+                        <span>新建会话</span>
+                    </button>
+                    <div class="sidebar-nav-cards employee-only-nav" id="employee-sidebar-menu">
+                        <div class="bc-item bc-item-nav bc-nav-card" id="menu-today-tasks" data-bc="today-tasks" data-center-view="session" data-action="today-tasks">
+                            <button type="button" class="bc-trigger" id="bc-trigger-today-tasks" title="今日任务">
+                                <span class="bc-nav-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <rect x="3.5" y="5" width="17" height="15" rx="3" stroke="currentColor" stroke-width="2"/>
+                                        <path d="M7 3.5V7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M17 3.5V7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M3.5 9h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
+                                <span class="bc-label">今日任务</span>
+                                <span class="bc-nav-count" id="sidebar-nav-tasks-count" aria-label="0项今日任务">0</span>
                                 <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             </button>
                         </div>
-                        <div class="bc-item bc-item-nav bc-nav-card" data-bc="exceptions" data-center-view="exceptions">
-                            <button type="button" class="bc-trigger" id="bc-trigger-exceptions-employee">
-                                <span class="bc-nav-icon">⚠️</span>
+                        <div class="bc-item bc-item-nav bc-nav-card" id="menu-exceptions" data-bc="exceptions" data-center-view="exceptions" data-action="exceptions">
+                            <button type="button" class="bc-trigger" id="bc-trigger-exceptions-employee" title="异常提醒">
+                                <span class="bc-nav-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <path d="M12 3.5l9 16H3l9-16z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                        <path d="M12 9v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <circle cx="12" cy="17.2" r="1" fill="currentColor"/>
+                                    </svg>
+                                </span>
                                 <span class="bc-label">异常提醒</span>
+                                <span class="bc-nav-count" id="sidebar-nav-exceptions-count" aria-label="0项异常提醒">0</span>
                                 <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             </button>
                         </div>
-                        <div class="bc-item bc-item-nav bc-nav-card" data-bc="travel" data-center-view="travel">
-                            <button type="button" class="bc-trigger" id="bc-trigger-travel">
-                                <span class="bc-nav-icon">✈️</span>
+                        <div class="bc-item bc-item-nav bc-nav-card" id="menu-travel" data-bc="travel" data-center-view="travel" data-action="travel">
+                            <button type="button" class="bc-trigger" id="bc-trigger-travel" title="差旅分析">
+                                <span class="bc-nav-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <path d="M2.5 13l19-8.5-6.5 19-3.5-8-9-2.5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                        <path d="M12 15.5l2.5 2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
                                 <span class="bc-label">差旅分析</span>
                                 <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             </button>
                         </div>
-                    </div>
-                    <div class="sidebar-nav-cards sidebar-nav-cards--single support-only-nav">
-                        <div class="bc-item bc-item-nav bc-nav-card" data-bc="exceptions" data-center-view="exceptions">
-                            <button type="button" class="bc-trigger" id="bc-trigger-exceptions">
-                                <span class="bc-nav-icon">⚠️</span>
-                                <span class="bc-label">异常提醒</span>
+                        <div class="bc-item bc-item-nav bc-nav-card" id="menu-approval" data-bc="approval" data-center-view="session" data-action="approval">
+                            <button type="button" class="bc-trigger" id="bc-trigger-approval" title="待办事项">
+                                <span class="bc-nav-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="2"/>
+                                        <path d="M8 12l2.6 2.6L16.5 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </span>
+                                <span class="bc-label">待办事项</span>
+                                <span class="bc-nav-count" id="sidebar-nav-approval-count" aria-label="0项待办事项">0</span>
+                                <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                        </div>
+                        <div class="bc-item bc-item-nav bc-nav-card" id="menu-announcement" data-bc="announcement" data-center-view="session" data-action="announcement">
+                            <button type="button" class="bc-trigger" id="bc-trigger-announcement" title="通知公告">
+                                <span class="bc-nav-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <path d="M4 11v2c0 1.1.9 2 2 2h2l5 4V7l-5 4H6c-1.1 0-2 .9-2 2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                        <path d="M16 9c1.5 1.5 1.5 4.5 0 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M18.5 7c3 3 3 7 0 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
+                                <span class="bc-label">通知公告</span>
                                 <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             </button>
                         </div>
                     </div>
-                    <div class="sidebar-tabs employee-only-nav" id="sidebar-tabs">
-                        <div class="sidebar-tabs-bar" role="tablist" aria-label="任务与会话">
-                            <button type="button" class="sidebar-tab-btn" role="tab" id="sidebar-tab-sessions" aria-controls="sidebar-panel-sessions" aria-selected="false">历史会话</button>
-                            <button type="button" class="sidebar-tab-btn is-active" role="tab" id="sidebar-tab-tasks" aria-controls="sidebar-panel-tasks" aria-selected="true">
-                                今日任务
-                                <span class="sidebar-tab-badge" id="sidebar-tasks-count">0</span>
+                    <button type="button" class="sidebar-action-btn support-only-nav sidebar-new-chat-top" id="support-new-chat-btn" title="新建会话">
+                        <svg class="sidebar-new-chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M8 12h8"></path>
+                            <path d="M12 8v8"></path>
+                        </svg>
+                        <span>新建会话</span>
+                    </button>
+                    <div class="sidebar-nav-cards support-only-nav support-sidebar-menu" id="support-sidebar-menu">
+                        <div class="bc-item bc-item-nav bc-nav-card" id="support-menu-today-tasks" data-bc="support-today-tasks" data-center-view="session" data-action="today-tasks">
+                            <button type="button" class="bc-trigger" id="bc-trigger-support-today-tasks" title="今日任务">
+                                <span class="bc-nav-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <rect x="3.5" y="5" width="17" height="15" rx="3" stroke="currentColor" stroke-width="2"/>
+                                        <path d="M7 3.5V7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M17 3.5V7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M3.5 9h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
+                                <span class="bc-label">今日任务</span>
+                                <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             </button>
                         </div>
-                        <div class="sidebar-tab-panels">
-                            <div class="sidebar-tab-panel" id="sidebar-panel-sessions" role="tabpanel" aria-labelledby="sidebar-tab-sessions" hidden>
-                                <button type="button" class="sidebar-action-btn" id="new-chat-btn">+ 新建会话</button>
-                                <div class="sidebar-tab-scroll">
-                                    <div id="sidebar-sessions-list"></div>
-                                </div>
-                            </div>
-                            <div class="sidebar-tab-panel is-active" id="sidebar-panel-tasks" role="tabpanel" aria-labelledby="sidebar-tab-tasks">
-                                <section class="work-tips-section main-work-tips" id="work-tips-section">
-                                    <button type="button" class="sidebar-action-btn" id="new-task-btn">+ 新建任务</button>
-                                    <div class="sidebar-tab-scroll employee-tasks-scroll" id="employee-daily-tasks-scroll">
-                                        <ul class="tips-list" id="employee-daily-tasks-list"></ul>
-                                    </div>
-                                </section>
-                            </div>
+                        <div class="bc-item bc-item-nav bc-nav-card" id="support-menu-exceptions" data-bc="support-exceptions" data-center-view="session" data-action="exceptions">
+                            <button type="button" class="bc-trigger" id="bc-trigger-support-exceptions" title="异常提醒">
+                                <span class="bc-nav-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <path d="M12 3.5l9 16H3l9-16z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                        <path d="M12 9v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <circle cx="12" cy="17.2" r="1" fill="currentColor"/>
+                                    </svg>
+                                </span>
+                                <span class="bc-label">异常提醒</span>
+                                <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                        </div>
+                        <div class="bc-item bc-item-nav bc-nav-card" id="support-menu-approval" data-bc="support-approval" data-center-view="session" data-action="approval">
+                            <button type="button" class="bc-trigger" id="bc-trigger-support-approval" title="待办事项">
+                                <span class="bc-nav-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="2"/>
+                                        <path d="M8 12l2.6 2.6L16.5 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </span>
+                                <span class="bc-label">待办事项</span>
+                                <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                        </div>
+                        <div class="bc-item bc-item-nav bc-nav-card" id="support-menu-announcement" data-bc="support-announcement" data-center-view="session" data-action="announcement">
+                            <button type="button" class="bc-trigger" id="bc-trigger-support-announcement" title="通知公告">
+                                <span class="bc-nav-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <path d="M4 11v2c0 1.1.9 2 2 2h2l5 4V7l-5 4H6c-1.1 0-2 .9-2 2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                        <path d="M16 9c1.5 1.5 1.5 4.5 0 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M18.5 7c3 3 3 7 0 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
+                                <span class="bc-label">通知公告</span>
+                                <svg class="bc-nav-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
                         </div>
                     </div>
-                    <div class="sidebar-tabs support-only-nav" id="support-sidebar-tabs">
-                        <div class="sidebar-tabs-bar" role="tablist" aria-label="任务与会话">
-                            <button type="button" class="sidebar-tab-btn" role="tab" id="support-sidebar-tab-sessions" aria-controls="support-sidebar-panel-sessions" aria-selected="false">历史会话</button>
-                            <button type="button" class="sidebar-tab-btn is-active" role="tab" id="support-sidebar-tab-tasks" aria-controls="support-sidebar-panel-tasks" aria-selected="true">
-                                今日任务
-                                <span class="sidebar-tab-badge" id="support-sidebar-tasks-count">0</span>
+                    <div class="sidebar-sessions employee-only-nav" id="employee-sidebar-sessions">
+                        <div class="sidebar-section-header">
+                            <button type="button" class="sidebar-section-toggle" id="employee-sessions-toggle" aria-expanded="true">
+                                <span class="sidebar-section-title">历史会话</span>
+                                <svg class="sidebar-section-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
                             </button>
                         </div>
-                        <div class="sidebar-tab-panels">
-                            <div class="sidebar-tab-panel" id="support-sidebar-panel-sessions" role="tabpanel" aria-labelledby="support-sidebar-tab-sessions" hidden>
-                                <button type="button" class="sidebar-action-btn" id="support-new-chat-btn">+ 新建会话</button>
-                                <div class="sidebar-tab-scroll">
-                                    <div id="support-sidebar-sessions-list"></div>
-                                </div>
-                            </div>
-                            <div class="sidebar-tab-panel is-active" id="support-sidebar-panel-tasks" role="tabpanel" aria-labelledby="support-sidebar-tab-tasks">
-                                <div class="sidebar-tab-scroll support-sidebar-tasks-scroll" id="support-sidebar-tasks-body"></div>
-                            </div>
+                        <div class="sidebar-tab-scroll" id="employee-sessions-body">
+                            <div id="sidebar-sessions-list"></div>
+                        </div>
+                    </div>
+                    <div class="sidebar-sessions support-only-nav support-sidebar-sessions" id="support-sidebar-sessions">
+                        <div class="sidebar-section-header">
+                            <button type="button" class="sidebar-section-toggle" id="support-sessions-toggle" aria-expanded="true">
+                                <span class="sidebar-section-title">历史会话</span>
+                                <svg class="sidebar-section-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="sidebar-tab-scroll" id="support-sessions-body">
+                            <div id="support-sidebar-sessions-list"></div>
                         </div>
                     </div>
                     <div class="sidebar-scroll" id="sidebar-scroll">
@@ -220,30 +319,10 @@
                             </button>
                         </div>
                         <div class="center-agents-bar" id="center-agents-bar" role="region" aria-label="业务助理">
-                            <div class="digital-avatars-scroll-wrap center-agents-scroll-wrap" id="center-agents-scroll-wrap">
-                                <button type="button" class="digital-avatars-scroll-btn digital-avatars-scroll-left" aria-label="向左滑动" hidden>
-                                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 4L6 8L10 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                </button>
-                                <div class="digital-avatars-scroll center-agents-track">
-                                    <div class="digital-avatars" id="center-agents-list">
-                                        <div class="avatar-item" data-avatar-type="ib" onclick="handleTopAvatarClick('ib')"><div class="avatar-img-wrap"><img src="images/Avatar1.png" alt="" class="avatar-img"></div><span class="avatar-name">投行业务助理</span></div>
-                                        <div class="avatar-item" data-avatar-type="asset" onclick="handleTopAvatarClick('asset')"><div class="avatar-img-wrap"><img src="images/Avatar2.png" alt="" class="avatar-img"></div><span class="avatar-name">资管业务助理</span></div>
-                                        <div class="avatar-item" data-avatar-type="retail" onclick="handleTopAvatarClick('retail')"><div class="avatar-img-wrap"><img src="images/Avatar3.png" alt="" class="avatar-img"></div><span class="avatar-name">零售业务助理</span></div>
-                                        <div class="avatar-item" data-avatar-type="invest" onclick="handleTopAvatarClick('invest')"><div class="avatar-img-wrap"><img src="images/Avatar4.png" alt="" class="avatar-img"></div><span class="avatar-name">投资业务助理</span></div>
-                                        <div class="avatar-item" data-avatar-type="sales" onclick="handleTopAvatarClick('sales')"><div class="avatar-img-wrap"><img src="images/Avatar5.png" alt="" class="avatar-img"></div><span class="avatar-name">销交业务助理</span></div>
-                                        <div class="avatar-item" data-avatar-type="institution" onclick="handleTopAvatarClick('institution')"><div class="avatar-img-wrap"><img src="images/Avatar6.png" alt="" class="avatar-img"></div><span class="avatar-name">机构业务助理</span></div>
-                                        <div class="avatar-item" data-avatar-type="research" onclick="handleTopAvatarClick('research')"><div class="avatar-img-wrap"><img src="images/Avatar8.png" alt="" class="avatar-img"></div><span class="avatar-name">研究业务助理</span></div>
-                                        <div class="avatar-item" data-avatar-type="credit" onclick="handleTopAvatarClick('credit')"><div class="avatar-img-wrap"><img src="images/Avatar9.png" alt="" class="avatar-img"></div><span class="avatar-name">信用业务助理</span></div>
-                                    </div>
-                                    <button type="button" class="center-agents-add-btn" id="center-agents-add-btn" aria-label="管理业务助理">
-                                        <span class="center-agents-add-plus" aria-hidden="true">+</span>
-                                        <span class="center-agents-add-text">新增</span>
-                                    </button>
-                                </div>
-                                <button type="button" class="digital-avatars-scroll-btn digital-avatars-scroll-right" aria-label="向右滑动" hidden>
-                                    <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                </button>
+                            <div class="center-agents-heading" id="center-agents-heading">
+                                <span class="center-agents-heading-text">业务助理</span>
                             </div>
+                            <div class="center-agents-grid" id="center-agents-list"></div>
                         </div>
                         <div class="context-expand-toolbar">
                             <button type="button" class="panel-collapse-btn context-expand-btn" id="expand-context-btn" aria-label="展开会话输出物" title="展开会话输出物">
@@ -260,8 +339,49 @@
                             <section class="ai-workbench-section session-merged center-module-view" id="center-view-session">
                             <div class="session-scroll" id="session-scroll">
                             <div class="center-hero" id="center-hero">
-                                <h1 class="center-hero-title" id="center-hero-title">业务团队工作台</h1>
-                                <p class="center-hero-sub">你的业务超能力</p>
+                                <h1 class="center-hero-title" id="center-hero-title">释放你的AI超能力</h1>
+                            </div>
+                            <div class="employee-home-assistant-tabs" id="employee-home-assistant-tabs" role="tablist" aria-label="选择助手">
+                                <button type="button" class="employee-home-assistant-tab canmou" data-assistant-index="0" role="tab" aria-selected="false">
+                                    <span class="employee-home-assistant-tab-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                            <path d="M16 3.128a4 4 0 0 1 0 7.744"></path>
+                                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                            <circle cx="9" cy="7" r="4"></circle>
+                                        </svg>
+                                    </span>
+                                    <span class="employee-home-assistant-tab-text">客户分析助手</span>
+                                </button>
+                                <button type="button" class="employee-home-assistant-tab tanma" data-assistant-index="1" role="tab" aria-selected="false">
+                                    <span class="employee-home-assistant-tab-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+                                            <polyline points="16 7 22 7 22 13"></polyline>
+                                        </svg>
+                                    </span>
+                                    <span class="employee-home-assistant-tab-text">业务分析助手</span>
+                                </button>
+                                <button type="button" class="employee-home-assistant-tab junshi" data-assistant-index="2" role="tab" aria-selected="false">
+                                    <span class="employee-home-assistant-tab-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+                                            <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                                            <path d="M10 9H8"></path>
+                                            <path d="M16 13H8"></path>
+                                            <path d="M16 17H8"></path>
+                                        </svg>
+                                    </span>
+                                    <span class="employee-home-assistant-tab-text">方案生成助手</span>
+                                </button>
+                                <button type="button" class="employee-home-assistant-tab tianyan" data-assistant-index="4" role="tab" aria-selected="false">
+                                    <span class="employee-home-assistant-tab-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"></path>
+                                        </svg>
+                                    </span>
+                                    <span class="employee-home-assistant-tab-text">客户服务助手</span>
+                                </button>
                             </div>
                             <div class="ai-team-section" id="ai-carousel-view">
                                 <div class="ai-cards-fan-row">
@@ -324,20 +444,24 @@
                 <div class="input-chat-row">
                 <div class="ai-mini-avatars" id="ai-mini-avatars" style="display: none;"></div>
                 <div class="enhanced-input-wrap">
-                    <textarea id="main-chat-input" class="chat-input enhanced-textarea" rows="1" placeholder="开启我的工作" onkeydown="handleMainInput(event)"></textarea>
+                    <textarea id="main-chat-input" class="chat-input enhanced-textarea" rows="1" placeholder="发消息..." onkeydown="handleMainInput(event)"></textarea>
                     <div class="input-container input-bottom-bar">
-                        <div class="input-assistant-tags-wrap">
-                            <div class="input-assistant-tags" id="input-assistant-tags" role="listbox" aria-label="选择助手"></div>
-                            <div class="input-assistant-more-anchor" id="input-assistant-more-anchor"></div>
-                        </div>
-                        <div class="input-actions-right">
+                        <div class="input-actions-left">
                             <div class="input-skill-picker" id="input-skill-picker">
-                                <button type="button" class="input-skill-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="选择技能" disabled>
-                                    <span class="input-skill-trigger-text">技能</span>
+                                <button type="button" class="input-skill-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="选择技能">
+                                    <span class="input-skill-trigger-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none">
+                                            <path d="M13 2L3 14h7l-1 8 12-14h-7l-1-6z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
+                                    <span class="input-skill-trigger-text">原子模型</span>
                                     <svg class="input-skill-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                 </button>
                                 <div class="input-skill-menu" role="listbox" aria-label="已安装技能" hidden></div>
                             </div>
+                            <div class="input-assistant-tags" id="input-assistant-tags" role="listbox" aria-label="选择助手"></div>
+                        </div>
+                        <div class="input-actions-right">
                             <button type="button" class="input-action-btn upload-btn" onclick="startMainFileUpload()" aria-label="上传文件" title="上传文件">
                                 <svg class="input-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
@@ -352,7 +476,12 @@
                                     <line x1="8" y1="22" x2="16" y2="22"></line>
                                 </svg>
                             </button>
-                            <button type="button" class="send-btn" onclick="sendMainMessage()" aria-label="发送" title="发送">➤</button>
+                            <button type="button" class="send-btn" onclick="sendMainMessage()" aria-label="发送" title="发送">
+                                <svg class="input-action-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M10.5 13.5l10-10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M21 3l-6.9 18c-.3.8-1.3.9-1.8.2l-3.7-5.6-5.6-3.7c-.7-.5-.6-1.6.2-1.8L21 3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -752,21 +881,13 @@
                         <button type="button" class="panel-collapse-btn context-collapse-btn" id="context-collapse-btn" aria-expanded="true" aria-label="收起会话输出物" title="收起会话输出物">
                             <svg class="layout-toggle-icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
                         </button>
-                        <h3>会话输出物</h3>
+                        <div class="context-header-title">
+                            <h3>会话输出物</h3>
+                            <span class="context-header-count" id="context-outputs-count">0项</span>
+                        </div>
                     </div>
                     <div class="context-scroll">
-                        <div class="context-section">
-                            <div class="context-section-title">输出物</div>
-                            <div id="context-outputs-list"></div>
-                        </div>
-                        <div class="context-section">
-                            <div class="context-section-title">关联模型</div>
-                            <div id="context-models-list"></div>
-                        </div>
-                        <div class="context-section">
-                            <div class="context-section-title">关联客户</div>
-                            <div id="context-customers-list"></div>
-                        </div>
+                        <div id="context-outputs-list"></div>
                     </div>
                 </aside>
             </div>

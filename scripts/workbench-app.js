@@ -1,4 +1,4 @@
-    // 登录处理函数
+﻿    // 登录处理函数
     function handleLogin() {
         alert('登录功能即将上线，敬请期待！');
     }
@@ -749,7 +749,7 @@
 
     function getWorkbenchBrandTitle(role) {
         const resolvedRole = role || currentWorkbenchRole || 'employee';
-        return resolvedRole === 'support' ? '业务支持中心工作台' : '业务团队工作台';
+        return resolvedRole === 'support' ? '业务支持中心工作台' : '员工工作台';
     }
 
     function getWorkbenchUserLabel(role) {
@@ -777,12 +777,12 @@
                 : userLabel;
             sidebarUserAvatarEl.textContent = avatarSource ? avatarSource.charAt(0) : '';
         }
-        if (heroTitleEl && resolvedRole === 'employee') heroTitleEl.textContent = brandTitle;
+        // 员工端首页主标题为“释放你的AI超能力”，不随角色标题变更
 
         const supportHeroTitle = document.querySelector('#workbench-panel-support #center-hero-title-support');
         const supportHeroSub = document.querySelector('#workbench-panel-support .center-hero-sub');
         if (supportHeroTitle && resolvedRole === 'support') {
-            supportHeroTitle.textContent = brandTitle;
+            supportHeroTitle.textContent = '释放你的 AI 超能力';
         }
         if (supportHeroSub && resolvedRole === 'support') {
             supportHeroSub.textContent = '你的业务超能力';
@@ -799,7 +799,7 @@
         } else {
             titleEl.classList.add('nav-title-multiline');
             brandEl?.classList.remove('nav-brand-support-title');
-            titleEl.innerHTML = '<span class="nav-title-line-main">业务团队</span><span class="nav-title-line-sub">工作台</span>';
+            titleEl.innerHTML = '<span class="nav-title-line-main">员工</span><span class="nav-title-line-sub">工作台</span>';
         }
     }
 
@@ -1209,6 +1209,7 @@
 
         if (scope === 'employee') {
             syncEmployeeExceptionTabs(board);
+            updateEmployeeSidebarNavCounts();
         }
         syncExceptionBoardStats(board);
         board.querySelectorAll('.exception-tab-panel').forEach((panel) => {
@@ -1857,8 +1858,7 @@
     }
 
     function buildEmployeeExceptionChatAvatarHtml() {
-        const meta = getSupportInputAgentMeta(SUPPORT_INPUT_AGENT_EXCEPTIONS);
-        return buildSupportAssistantChatAvatarHtml(meta);
+        return buildEmployeeBotAvatarHtml('异常提醒助手', 'exceptions');
     }
 
     function clearEmployeeAssistantInputSelection(panel) {
@@ -1955,7 +1955,33 @@
             window.initAssistantManagement();
         }
         initInputSkillPickers();
+        initMainSendButtonSync();
     }
+
+    function syncMainSendButtonState(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (!p) return;
+        const input = getPanelEl('main-chat-input', p);
+        const sendBtn = p.querySelector('.send-btn');
+        if (!input || !sendBtn) return;
+        const ready = !!String(input.value || '').trim();
+        sendBtn.classList.toggle('is-ready', ready);
+        sendBtn.setAttribute('aria-disabled', ready ? 'false' : 'true');
+    }
+
+    function initMainSendButtonSync(root) {
+        const scope = root?.querySelectorAll ? root : document;
+        scope.querySelectorAll('.workbench-panel').forEach((panel) => {
+            const input = getPanelEl('main-chat-input', panel);
+            if (!input || input.dataset.sendBtnSyncBound === 'true') return;
+            input.dataset.sendBtnSyncBound = 'true';
+            input.addEventListener('input', () => syncMainSendButtonState(panel));
+            input.addEventListener('change', () => syncMainSendButtonState(panel));
+            syncMainSendButtonState(panel);
+        });
+    }
+
+    window.syncMainSendButtonState = syncMainSendButtonState;
 
     function restoreSupportStandardInput(panel) {
         const p = panel || document.getElementById('workbench-panel-support');
@@ -2052,6 +2078,8 @@
         const miniAvatars = panel.querySelector('#ai-mini-avatars-support');
         if (miniAvatars) miniAvatars.remove();
 
+        panel.querySelector('#employee-home-assistant-tabs-support')?.remove();
+
         const chatView = panel.querySelector('#ai-chat-view-support');
         if (chatView) {
             chatView.style.display = 'none';
@@ -2094,6 +2122,117 @@
             }
             return parseExceptionAlertCard(card);
         }).filter((item) => item?.title);
+    }
+
+    function collectEmployeeExceptionAlerts() {
+        const board = document.getElementById('exception-reminder-board');
+        if (!board) return [];
+        applyExceptionBoardScope(board);
+        return Array.from(board.querySelectorAll('.exception-alert-card')).map((card) => {
+            if (card.classList.contains('is-scope-hidden') || card.classList.contains('is-filter-hidden')) {
+                return null;
+            }
+            return parseExceptionAlertCard(card);
+        }).filter((item) => item?.title);
+    }
+
+    const EMPLOYEE_APPROVAL_PENDING_COUNT = 3;
+
+    function getEmployeeDailyTaskCount() {
+        return (getEmployeeDailyTasks?.() || []).length;
+    }
+
+    function getEmployeeExceptionAlertCount() {
+        const board = document.getElementById('exception-reminder-board');
+        if (!board) return 0;
+        return board.querySelectorAll('.exception-alert-card:not(.is-scope-hidden):not(.is-filter-hidden)').length;
+    }
+
+    function getEmployeeApprovalPendingCount() {
+        return EMPLOYEE_APPROVAL_PENDING_COUNT;
+    }
+
+    function updateNavLabelCount(labelEl, fallback, count) {
+        if (!labelEl) return;
+        if (!labelEl.dataset.baseLabel) {
+            labelEl.dataset.baseLabel = labelEl.textContent.trim() || fallback;
+        }
+        const base = labelEl.dataset.baseLabel;
+        labelEl.textContent = count > 0 ? `${base}（${count}）` : base;
+    }
+
+    function updateEmployeeSidebarNavCounts() {
+        const tasksEl = document.getElementById('sidebar-nav-tasks-count');
+        const exceptionsEl = document.getElementById('sidebar-nav-exceptions-count');
+        const approvalEl = document.getElementById('sidebar-nav-approval-count');
+        const tasksLabelEl = document.querySelector('#menu-today-tasks .bc-label');
+        const exceptionsLabelEl = document.querySelector('#menu-exceptions .bc-label');
+        const approvalLabelEl = document.querySelector('#menu-approval .bc-label');
+        const taskCount = getEmployeeDailyTaskCount();
+        const exceptionCount = getEmployeeExceptionAlertCount();
+        const approvalCount = getEmployeeApprovalPendingCount();
+
+        if (tasksEl) {
+            tasksEl.textContent = String(taskCount);
+            tasksEl.setAttribute('aria-label', `${taskCount}项今日任务`);
+        }
+        if (exceptionsEl) {
+            exceptionsEl.textContent = String(exceptionCount);
+            exceptionsEl.setAttribute('aria-label', `${exceptionCount}项异常提醒`);
+        }
+        if (approvalEl) {
+            approvalEl.textContent = String(approvalCount);
+            approvalEl.setAttribute('aria-label', `${approvalCount}项待办事项`);
+        }
+
+        updateNavLabelCount(tasksLabelEl, '今日任务', taskCount);
+        updateNavLabelCount(exceptionsLabelEl, '异常提醒', exceptionCount);
+        updateNavLabelCount(approvalLabelEl, '待办事项', approvalCount);
+    }
+
+    function updateSupportSidebarNavCounts() {
+        updateNavLabelCount(
+            document.querySelector('#support-menu-today-tasks .bc-label'),
+            '今日任务',
+            getSupportTotalTaskCount()
+        );
+        updateNavLabelCount(
+            document.querySelector('#support-menu-exceptions .bc-label'),
+            '异常提醒',
+            collectSupportExceptionAlerts().length
+        );
+        updateNavLabelCount(
+            document.querySelector('#support-menu-approval .bc-label'),
+            '待办事项',
+            getEmployeeApprovalPendingCount()
+        );
+    }
+
+    function buildEmployeeAllExceptionsChatHtml() {
+        const alerts = collectEmployeeExceptionAlerts();
+        const count = alerts.length;
+        if (!count) {
+            return `
+                <p class="chat-md-h2">异常提醒</p>
+                <p>当前暂无异常提醒。</p>
+            `;
+        }
+        return `
+            <p class="chat-md-h2">异常提醒（${count}）</p>
+            <p>点击任一条异常，可直接在对话里查看详情与处理建议。</p>
+            <div class="chat-exception-list">
+                ${alerts.map((item) => `
+                    <button type="button" class="chat-exception-card" data-exception-title="${escapeHtmlAttr(item.title)}">
+                        <div class="chat-exception-card-title">${escapeHtmlText(item.title)}</div>
+                        <div class="chat-exception-card-meta">
+                            <span class="chat-exception-card-status">${escapeHtmlText(item.status || '待处理')}</span>
+                            <span class="chat-exception-card-time">${escapeHtmlText(item.createdAt || '')}</span>
+                        </div>
+                        <div class="chat-exception-card-desc">${escapeHtmlText(item.desc || '')}</div>
+                    </button>
+                `).join('')}
+            </div>
+        `;
     }
 
     function ensureSupportHomeCards(panel) {
@@ -2251,7 +2390,8 @@
     }
 
     function buildEmployeeCatalogChatAvatarHtml(agent) {
-        return `<div class="chat-avatar employee-chat-avatar ${agent.avatarClass || ''}" title="${escapeHtmlText(agent.name)}"><span>${agent.emoji || '🤖'}</span></div>`;
+        if (!agent) return buildWorkbenchChatAvatarHtml();
+        return buildEmployeeBotAvatarHtml(agent.name, getEmployeeAssistantAvatarKey(agent));
     }
 
     function getEmployeeCatalogWelcomeHtml(agent) {
@@ -2374,10 +2514,15 @@
 
     function renderSupportSidebarTasks(panel) {
         const body = document.getElementById('support-sidebar-tasks-body');
-        if (!body) return;
+        if (!body) {
+            updateSupportSidebarNavCounts();
+            return;
+        }
         body.innerHTML = `<div class="support-sidebar-tasks-content support-daily-task-body">${buildSupportDailyTasksSummaryHtml({ sidebar: true })}</div>`;
         updateSupportSidebarTasksCount();
+        updateSupportSidebarNavCounts();
         refreshSupportHomeCardCounts(panel);
+        updateSupportAvatarPendingDots();
         const scrollEl = body.closest('.support-sidebar-tasks-scroll');
         if (scrollEl) bindOverlayScrollbar(scrollEl);
     }
@@ -2753,7 +2898,7 @@
         if (!input.value.trim() || (prevPrompt && input.value === prevPrompt)) {
             input.value = '';
         }
-        input.placeholder = prompt || '开启我的工作';
+        input.placeholder = prompt || '发消息...';
         input.dataset.suggestedPrompt = prompt;
     }
 
@@ -2780,6 +2925,104 @@
 
     function getInputSkillPickerEl(panel) {
         return getPanelEl('input-skill-picker', panel);
+    }
+
+    const FALLBACK_EMPLOYEE_SKILLS = [
+        { id: 'emp-invest-plan', name: '投资方案生成', description: '根据需求生成投资方案、服务方案' },
+        { id: 'emp-compliance', name: '合规审查', description: '检查文档、交易或操作是否符合规范' }
+    ];
+
+    const SUPPORT_ATOMIC_SKILLS = [
+        {
+            id: 'support-atom-daily',
+            name: '今日任务原子模型',
+            description: '围绕今日任务的拆解、归类与跟进'
+        },
+        {
+            id: 'support-atom-exception',
+            name: '异常提醒原子模型',
+            description: '识别、归因并跟踪业务异常事项'
+        }
+    ];
+
+    function getIbAtomicSkills() {
+        const knowledge = window.IB_MODEL_KNOWLEDGE;
+        if (!knowledge || (!Array.isArray(knowledge.businesses) && !Array.isArray(knowledge.serviceModels))) {
+            return FALLBACK_EMPLOYEE_SKILLS.slice();
+        }
+
+        const skills = [];
+        const seenNames = new Set();
+        const businesses = Array.isArray(knowledge.businesses) ? knowledge.businesses : [];
+        const serviceModels = Array.isArray(knowledge.serviceModels) ? knowledge.serviceModels : [];
+
+        function addAtomicModel(name, bizLabel, columnLabel, categoryLabel) {
+            const modelName = String(name || '').trim();
+            if (!modelName) return;
+            if (seenNames.has(modelName)) return;
+            seenNames.add(modelName);
+            const parts = [];
+            if (bizLabel) parts.push(bizLabel);
+            if (columnLabel) parts.push(columnLabel);
+            if (categoryLabel) parts.push(categoryLabel);
+            const desc = parts.join(' · ');
+            skills.push({
+                id: `ib-atom-${skills.length}`,
+                name: modelName,
+                description: desc || '投行业务原子模型'
+            });
+        }
+
+        const COLUMN_LABEL_MAP = {
+            analysis: '业务分析模型',
+            design: '方案设计模型',
+            validation: '交叉验证模型'
+        };
+
+        businesses.forEach((biz) => {
+            if (!biz || !biz.name || !biz.columns) return;
+            const bizLabel = biz.category ? `${biz.name}（${biz.category}）` : biz.name;
+            ['analysis', 'design', 'validation'].forEach((columnKey) => {
+                const column = biz.columns[columnKey];
+                if (!Array.isArray(column)) return;
+                const columnLabel = COLUMN_LABEL_MAP[columnKey] || columnKey;
+                column.forEach((sectionItem) => {
+                    if (!sectionItem) return;
+                    const categoryLabel = sectionItem.subSection
+                        ? `${sectionItem.section} / ${sectionItem.subSection}`
+                        : sectionItem.section;
+                    (sectionItem.models || []).forEach((modelName) => {
+                        addAtomicModel(modelName, bizLabel, columnLabel, categoryLabel);
+                    });
+                });
+            });
+        });
+
+        serviceModels.forEach((service) => {
+            if (!service || !service.name || !Array.isArray(service.sections)) return;
+            const bizLabel = service.name;
+            const columnLabel = '客户服务';
+            service.sections.forEach((section) => {
+                if (!section) return;
+                const categoryLabel = section.section;
+                (section.models || []).forEach((modelName) => {
+                    addAtomicModel(modelName, bizLabel, columnLabel, categoryLabel);
+                });
+            });
+        });
+
+        return skills.length ? skills : FALLBACK_EMPLOYEE_SKILLS.slice();
+    }
+
+    function getSupportAtomicSkills() {
+        return SUPPORT_ATOMIC_SKILLS.slice();
+    }
+
+    function getFallbackEmployeeSkillById(skillId) {
+        if (!skillId) return null;
+        const atomic = getIbAtomicSkills().find((s) => s.id === skillId);
+        if (atomic) return atomic;
+        return FALLBACK_EMPLOYEE_SKILLS.find((s) => s.id === skillId) || null;
     }
 
     function getActiveAssistantSkillOwnerKey(panel) {
@@ -2833,9 +3076,9 @@
         const picker = getInputSkillPickerEl(panel);
         if (!picker) return;
         const triggerText = picker.querySelector('.input-skill-trigger-text');
-        const skill = skillId ? window.getSkillById?.(skillId) : null;
+        const skill = skillId ? (window.getSkillById?.(skillId) || getFallbackEmployeeSkillById(skillId)) : null;
         if (triggerText) {
-            triggerText.textContent = skill?.name || '技能';
+            triggerText.textContent = skill?.name || '原子模型';
         }
         picker.querySelectorAll('.input-skill-option').forEach((btn) => {
             const active = (btn.dataset.skillId || '') === (skillId || '');
@@ -2851,7 +3094,15 @@
         if (!picker) return;
 
         const ownerKey = getActiveAssistantSkillOwnerKey(p);
-        const skills = window.getInstalledSkillsForOwner?.(ownerKey) || [];
+        const panelKey = getPanelKey(p);
+        let skills;
+        if (panelKey === 'employee' && window.IB_MODEL_KNOWLEDGE) {
+            skills = getIbAtomicSkills();
+        } else if (panelKey === 'support') {
+            skills = getSupportAtomicSkills();
+        } else {
+            skills = window.getInstalledSkillsForOwner?.(ownerKey) || [];
+        }
         const state = getPanelState(p);
         const menu = picker.querySelector('.input-skill-menu');
         const trigger = picker.querySelector('.input-skill-trigger');
@@ -2862,37 +3113,51 @@
 
         if (!skills.length) {
             if (menu) {
-                menu.innerHTML = '<div class="input-skill-empty">当前助手暂无已安装技能</div>';
+                menu.innerHTML = '<div class="input-skill-empty">当前助手暂无已安装原子模型</div>';
             }
             if (trigger) {
                 trigger.disabled = true;
-                trigger.title = ownerKey ? `${ownerKey}助手暂无已安装技能` : '请先选择助手';
+                trigger.title = ownerKey ? `${ownerKey}助手暂无已安装原子模型` : '请先选择助手';
             }
             setInputSkillSelection(p, null);
-            if (trigger) trigger.querySelector('.input-skill-trigger-text').textContent = '技能';
+            if (trigger) trigger.querySelector('.input-skill-trigger-text').textContent = '原子模型';
             return;
         }
 
         if (trigger) {
             trigger.disabled = false;
-            trigger.title = `选择${ownerKey}助手下的已安装技能`;
+            trigger.title = ownerKey ? `选择${ownerKey}助手下的已安装原子模型` : '选择原子模型';
         }
 
         if (menu) {
             const items = [
-                `<button type="button" class="input-skill-option${!state.currentInputSkillId ? ' is-active' : ''}" data-skill-id="" role="option" aria-selected="${!state.currentInputSkillId ? 'true' : 'false'}">不使用技能</button>`
-            ].concat(skills.map((skill) => `
-                <button type="button" class="input-skill-option${state.currentInputSkillId === skill.id ? ' is-active' : ''}" data-skill-id="${escapeHtmlAttr(skill.id)}" role="option" aria-selected="${state.currentInputSkillId === skill.id ? 'true' : 'false'}">
-                    <span class="input-skill-option-name">${escapeHtmlText(skill.name)}</span>
-                </button>
-            `));
+                `<button type="button" class="input-skill-option${!state.currentInputSkillId ? ' is-active' : ''}" data-skill-id="" role="option" aria-selected="${!state.currentInputSkillId ? 'true' : 'false'}">不使用原子模型</button>`
+            ].concat(skills.map((skill) => {
+                const desc = skill.description || skill.desc || skill.summary || '';
+                return `
+                    <button type="button" class="input-skill-option${state.currentInputSkillId === skill.id ? ' is-active' : ''}" data-skill-id="${escapeHtmlAttr(skill.id)}" role="option" aria-selected="${state.currentInputSkillId === skill.id ? 'true' : 'false'}">
+                        <span class="input-skill-option-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M14.7 6.3a4 4 0 0 0-5.7 5.7L3 18v3h3l6-6a4 4 0 0 0 2.7-8.7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        <span class="input-skill-option-body">
+                            <span class="input-skill-option-name">${escapeHtmlText(skill.name)}</span>
+                            ${desc ? `<span class="input-skill-option-desc">${escapeHtmlText(desc)}</span>` : ''}
+                        </span>
+                        <span class="input-skill-option-check" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l2.6 2.6L12.5 4.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                    </button>
+                `;
+            }));
             menu.innerHTML = items.join('');
             window.bindOverlayScrollbar?.(menu);
         }
 
-        const activeSkill = state.currentInputSkillId ? window.getSkillById(state.currentInputSkillId) : null;
+        const activeSkill = state.currentInputSkillId ? (window.getSkillById?.(state.currentInputSkillId) || getFallbackEmployeeSkillById(state.currentInputSkillId)) : null;
         const triggerText = picker.querySelector('.input-skill-trigger-text');
-        if (triggerText) triggerText.textContent = activeSkill?.name || '技能';
+        if (triggerText) triggerText.textContent = activeSkill?.name || '原子模型';
     }
 
     function toggleInputSkillPicker(panel) {
@@ -2916,7 +3181,7 @@
 
     function formatMessageWithSelectedSkill(message, panel) {
         const state = getPanelState(panel);
-        const skill = state.currentInputSkillId ? window.getSkillById?.(state.currentInputSkillId) : null;
+        const skill = state.currentInputSkillId ? (window.getSkillById?.(state.currentInputSkillId) || getFallbackEmployeeSkillById(state.currentInputSkillId)) : null;
         if (!skill) return message;
         return `【${skill.name}】${message}`;
     }
@@ -2975,9 +3240,9 @@
             return getChatModeInputPlaceholder(panel);
         }
         if (getPanelKey(panel) === 'support') {
-            return getSupportAssistantInputPrompt(panel) || '开启我的工作';
+            return getSupportAssistantInputPrompt(panel) || '发消息...';
         }
-        return '开启我的工作';
+        return '发消息...';
     }
 
     function ensureSupportInputTopRow(panel) {
@@ -3268,71 +3533,9 @@
     }
 
     function initSupportInputAgentSelect(panel) {
-        const container = panel?.querySelector('.input-container');
-        if (!container) return;
-
-        prepareSupportInputField(panel);
-        container.querySelector('.support-input-agent-select')?.remove();
-
-        const topRow = ensureSupportInputTopRow(panel);
-        let picker = topRow?.querySelector('.support-input-agent-picker')
-            || container.querySelector('.support-input-agent-picker');
-        if (!picker) {
-            const state = getPanelState(panel);
-            const optionsHtml = getSupportInputAgentOptions()
-                .map((meta) => buildSupportInputAgentOptionHtml(meta, meta.id === state.currentSupportInputAgent))
-                .join('');
-
-            picker = document.createElement('div');
-            picker.className = 'support-input-agent-picker';
-            picker.innerHTML = `
-                <button type="button" class="support-input-agent-trigger" aria-haspopup="listbox" aria-expanded="false" data-agent-name="${escapeHtmlText(WORKBENCH_ASSISTANT.name)}" title="${escapeHtmlText(WORKBENCH_ASSISTANT.name)}">
-                    <span class="support-input-agent-trigger-emoji ${WORKBENCH_ASSISTANT.avatarClass}" aria-hidden="true">${WORKBENCH_ASSISTANT.emoji}</span>
-                </button>
-                <div class="support-input-agent-menu overlay-scrollbar" role="listbox" aria-label="选择助理" hidden>
-                    ${optionsHtml}
-                </div>
-            `;
-
-            const insertTarget = topRow || container.querySelector('.input-actions-right') || container;
-            insertTarget.insertBefore(picker, insertTarget.firstChild);
-        } else if (topRow && picker.parentElement !== topRow) {
-            topRow.insertBefore(picker, topRow.firstChild);
-        } else {
-            refreshSupportInputAgentMenu(picker, panel);
-        }
-
-        const state = getPanelState(panel);
-        updateSupportInputAgentPickerUI(picker, state.currentSupportInputAgent);
-        bindSupportInputAgentMenuScroll(picker.querySelector('.support-input-agent-menu'));
-
-        if (!picker.dataset.bound) {
-            picker.dataset.bound = 'true';
-
-            const trigger = picker.querySelector('.support-input-agent-trigger');
-            const menu = picker.querySelector('.support-input-agent-menu');
-
-            trigger?.addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleSupportInputAgentPicker(picker);
-                if (picker.classList.contains('is-open')) {
-                    menu?.removeAttribute('hidden');
-                } else {
-                    menu?.setAttribute('hidden', '');
-                }
-            });
-
-            menu?.addEventListener('click', (e) => {
-                const btn = e.target.closest('.support-input-agent-option');
-                if (!btn) return;
-                e.stopPropagation();
-                const agentId = btn.dataset.agentId;
-                if (!agentId) return;
-                setSupportInputAgent(panel, agentId);
-                closeSupportInputAgentPicker(picker);
-                menu.setAttribute('hidden', '');
-            });
-        }
+        if (!panel) return;
+        restoreSupportStandardInput(panel);
+        updateSupportInputPlaceholder(panel);
     }
 
     if (!window.__supportInputAgentPickerDocBound) {
@@ -3582,6 +3785,7 @@
         state.supportWelcomeShown = false;
         initSupportInputAgentSelect(panel);
         syncSupportAssistantTags(panel);
+        initSupportAtMentionAssistantPicker(panel);
         initSupportMainInputPromptBehavior(panel);
         updateSupportAgentButton(panel, null);
         updateTopAvatarActive(null);
@@ -3590,6 +3794,7 @@
         ensureSupportHomeCards(panel);
         refreshSupportHomeCardCounts(panel);
         showSupportWelcomeMessage(panel);
+        updateSupportSidebarNavCounts();
         syncSupportHomeLayout(panel);
         panel.dataset.initialized = 'true';
     }
@@ -3605,7 +3810,7 @@
         row.dataset.supportAgentGuide = agentId;
         row.innerHTML = `
             <div class="chat-avatar support-chat-avatar"><img src="${agent.image}" alt="${escapeHtmlText(getSupportAgentDisplayLabel(agentId))}"></div>
-            <div class="chat-bubble chat-bubble-assistant">${buildSupportAgentTasksGuideHtml(agentId)}</div>
+            <div class="chat-bubble chat-bubble-assistant">${buildSupportAssistantBubbleContent(buildSupportAgentTasksGuideHtml(agentId), { html: true, agentId }, p)}</div>
         `;
         messagesEl.appendChild(row);
         updateSupportChatLayout(p);
@@ -3629,26 +3834,56 @@
 
     function buildSupportAssistantChatAvatarHtml(agentMeta) {
         if (!agentMeta) {
-            return `<div class="chat-avatar support-chat-avatar support-daily-task-chat-avatar">${getSupportDailyTaskRobotAvatarHtml()}</div>`;
-        }
-        if (agentMeta.id === SUPPORT_INPUT_AGENT_DAILY_TASK) {
-            return `<div class="chat-avatar support-chat-avatar support-daily-task-chat-avatar">${getSupportDailyTaskRobotAvatarHtml()}</div>`;
+            return buildWorkbenchChatAvatarHtml();
         }
         if (agentMeta.id === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
-            const emojiHtml = getSupportInputAgentAvatarHtml(
-                agentMeta,
-                'support-input-agent-trigger-img',
-                'support-input-agent-option-emoji support-exceptions-avatar'
-            );
-            return `<div class="chat-avatar support-chat-avatar support-exceptions-chat-avatar"><span class="support-exceptions-chat-option-avatar">${emojiHtml}</span></div>`;
+            return buildEmployeeExceptionChatAvatarHtml();
         }
-        if (agentMeta.emoji && agentMeta.avatarClass) {
-            return `<div class="chat-avatar employee-chat-avatar support-functional-chat-avatar ${agentMeta.avatarClass}" title="${escapeHtmlText(agentMeta.name)}"><span>${agentMeta.emoji}</span></div>`;
+        if (agentMeta.id === SUPPORT_INPUT_AGENT_DAILY_TASK) {
+            return buildEmployeeBotAvatarHtml('今日任务助手', 'tasks');
         }
-        if (agentMeta.image) {
-            return `<div class="chat-avatar support-chat-avatar"><img src="${escapeHtml(agentMeta.image)}" alt="${escapeHtmlText(agentMeta.name)}"></div>`;
+        const name = getEmployeeAssistantDisplayName(agentMeta, WORKBENCH_ASSISTANT.name);
+        const avatarKey = getEmployeeAssistantAvatarKey(agentMeta);
+        return buildEmployeeBotAvatarHtml(name, avatarKey);
+    }
+
+    function resolveSupportMessageAssistantName(options = {}, text = '', panel) {
+        if (options.workbenchAssistant) {
+            return WORKBENCH_ASSISTANT.name;
         }
-        return `<div class="chat-avatar support-chat-avatar support-daily-task-chat-avatar">${getSupportDailyTaskRobotAvatarHtml()}</div>`;
+        if (options.extraAssistantId) {
+            const extra = getExtraAssistantById(options.extraAssistantId);
+            if (extra?.name) return extra.name;
+        }
+        if (options.assistantDisplayName) {
+            return options.assistantDisplayName;
+        }
+        const p = panel || document.getElementById('workbench-panel-support');
+        const state = getPanelState(p);
+        const agentId = options.agentId
+            || options.extraAssistantId
+            || state.currentExtraAssistantId
+            || state.currentTaskAgentId
+            || state.currentSupportInputAgent
+            || state.currentSupportAgent;
+        if (agentId) {
+            const label = getSupportAgentDisplayLabel(agentId);
+            if (label) return label;
+        }
+        if (typeof options.chatIndex === 'number') {
+            const assistant = aiAssistants[options.chatIndex];
+            if (assistant?.name) return assistant.name;
+        }
+        const titleName = resolveAssistantTitleFromMessage(text);
+        if (titleName) return getAssistantDisplayNameFromTitle(titleName);
+        return '助手';
+    }
+
+    function buildSupportAssistantBubbleContent(text, options = {}, panel) {
+        const name = resolveSupportMessageAssistantName(options, text, panel);
+        let bodyHtml = options.html ? String(text || '') : markdownToHtml(stripLeadingAssistantTitleMarkdown(text, name));
+        bodyHtml = stripLeadingAssistantTitleHtml(bodyHtml, name);
+        return `<p class="chat-assistant-name">${escapeHtml(name)}</p>${bodyHtml}`;
     }
 
     function appendSupportChatMessage(text, role, panel, options = {}) {
@@ -3659,15 +3894,24 @@
         const state = getPanelState(p);
         const agentId = options.workbenchAssistant
             ? null
-            : (options.agentId || state.currentTaskAgentId || state.currentSupportInputAgent || state.currentSupportAgent);
+            : (options.agentId
+                || options.extraAssistantId
+                || state.currentExtraAssistantId
+                || state.currentTaskAgentId
+                || state.currentSupportInputAgent
+                || state.currentSupportAgent);
         const agentMeta = agentId ? getSupportInputAgentMeta(agentId) : null;
         const row = document.createElement('div');
         row.className = role === 'user' ? 'chat-row chat-row-user' : 'chat-row chat-row-assistant support-assistant-row';
 
-        const assistantBody = options.html ? text : markdownToHtml(text);
+        const assistantBody = buildSupportAssistantBubbleContent(text, options, p);
 
         if (role === 'user') {
-            row.innerHTML = `<div class="chat-bubble chat-bubble-user">${escapeHtml(text)}</div>`;
+            const initial = (document.getElementById('sidebar-user-avatar')?.textContent || '业').trim().charAt(0) || '业';
+            row.innerHTML = `
+                <div class="chat-bubble chat-bubble-user">${escapeHtml(text)}</div>
+                <div class="chat-avatar employee-chat-avatar employee-user-avatar support-user-avatar">${escapeHtmlText(initial)}</div>
+            `;
         } else if (options.workbenchAssistant) {
             row.innerHTML = `
                 ${buildWorkbenchChatAvatarHtml()}
@@ -3828,7 +4072,16 @@
         if (resolvedAgentId === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
             appendSupportChatMessage(buildSupportAllExceptionsChatHtml(), 'assistant', p, {
                 html: true,
-                agentId: resolvedAgentId
+                agentId: resolvedAgentId,
+                userMessage: message
+            });
+            return;
+        }
+        if (resolvedAgentId === SUPPORT_INPUT_AGENT_DAILY_TASK) {
+            appendSupportChatMessage(buildSupportDailyTasksSummaryHtml({ forChatCard: true }), 'assistant', p, {
+                html: true,
+                agentId: resolvedAgentId,
+                userMessage: message
             });
             return;
         }
@@ -4181,7 +4434,7 @@
         const badge = document.createElement('span');
         badge.className = 'avatar-task-badge';
         badge.textContent = String(count);
-        badge.setAttribute('aria-label', count + '项今日任务');
+        badge.setAttribute('aria-label', count + '项今日待办');
         wrap.appendChild(badge);
     }
 
@@ -4210,6 +4463,8 @@
             if (count > 0) setAvatarImgTaskBadge(wrap, count);
         });
     }
+
+    window.updateSupportAvatarPendingDots = updateSupportAvatarPendingDots;
 
     function renderOrgPrompts(panel, agentId) {
         const listEl = panel.querySelector('#org-agent-prompts-list-org');
@@ -4396,6 +4651,7 @@
         deselectEmployeeInputAssistant(panel);
         syncEmployeeAssistantTags(panel);
         initEmployeeMainInputPromptBehavior(panel);
+        initEmployeeAtMentionAssistantPicker(panel);
         panel.dataset.initialized = 'true';
     }
 
@@ -4420,6 +4676,7 @@
         if (isSupport) {
             renderSupportSidebarTasks();
             renderSupportSessionHistory();
+            updateSupportSidebarNavCounts();
             const supportPanel = document.getElementById('workbench-panel-support');
             if (supportPanel && !supportPanel.querySelector('.support-input-agent-picker')) {
                 const container = supportPanel.querySelector('.input-container');
@@ -4458,12 +4715,12 @@
         if (panel && panel.dataset.initialized !== 'true') {
             initWorkbenchPanel(panel);
         }
-        updateSupportAvatarPendingDots();
-        updateDigitalAvatarsScrollButtons();
-        requestAnimationFrame(updateDigitalAvatarsScrollButtons);
         if (tabKey === 'support' || tabKey === 'employee') {
             window.syncCenterAgentsBar?.();
         }
+        updateSupportAvatarPendingDots();
+        updateDigitalAvatarsScrollButtons();
+        requestAnimationFrame(updateDigitalAvatarsScrollButtons);
         if (panel && (tabKey === 'support' || tabKey === 'employee')) {
             refreshInputSkillPicker(panel);
         }
@@ -4601,6 +4858,67 @@
         welcomeText: `**工作台助手**\n\n我是您的工作台助手，可帮您协调各业务助手、处理通用工作台事务。\n\n如需专业分析，可点选下方助手标签切换；也可直接描述需求，我来协助您。`
     };
 
+    const EMPLOYEE_ASSISTANT_AVATAR_NAME_MAP = {
+        '工作台助手': 'workbench',
+        '今日任务助手': 'tasks',
+        '今日任务': 'tasks',
+        '异常提醒助手': 'exceptions',
+        '异常提醒': 'exceptions',
+        '差旅分析助手': 'travel',
+        '差旅分析': 'travel',
+        '差旅分析汇总': 'travel',
+        '待办事项助手': 'approval',
+        '审批助手': 'approval',
+        '通知公告助手': 'tongzhi',
+        '客户分析助手': 'canmou',
+        '业务分析助手': 'tanma',
+        '方案生成助手': 'junshi',
+        '交叉验证助手': 'jiaocha',
+        '客户服务助手': 'tianyan'
+    };
+
+    const EMPLOYEE_ASSISTANT_AVATAR_CLASS_MAP = {
+        workbench: 'workbench',
+        canmou: 'canmou',
+        tanma: 'tanma',
+        junshi: 'junshi',
+        jiaocha: 'jiaocha',
+        tianyan: 'tianyan',
+        shenpi: 'approval',
+        tongzhi: 'tongzhi',
+        'support-exceptions-avatar': 'exceptions',
+        'support-exceptions-tag': 'exceptions',
+        'support-daily-task-tag': 'tasks'
+    };
+
+    const EMPLOYEE_ASSISTANT_AVATAR_SVGS = {
+        workbench: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>`,
+        tasks: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path><path d="m9 16 2 2 4-4"></path></svg>`,
+        exceptions: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>`,
+        travel: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"></path></svg>`,
+        approval: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><path d="M12 11h4"></path><path d="M12 16h4"></path><path d="M8 11h.01"></path><path d="M8 16h.01"></path></svg>`,
+        tongzhi: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path></svg>`,
+        canmou: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><path d="M16 3.128a4 4 0 0 1 0 7.744"></path><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><circle cx="9" cy="7" r="4"></circle></svg>`,
+        tanma: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>`,
+        junshi: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>`,
+        jiaocha: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>`,
+        tianyan: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"></path></svg>`
+    };
+
+    const EMPLOYEE_ASSISTANT_AVATAR_KEY_LABELS = {
+        workbench: '工作台助手',
+        tasks: '今日任务助手',
+        exceptions: '异常提醒助手',
+        travel: '差旅分析助手',
+        approval: '待办事项助手',
+        tongzhi: '通知公告助手',
+        canmou: '客户分析助手',
+        tanma: '业务分析助手',
+        junshi: '方案生成助手',
+        jiaocha: '交叉验证助手',
+        tianyan: '客户服务助手'
+    };
+
     const EMPLOYEE_ASSISTANT_INPUT_PROMPTS = {
         canmou: '分析我名下的【陈明精工这家公司】',
         tanma: '帮我分析本季度投行业务的目标完成进度',
@@ -4726,12 +5044,15 @@
         if (!p || getPanelKey(p) !== 'employee') return '';
         if (!isWorkbenchInputHomePage(p)) return '';
         const state = getPanelState(p);
+        if (state.exceptionChatActive) return '';
         if (state.currentExtraAssistantId) {
             return EMPLOYEE_ASSISTANT_INPUT_PROMPTS[state.currentExtraAssistantId] || '';
         }
         if (typeof state.currentCardIndex === 'number' && state.currentCardIndex >= 0) {
             const avatarClass = resolveEmployeeAssistantAvatarClass(state.currentCardIndex, p);
-            return EMPLOYEE_ASSISTANT_INPUT_PROMPTS[avatarClass] || '';
+            if (avatarClass && EMPLOYEE_ASSISTANT_INPUT_PROMPTS[avatarClass]) {
+                return EMPLOYEE_ASSISTANT_INPUT_PROMPTS[avatarClass];
+            }
         }
         return '';
     }
@@ -4790,8 +5111,58 @@
         return typeof state.currentCardIndex === 'number' && state.currentCardIndex >= 0;
     }
 
+    function getEmployeeAssistantAvatarKey(source) {
+        if (!source) return 'workbench';
+        if (typeof source === 'string') {
+            const key = EMPLOYEE_ASSISTANT_AVATAR_NAME_MAP[source.trim()];
+            if (key) return key;
+            return EMPLOYEE_ASSISTANT_AVATAR_CLASS_MAP[source] || 'workbench';
+        }
+        if (source.assistantAvatarKey) return source.assistantAvatarKey;
+        if (source.avatarKey) return source.avatarKey;
+        if (source.id === SUPPORT_INPUT_AGENT_DAILY_TASK) return 'tasks';
+        if (source.id === SUPPORT_INPUT_AGENT_EXCEPTIONS) return 'exceptions';
+        if (source.avatarClass) {
+            return EMPLOYEE_ASSISTANT_AVATAR_CLASS_MAP[source.avatarClass] || source.avatarClass;
+        }
+        if (source.name) {
+            const byName = EMPLOYEE_ASSISTANT_AVATAR_NAME_MAP[source.name.trim()];
+            if (byName) return byName;
+        }
+        return 'workbench';
+    }
+
+    function getEmployeeAssistantDisplayName(source, fallback) {
+        if (!source) return fallback || WORKBENCH_ASSISTANT.name;
+        if (typeof source === 'string') return source;
+        return source.name || fallback || WORKBENCH_ASSISTANT.name;
+    }
+
+    function buildEmployeeAssistantIconSvg(avatarKey) {
+        const icons = EMPLOYEE_ASSISTANT_AVATAR_SVGS;
+        return icons[avatarKey] || icons.workbench;
+    }
+
+    function buildEmployeeBotAvatarHtml(name, avatarKey) {
+        const key = avatarKey || 'workbench';
+        const label = name || WORKBENCH_ASSISTANT.name;
+        return `<div class="chat-avatar employee-chat-avatar employee-bot-avatar employee-bot-avatar--${escapeHtmlAttr(key)}" title="${escapeHtmlText(label)}">
+            <span class="employee-bot-avatar-icon" aria-hidden="true">
+                ${buildEmployeeAssistantIconSvg(key)}
+            </span>
+        </div>`;
+    }
+
+    function buildEmployeeAssistantInlineIconHtml(source, variant) {
+        const avatarKey = getEmployeeAssistantAvatarKey(source);
+        const variantClass = variant === 'mention'
+            ? 'employee-inline-assistant-icon--mention'
+            : 'employee-inline-assistant-icon--tag';
+        return `<span class="employee-inline-assistant-icon ${variantClass} employee-inline-assistant-icon--${escapeHtmlAttr(avatarKey)}" aria-hidden="true">${buildEmployeeAssistantIconSvg(avatarKey)}</span>`;
+    }
+
     function buildWorkbenchChatAvatarHtml() {
-        return `<div class="chat-avatar employee-chat-avatar ${WORKBENCH_ASSISTANT.avatarClass}" title="${escapeHtmlText(WORKBENCH_ASSISTANT.name)}"><span>${WORKBENCH_ASSISTANT.emoji}</span></div>`;
+        return buildEmployeeBotAvatarHtml(WORKBENCH_ASSISTANT.name, 'workbench');
     }
 
     function parseAssistantTitleFromMarkdown(text) {
@@ -4799,90 +5170,167 @@
         return match ? match[1].trim() : '';
     }
 
+    function parseAssistantTitleFromHtml(text) {
+        const match = String(text || '').match(/class="chat-md-h2"[^>]*>([^<]+)</);
+        if (!match) return '';
+        return match[1].replace(/（.*?）/g, '').replace(/\(\d+\)/g, '').trim();
+    }
+
+    function resolveAssistantTitleFromMessage(text) {
+        return parseAssistantTitleFromMarkdown(text) || parseAssistantTitleFromHtml(text);
+    }
+
     function buildAvatarHtmlFromAiAssistant(assistant) {
         if (!assistant) return buildWorkbenchChatAvatarHtml();
-        return `<div class="chat-avatar employee-chat-avatar ${assistant.avatarClass || ''}" title="${escapeHtmlText(assistant.name)}"><span>${assistant.emoji || '🤖'}</span></div>`;
+        return buildEmployeeBotAvatarHtml(
+            assistant.name,
+            getEmployeeAssistantAvatarKey(assistant)
+        );
     }
 
     function buildAvatarHtmlFromExtraAssistant(extra) {
         if (!extra) return buildWorkbenchChatAvatarHtml();
-        return `<div class="chat-avatar employee-chat-avatar ${extra.avatarClass || ''}" title="${escapeHtmlText(extra.name)}"><span>${extra.emoji || '🤖'}</span></div>`;
+        return buildEmployeeBotAvatarHtml(
+            extra.name,
+            getEmployeeAssistantAvatarKey(extra)
+        );
+    }
+
+    function buildEmployeeUserAvatarHtml(panel) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        const name = getLoggedInEmployeeProfile?.().name || '';
+        const label = (name || 'W').trim();
+        const initial = label ? label.charAt(0) : 'W';
+        return `<div class="chat-avatar employee-chat-avatar employee-user-avatar" title="${escapeHtmlText(label)}"><span>${escapeHtmlText(initial)}</span></div>`;
+    }
+
+    function getAssistantDisplayNameFromTitle(titleName) {
+        const title = String(titleName || '').trim();
+        if (!title) return '助手';
+        if (title.endsWith('助手')) return title;
+        const withSuffix = `${title}助手`;
+        if (EMPLOYEE_ASSISTANT_AVATAR_NAME_MAP[withSuffix]) return withSuffix;
+        return EMPLOYEE_ASSISTANT_AVATAR_KEY_LABELS[EMPLOYEE_ASSISTANT_AVATAR_NAME_MAP[title]] || title;
     }
 
     function resolveEmployeeMessageAvatarMeta(options = {}, text = '', panel) {
+        if (options.assistantAvatarKey) {
+            return {
+                avatarKey: options.assistantAvatarKey,
+                name: options.assistantDisplayName
+                    || EMPLOYEE_ASSISTANT_AVATAR_KEY_LABELS[options.assistantAvatarKey]
+                    || '助手'
+            };
+        }
+
         if (options.agentId === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
-            return { kind: 'exception' };
+            return { avatarKey: 'exceptions', name: '异常提醒助手' };
         }
 
         if (options.extraAssistantId) {
             const extra = getExtraAssistantById(options.extraAssistantId);
-            if (extra) return { kind: 'extra', extra };
+            if (extra) {
+                return {
+                    avatarKey: getEmployeeAssistantAvatarKey(extra),
+                    name: extra.name
+                };
+            }
         }
 
-        if (options.workbenchAssistant) {
-            return { kind: 'workbench' };
-        }
-
-        const titleName = parseAssistantTitleFromMarkdown(text);
+        const titleName = resolveAssistantTitleFromMessage(text);
         if (titleName) {
             if (titleName === WORKBENCH_ASSISTANT.name || isWorkbenchAssistantReplyText(text)) {
-                return { kind: 'workbench' };
+                return { avatarKey: 'workbench', name: WORKBENCH_ASSISTANT.name };
+            }
+            const mappedKey = EMPLOYEE_ASSISTANT_AVATAR_NAME_MAP[titleName];
+            if (mappedKey) {
+                return {
+                    avatarKey: mappedKey,
+                    name: getAssistantDisplayNameFromTitle(titleName)
+                };
             }
             const extraByName = employeeExtraAssistants.find((item) => item.name === titleName);
-            if (extraByName) return { kind: 'extra', extra: extraByName };
+            if (extraByName) {
+                return {
+                    avatarKey: getEmployeeAssistantAvatarKey(extraByName),
+                    name: extraByName.name
+                };
+            }
             const assistantByName = aiAssistants.find((item) => item.name === titleName);
-            if (assistantByName) return { kind: 'main', assistant: assistantByName };
+            if (assistantByName) {
+                return {
+                    avatarKey: getEmployeeAssistantAvatarKey(assistantByName),
+                    name: assistantByName.name
+                };
+            }
         }
 
         if (typeof options.chatIndex === 'number' && aiAssistants[options.chatIndex]) {
-            return { kind: 'main', assistant: aiAssistants[options.chatIndex] };
+            const assistant = aiAssistants[options.chatIndex];
+            return {
+                avatarKey: getEmployeeAssistantAvatarKey(assistant),
+                name: assistant.name
+            };
         }
 
         if (typeof options.assistantIndex === 'number') {
             const chatIndex = options.assistantIndex;
             if (aiAssistants[chatIndex]) {
-                return { kind: 'main', assistant: aiAssistants[chatIndex] };
+                const assistant = aiAssistants[chatIndex];
+                return {
+                    avatarKey: getEmployeeAssistantAvatarKey(assistant),
+                    name: assistant.name
+                };
             }
             const homeAgent = getEmployeeHomeAssistant(chatIndex, panel);
             if (homeAgent) {
                 return {
-                    kind: 'main',
-                    assistant: {
-                        name: homeAgent.name,
-                        emoji: homeAgent.emoji,
-                        avatarClass: homeAgent.avatarClass,
-                        index: homeAgent.chatIndex,
-                        chatIndex: homeAgent.chatIndex
-                    }
+                    avatarKey: getEmployeeAssistantAvatarKey(homeAgent),
+                    name: homeAgent.name
                 };
             }
         }
 
+        if (options.workbenchAssistant) {
+            return { avatarKey: 'workbench', name: WORKBENCH_ASSISTANT.name };
+        }
+
         if (!options.skipPersist) {
             const state = getPanelState(panel);
-            if (isWorkbenchAssistantMode(state)) return { kind: 'workbench' };
+            if (isWorkbenchAssistantMode(state)) {
+                return { avatarKey: 'workbench', name: WORKBENCH_ASSISTANT.name };
+            }
             if (state.currentExtraAssistantId) {
                 const extra = getExtraAssistantById(state.currentExtraAssistantId);
-                if (extra) return { kind: 'extra', extra };
+                if (extra) {
+                    return {
+                        avatarKey: getEmployeeAssistantAvatarKey(extra),
+                        name: extra.name
+                    };
+                }
             }
             if (typeof state.currentCardIndex === 'number') {
-                return { kind: 'main', assistant: getEmployeeAssistant(state.currentCardIndex, panel) };
+                const assistant = getEmployeeAssistant(state.currentCardIndex, panel);
+                return {
+                    avatarKey: getEmployeeAssistantAvatarKey(assistant),
+                    name: assistant.name
+                };
             }
         }
 
-        return { kind: 'workbench' };
+        return { avatarKey: 'workbench', name: WORKBENCH_ASSISTANT.name };
     }
 
     function buildEmployeeMessageAvatarHtml(options = {}, text = '', panel) {
         const meta = resolveEmployeeMessageAvatarMeta(options, text, panel);
-        if (meta.kind === 'exception') return buildEmployeeExceptionChatAvatarHtml();
-        if (meta.kind === 'workbench') return buildWorkbenchChatAvatarHtml();
-        if (meta.kind === 'extra') return buildAvatarHtmlFromExtraAssistant(meta.extra);
-        return buildAvatarHtmlFromAiAssistant(meta.assistant);
+        return buildEmployeeBotAvatarHtml(meta.name, meta.avatarKey);
     }
 
     function buildEmployeeChatPersistMeta(role, options = {}, text = '', panel) {
-        if (role !== 'assistant' || options.agentId) {
+        if (role !== 'assistant') {
+            return {};
+        }
+        if (options.agentId) {
             return {
                 agentId: options.agentId || null
             };
@@ -4891,25 +5339,27 @@
         const meta = resolveEmployeeMessageAvatarMeta(options, text, panel);
         const persist = {};
 
-        if (meta.kind === 'workbench') {
+        if (meta.avatarKey === 'workbench' && options.workbenchAssistant) {
             persist.workbenchAssistant = true;
-            return persist;
         }
-        if (meta.kind === 'extra' && meta.extra) {
-            persist.extraAssistantId = meta.extra.id;
-            persist.chatIndex = meta.extra.chatIndex;
-            return persist;
+        if (meta.avatarKey && meta.avatarKey !== 'workbench') {
+            persist.assistantAvatarKey = meta.avatarKey;
+            if (meta.name) persist.assistantDisplayName = meta.name;
         }
-        if (meta.kind === 'main' && meta.assistant) {
-            const chatIndex = typeof meta.assistant.chatIndex === 'number'
-                ? meta.assistant.chatIndex
-                : meta.assistant.index;
-            if (typeof chatIndex === 'number') {
-                persist.chatIndex = chatIndex;
-                persist.assistantIndex = chatIndex;
+        if (options.extraAssistantId) {
+            const extra = getExtraAssistantById(options.extraAssistantId);
+            if (extra) {
+                persist.extraAssistantId = extra.id;
+                persist.chatIndex = extra.chatIndex;
             }
-            return persist;
+        } else if (typeof options.chatIndex === 'number') {
+            persist.chatIndex = options.chatIndex;
+            persist.assistantIndex = options.assistantIndex ?? options.chatIndex;
+        } else if (typeof options.assistantIndex === 'number') {
+            persist.chatIndex = options.assistantIndex;
+            persist.assistantIndex = options.assistantIndex;
         }
+
         return persist;
     }
 
@@ -5060,11 +5510,21 @@
                     const docDesc = (docLinkMatch[3] || '').replace(/^\s*[-—]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').trim();
                     const ext = docUrl.split('.').pop().toUpperCase().replace(/[?#].*/, '') || 'FILE';
                     const extClass = ['PDF', 'DOCX', 'DOC', 'XLSX', 'XLS'].includes(ext) ? ext.toLowerCase() : 'file';
+                    const briefSummary = window.ContextPanel?.getBriefSummaryByDocName?.(docName, docUrl)
+                        || docDesc.replace(/<[^>]+>/g, '')
+                        || '点击查看文档摘要';
+                    const iconClass = ['pdf', 'word'].includes(extClass) || extClass === 'doc' || extClass === 'docx'
+                        ? (extClass === 'pdf' ? 'pdf' : 'word')
+                        : (extClass === 'xlsx' || extClass === 'xls' ? 'txt' : 'txt');
                     html += `<div class="chat-doc-card" data-doc-url="${escapeHtmlAttr(docUrl)}" data-doc-name="${escapeHtmlAttr(docName)}">`;
-                    html += `<span class="doc-card-icon doc-ext-${extClass}">${ext}</span>`;
-                    html += `<span class="doc-card-body"><span class="doc-card-name">${escapeHtmlText(docName)}</span>`;
-                    if (docDesc) html += `<span class="doc-card-desc">${docDesc}</span>`;
-                    html += '</span><span class="doc-card-dl">↓ 下载</span></div>';
+                    html += `<div class="chat-doc-card-top">`;
+                    html += `<svg class="chat-doc-card-icon chat-doc-card-icon--${iconClass}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+                    html += `<div class="chat-doc-card-filename">${escapeHtmlText(docName)}</div>`;
+                    html += `<svg class="chat-doc-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
+                    html += `<button type="button" class="chat-doc-card-dl doc-card-dl" aria-label="下载文档">↓ 下载</button>`;
+                    html += `</div>`;
+                    html += `<div class="chat-doc-card-preview"><div class="chat-doc-card-preview-text">${escapeHtmlText(briefSummary)}</div></div>`;
+                    html += `</div>`;
                 } else {
                     if (!inList) {
                         html += '<ul class="chat-md-list">';
@@ -5129,16 +5589,43 @@
         document.body.dataset.chatPromptCardBound = 'true';
 
         document.addEventListener('click', (event) => {
+            const homeTab = event.target.closest('.employee-home-assistant-tab[data-assistant-index]');
+            if (homeTab) {
+                event.stopPropagation();
+                const panel = homeTab.closest('.workbench-panel') || getActiveWorkbenchPanel();
+                const idx = parseInt(homeTab.dataset.assistantIndex, 10);
+                if (!Number.isNaN(idx)) {
+                    handleEmployeeAssistantPick(idx, panel);
+                }
+                return;
+            }
             const promptCard = event.target.closest('.chat-prompt-card');
             if (promptCard?.dataset.prompt) {
                 event.stopPropagation();
                 clickPromptCard(promptCard.dataset.prompt);
                 return;
             }
+            const taskCard = event.target.closest('.chat-task-card');
+            if (taskCard?.dataset.taskId) {
+                event.stopPropagation();
+                sendEmployeeTaskToChat(taskCard.dataset.taskId);
+                return;
+            }
+            const exceptionCard = event.target.closest('.chat-exception-card');
+            if (exceptionCard?.dataset.exceptionTitle) {
+                event.stopPropagation();
+                const card = findExceptionAlertCard(exceptionCard.dataset.exceptionTitle);
+                const item = parseExceptionAlertCard(card);
+                if (item) {
+                    sendEmployeeExceptionAlert(item, getExceptionActionFromStatus(item.status));
+                }
+                return;
+            }
             const docCard = event.target.closest('.chat-doc-card');
-            if (docCard?.dataset.docUrl) {
+            if (docCard?.dataset.docUrl && event.target.closest('.chat-doc-card-dl, .doc-card-dl')) {
                 event.stopPropagation();
                 downloadDocFile(docCard.dataset.docUrl, docCard.dataset.docName || '文档');
+                return;
             }
         });
     }
@@ -5306,7 +5793,7 @@
         btn.setAttribute('role', 'option');
         btn.setAttribute('aria-selected', 'true');
         btn.innerHTML = `
-            <span class="input-assistant-tag-icon ${extra.avatarClass || ''}" aria-hidden="true">${extra.emoji || '🤖'}</span>
+            ${buildEmployeeAssistantInlineIconHtml(extra, 'tag')}
             <span class="input-assistant-tag-name">${escapeHtmlText(getEmployeeAssistantTagLabel(extra.name))}</span>
         `;
         btn.addEventListener('click', () => {
@@ -5339,15 +5826,12 @@
         const container = getPanelEl('input-assistant-tags', p);
         if (!container) return;
 
-        const agents = window.getInstalledEmployeeAssistantsForHome?.()
-            || aiAssistants.map((assistant) => ({
-                listIndex: assistant.index,
-                chatIndex: assistant.index,
-                name: assistant.name,
-                emoji: assistant.emoji,
-                avatarClass: assistant.avatarClass,
-                id: ''
-            }));
+        const agents = [
+            { listIndex: 0, chatIndex: 0, name: '客户分析助手', emoji: '🧠', avatarClass: 'canmou', id: '' },
+            { listIndex: 1, chatIndex: 1, name: '业务分析助手', emoji: '🐎', avatarClass: 'tanma', id: '' },
+            { listIndex: 2, chatIndex: 2, name: '方案生成助手', emoji: '📋', avatarClass: 'junshi', id: '' },
+            { listIndex: 4, chatIndex: 4, name: '客户服务助手', emoji: '👁️', avatarClass: 'tianyan', id: '' }
+        ];
 
         container.innerHTML = '';
         agents.forEach((agent) => {
@@ -5360,7 +5844,7 @@
             btn.setAttribute('role', 'option');
             btn.setAttribute('aria-selected', 'false');
             btn.innerHTML = `
-                <span class="input-assistant-tag-icon ${agent.avatarClass || ''}" aria-hidden="true">${agent.emoji || '🤖'}</span>
+                ${buildEmployeeAssistantInlineIconHtml(agent, 'tag')}
                 <span class="input-assistant-tag-name">${escapeHtmlText(getEmployeeAssistantTagLabel(agent.name))}</span>
             `;
             btn.addEventListener('click', () => {
@@ -5369,7 +5853,8 @@
             container.appendChild(btn);
         });
 
-        renderEmployeeAssistantMorePicker(p);
+        // 员工首页固定4个标签，不展示“更多”
+        closeEmployeeAssistantMorePicker?.(p);
 
         const state = getPanelState(p);
         if (state.currentExtraAssistantId || (typeof state.currentCardIndex === 'number' && state.currentCardIndex >= 0)) {
@@ -5535,6 +6020,270 @@
 
     window.syncEmployeeAssistantTags = syncEmployeeAssistantTags;
 
+    function getEmployeeAtMentionOptions() {
+        return [
+            { kind: 'main', index: 0, name: '客户分析助手', avatarClass: 'canmou' },
+            { kind: 'main', index: 1, name: '业务分析助手', avatarClass: 'tanma' },
+            { kind: 'main', index: 2, name: '方案生成助手', avatarClass: 'junshi' },
+            { kind: 'main', index: 4, name: '客户服务助手', avatarClass: 'tianyan' }
+        ];
+    }
+
+    function getSupportAtMentionOptions() {
+        return [
+            {
+                kind: 'support',
+                agentId: SUPPORT_INPUT_AGENT_DAILY_TASK,
+                id: SUPPORT_INPUT_AGENT_DAILY_TASK,
+                name: '今日任务助手',
+                avatarClass: 'support-daily-task-tag'
+            },
+            {
+                kind: 'support',
+                agentId: SUPPORT_INPUT_AGENT_EXCEPTIONS,
+                id: SUPPORT_INPUT_AGENT_EXCEPTIONS,
+                name: '异常提醒助手',
+                avatarClass: 'support-exceptions-tag'
+            }
+        ];
+    }
+
+    function getAtMentionOptionsForPanel(panel) {
+        return getPanelKey(panel) === 'support'
+            ? getSupportAtMentionOptions()
+            : getEmployeeAtMentionOptions();
+    }
+
+    function findAtMentionToken(text, caretIndex) {
+        const before = String(text || '').slice(0, Math.max(0, caretIndex || 0));
+        const atIndex = before.lastIndexOf('@');
+        if (atIndex < 0) return null;
+        const token = before.slice(atIndex + 1);
+        if (!token && atIndex === before.length - 1) {
+            return { start: atIndex, token: '' };
+        }
+        if (/[\s\n\r\t]/.test(token)) return null;
+        return { start: atIndex, token: token || '' };
+    }
+
+    function normalizeAtMentionQuery(q) {
+        return String(q || '').trim().toLowerCase();
+    }
+
+    function filterAtMentionOptions(options, query) {
+        const q = normalizeAtMentionQuery(query);
+        if (!q) return options;
+        return options.filter((opt) => {
+            const name = String(opt.name || '').toLowerCase();
+            const shortName = name.replace(/助手$/g, '');
+            return name.includes(q) || shortName.includes(q);
+        });
+    }
+
+    function ensureAtMentionMenu(panel) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        const wrap = p?.querySelector('.enhanced-input-wrap');
+        if (!wrap) return null;
+        let menu = wrap.querySelector('.input-at-mention-menu');
+        if (!menu) {
+            menu = document.createElement('div');
+            menu.className = 'input-at-mention-menu';
+            menu.hidden = true;
+            wrap.appendChild(menu);
+        }
+        return menu;
+    }
+
+    function setAtMentionActiveIndex(menu, index) {
+        if (!menu) return;
+        const items = menu.querySelectorAll('[data-at-mention-idx]');
+        items.forEach((el) => el.classList.remove('is-active'));
+        const active = menu.querySelector(`[data-at-mention-idx="${index}"]`);
+        if (active) {
+            active.classList.add('is-active');
+            active.scrollIntoView({ block: 'nearest' });
+        }
+        menu.dataset.activeIndex = String(index);
+    }
+
+    function closeAtMentionMenu(panel) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        const menu = ensureAtMentionMenu(p);
+        if (!menu) return;
+        menu.hidden = true;
+        menu.innerHTML = '';
+        delete menu.dataset.activeIndex;
+        delete menu.dataset.mentionStart;
+        p?.querySelector('.enhanced-input-wrap')?.classList.remove('has-at-mention-open');
+        p?.querySelector('.input-section')?.classList.remove('has-at-mention-open');
+    }
+
+    function openAtMentionMenu(panel, token) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        const menu = ensureAtMentionMenu(p);
+        const wrap = p?.querySelector('.enhanced-input-wrap');
+        if (!menu) return;
+
+        const query = token?.token ?? '';
+        const options = filterAtMentionOptions(getAtMentionOptionsForPanel(p), query);
+        if (!options.length) {
+            closeAtMentionMenu(p);
+            return;
+        }
+
+        menu.hidden = false;
+        wrap?.classList.add('has-at-mention-open');
+        p?.querySelector('.input-section')?.classList.add('has-at-mention-open');
+        menu.innerHTML = options.map((opt, idx) => `
+            <button type="button" class="input-at-mention-option ${escapeHtmlText(opt.avatarClass || '')}" data-at-mention-idx="${idx}" data-kind="${opt.kind}" data-index="${opt.index ?? ''}" data-extra-id="${escapeHtmlText(opt.extraId || '')}" data-agent-id="${escapeHtmlAttr(opt.agentId || opt.id || '')}" data-assistant-name="${escapeHtmlAttr(opt.name || '')}">
+                ${buildAtMentionOptionIconHtml(opt, p)}
+                <span class="input-at-mention-option-name">${escapeHtmlText(opt.name || '')}</span>
+            </button>
+        `).join('');
+
+        setAtMentionActiveIndex(menu, 0);
+
+        if (menu.dataset.bound !== 'true') {
+            menu.dataset.bound = 'true';
+            menu.addEventListener('click', (event) => {
+                const btn = event.target.closest('.input-at-mention-option');
+                if (!btn) return;
+                event.preventDefault();
+                const idx = Number(btn.dataset.atMentionIdx || 0);
+                pickAtMentionOption(p, idx);
+            });
+        }
+    }
+
+    function pickAtMentionOption(panel, optionIndex) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        const input = getPanelEl('main-chat-input', p);
+        const menu = ensureAtMentionMenu(p);
+        if (!input || !menu || menu.hidden) return;
+
+        const buttons = Array.from(menu.querySelectorAll('.input-at-mention-option'));
+        const btn = buttons[optionIndex];
+        if (!btn) return;
+
+        const kind = btn.dataset.kind;
+        const targetIndex = btn.dataset.index ? Number(btn.dataset.index) : null;
+        const extraId = btn.dataset.extraId || '';
+        const agentId = btn.dataset.agentId || '';
+        const assistantName = btn.dataset.assistantName
+            || btn.querySelector('.input-at-mention-option-name')?.textContent?.trim()
+            || '';
+
+        const caret = input.selectionStart ?? input.value.length;
+        const token = findAtMentionToken(input.value, caret);
+        if (token && assistantName) {
+            const before = input.value.slice(0, token.start);
+            const after = input.value.slice(caret);
+            const mentionText = `@${assistantName} `;
+            input.value = before + mentionText + after;
+            const nextCaret = before.length + mentionText.length;
+            input.setSelectionRange(nextCaret, nextCaret);
+        } else if (token) {
+            const before = input.value.slice(0, token.start);
+            const after = input.value.slice(caret);
+            input.value = before + after;
+            const nextCaret = before.length;
+            input.setSelectionRange(nextCaret, nextCaret);
+        }
+        syncMainSendButtonState(p);
+
+        if (kind === 'support' && agentId) {
+            handleSupportAssistantTagPick(agentId, p);
+        } else if (kind === 'extra' && extraId) {
+            handleEmployeeExtraAssistantPick(extraId, p);
+        } else if (typeof targetIndex === 'number' && !Number.isNaN(targetIndex)) {
+            handleEmployeeAssistantPick(targetIndex, p);
+        }
+
+        closeAtMentionMenu(p);
+        input.focus();
+    }
+
+    function bindAtMentionAssistantPicker(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const key = getPanelKey(p);
+        if (key !== 'employee' && key !== 'support') return;
+        const input = getPanelEl('main-chat-input', p);
+        if (!input || input.dataset.atMentionBound === 'true') return;
+        input.dataset.atMentionBound = 'true';
+
+        ensureAtMentionMenu(p);
+
+        input.addEventListener('input', () => {
+            const caret = input.selectionStart ?? input.value.length;
+            const token = findAtMentionToken(input.value, caret);
+            if (!token) {
+                closeAtMentionMenu(p);
+                return;
+            }
+            openAtMentionMenu(p, token);
+        });
+
+        input.addEventListener('keydown', (event) => {
+            const menu = ensureAtMentionMenu(p);
+            if (!menu || menu.hidden) return;
+
+            const buttons = menu.querySelectorAll('.input-at-mention-option');
+            if (!buttons.length) return;
+            const max = buttons.length - 1;
+            const active = Number(menu.dataset.activeIndex || 0);
+
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeAtMentionMenu(p);
+                return;
+            }
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                setAtMentionActiveIndex(menu, Math.min(max, active + 1));
+                return;
+            }
+            if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                setAtMentionActiveIndex(menu, Math.max(0, active - 1));
+                return;
+            }
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                pickAtMentionOption(p, active);
+            }
+        });
+    }
+
+    function initAtMentionDocDismiss() {
+        if (document.body.dataset.atMentionDocClickBound === 'true') return;
+        document.body.dataset.atMentionDocClickBound = 'true';
+        document.addEventListener('click', (event) => {
+            ['employee', 'support'].forEach((key) => {
+                const panel = document.getElementById('workbench-panel-' + key);
+                if (!panel) return;
+                const input = getPanelEl('main-chat-input', panel);
+                if (!input) return;
+                if (!event.target.closest('.input-at-mention-menu') && event.target !== input) {
+                    closeAtMentionMenu(panel);
+                }
+            });
+        });
+    }
+
+    function initEmployeeAtMentionAssistantPicker(panel) {
+        const p = panel || document.getElementById('workbench-panel-employee');
+        if (!p || getPanelKey(p) !== 'employee') return;
+        bindAtMentionAssistantPicker(p);
+        initAtMentionDocDismiss();
+    }
+
+    function initSupportAtMentionAssistantPicker(panel) {
+        const p = panel || document.getElementById('workbench-panel-support');
+        if (!p || getPanelKey(p) !== 'support') return;
+        bindAtMentionAssistantPicker(p);
+        initAtMentionDocDismiss();
+    }
+
     const supportInputTagAssistants = [
         {
             id: SUPPORT_INPUT_AGENT_DAILY_TASK,
@@ -5559,10 +6308,27 @@
     }
 
     function buildSupportAssistantTagIconHtml(agent) {
+        if (agent.id === SUPPORT_INPUT_AGENT_DAILY_TASK) {
+            return `<span class="input-assistant-tag-icon support-daily-task-tag" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15" rx="3" stroke="currentColor" stroke-width="2"/><path d="M7 3.5V7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M17 3.5V7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M3.5 9h17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>`;
+        }
+        if (agent.id === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
+            return `<span class="input-assistant-tag-icon support-exceptions-tag" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5l9 16H3l9-16z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.2" r="1" fill="currentColor"/></svg></span>`;
+        }
         if (agent.image) {
             return `<img src="${escapeHtml(agent.image)}" alt="" class="input-assistant-tag-img">`;
         }
         return `<span class="input-assistant-tag-icon ${agent.avatarClass || ''}" aria-hidden="true">${agent.emoji || '🤖'}</span>`;
+    }
+
+    function buildAtMentionOptionIconHtml(opt, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (getPanelKey(p) === 'support' && opt?.kind === 'support') {
+            const agent = supportInputTagAssistants.find((item) => item.id === (opt.agentId || opt.id));
+            if (agent) {
+                return `<span class="input-at-mention-option-icon" aria-hidden="true">${buildSupportAssistantTagIconHtml(agent)}</span>`;
+            }
+        }
+        return buildEmployeeAssistantInlineIconHtml(opt, 'mention');
     }
 
     function updateSupportAssistantTagSelection(panel) {
@@ -5724,6 +6490,16 @@
         selectSupportExtraAssistant(extraId, p);
     }
 
+    function handleSupportAssistantTagPick(agentId, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (getPanelKey(p) !== 'support') return;
+        const state = getPanelState(p);
+        if (state.chatModeActive && !state.currentExtraAssistantId && state.currentSupportInputAgent === agentId) {
+            return;
+        }
+        setSupportInputAgent(p, agentId);
+    }
+
     function syncSupportAssistantTags(panel) {
         const p = panel || document.getElementById('workbench-panel-support');
         if (!p || getPanelKey(p) !== 'support') return;
@@ -5745,9 +6521,7 @@
                 <span class="input-assistant-tag-name">${escapeHtmlText(getSupportAssistantTagLabel(agent.name, agent.shortName))}</span>
             `;
             btn.addEventListener('click', () => {
-                const state = getPanelState(p);
-                if (!state.currentExtraAssistantId && state.currentSupportInputAgent === agent.id) return;
-                setSupportInputAgent(p, agent.id);
+                handleSupportAssistantTagPick(agent.id, p);
             });
             container.appendChild(btn);
         });
@@ -5775,6 +6549,12 @@
             const isActive = !activeExtraId && hasMainSelection && parseInt(tag.dataset.index, 10) === index;
             tag.classList.toggle('is-active', isActive);
             tag.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+
+        p.querySelectorAll('.employee-home-assistant-tab[data-assistant-index]').forEach((btn) => {
+            const isActive = !activeExtraId && hasMainSelection && parseInt(btn.dataset.assistantIndex, 10) === index;
+            btn.classList.toggle('is-active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
         });
         syncEmployeeExtraInputTag(p);
         syncAssistantMorePickerState(p);
@@ -5983,7 +6763,9 @@
                     userMessage: lastUserMessage,
                     html: !!msg.html,
                     agentId: msg.agentId || undefined,
-                    workbenchAssistant: !!msg.workbenchAssistant
+                    workbenchAssistant: !!msg.workbenchAssistant,
+                    assistantAvatarKey: msg.assistantAvatarKey,
+                    assistantDisplayName: msg.assistantDisplayName
                 });
             }
         });
@@ -6172,15 +6954,15 @@
         if (state.currentExtraAssistantId) {
             const extra = getExtraAssistantById(state.currentExtraAssistantId);
             if (extra) {
-                return `<div class="chat-avatar employee-chat-avatar ${extra.avatarClass}" title="${escapeHtmlText(extra.name)}"><span>${extra.emoji}</span></div>`;
+                return buildEmployeeBotAvatarHtml(extra.name, getEmployeeAssistantAvatarKey(extra));
             }
         }
         const homeAgent = getEmployeeHomeAssistant(index, p);
         if (homeAgent) {
-            return `<div class="chat-avatar employee-chat-avatar ${homeAgent.avatarClass}" title="${escapeHtmlText(homeAgent.name)}"><span>${homeAgent.emoji || '🤖'}</span></div>`;
+            return buildEmployeeBotAvatarHtml(homeAgent.name, getEmployeeAssistantAvatarKey(homeAgent));
         }
         const assistant = getEmployeeAssistant(index, p);
-        return `<div class="chat-avatar employee-chat-avatar ${assistant.avatarClass}" title="${assistant.name}"><span>${assistant.emoji}</span></div>`;
+        return buildEmployeeBotAvatarHtml(assistant.name, getEmployeeAssistantAvatarKey(assistant));
     }
 
     function appendExtraAssistantConversation(extraId, panel, options = {}) {
@@ -6199,8 +6981,8 @@
         aiMsg.className = 'chat-row chat-row-assistant';
         const contentHtml = getExtraAssistantWelcomeHtml(extra.chatIndex);
         aiMsg.innerHTML = `
-            <div class="chat-avatar employee-chat-avatar ${extra.avatarClass}" title="${escapeHtmlText(extra.name)}"><span>${extra.emoji}</span></div>
-            <div class="chat-bubble chat-bubble-assistant">${contentHtml}</div>
+            ${buildEmployeeBotAvatarHtml(extra.name, getEmployeeAssistantAvatarKey(extra))}
+            <div class="chat-bubble chat-bubble-assistant">${buildEmployeeAssistantBubbleContent(contentHtml, { html: true, extraAssistantId: extraId }, p)}</div>
         `;
         block.appendChild(aiMsg);
 
@@ -6244,7 +7026,7 @@
         const contentHtml = EmployeeModelGuide.getWelcomeHtml(blockId, chatIndex);
         aiMsg.innerHTML = `
             ${buildEmployeeChatAvatarHtml(index, p)}
-            <div class="chat-bubble chat-bubble-assistant">${contentHtml}</div>
+            <div class="chat-bubble chat-bubble-assistant">${buildEmployeeAssistantBubbleContent(contentHtml, { html: true, assistantIndex: index }, p)}</div>
         `;
         block.appendChild(aiMsg);
 
@@ -6302,6 +7084,31 @@
         return null;
     }
 
+    function stripLeadingAssistantTitleMarkdown(text, assistantName) {
+        if (!text || !assistantName) return text;
+        const lines = String(text).split('\n');
+        const first = lines[0]?.trim() || '';
+        if (first === `**${assistantName}**`) {
+            return lines.slice(1).join('\n').replace(/^\n+/, '');
+        }
+        return text;
+    }
+
+    function stripLeadingAssistantTitleHtml(html, assistantName) {
+        if (!html || !assistantName) return html;
+        const escaped = escapeHtml(assistantName).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return String(html).replace(new RegExp(`^\\s*<p><strong>${escaped}<\\/strong><\\/p>\\s*`, 'i'), '')
+            .replace(new RegExp(`^\\s*<p class="chat-assistant-name">${escaped}<\\/p>\\s*`, 'i'), '');
+    }
+
+    function buildEmployeeAssistantBubbleContent(text, options = {}, panel) {
+        const meta = resolveEmployeeMessageAvatarMeta(options, text, panel);
+        const name = meta.name || '助手';
+        let bodyHtml = options.html ? String(text || '') : markdownToHtml(stripLeadingAssistantTitleMarkdown(text, name));
+        bodyHtml = stripLeadingAssistantTitleHtml(bodyHtml, name);
+        return `<p class="chat-assistant-name">${escapeHtml(name)}</p>${bodyHtml}`;
+    }
+
     function syncAssistantMessageContext(bubble, replyText, options = {}) {
         if (!bubble || !window.ContextPanel?.attachSnapshotToBubble) return;
         const bundle = resolveChatContextBundle(replyText, options);
@@ -6318,13 +7125,16 @@
         row.className = role === 'user' ? 'chat-row chat-row-user' : 'chat-row chat-row-assistant';
 
         if (role === 'user') {
-            row.innerHTML = `<div class="chat-bubble chat-bubble-user">${escapeHtml(text)}</div>`;
+            const userAvatarHtml = getPanelKey(p) === 'employee' ? buildEmployeeUserAvatarHtml(p) : '';
+            row.innerHTML = `<div class="chat-bubble chat-bubble-user">${escapeHtml(text)}</div>${userAvatarHtml}`;
             if (getPanelKey(p) === 'employee') {
                 collapseTopSections(p);
             }
         } else {
             const avatarHtml = buildEmployeeMessageAvatarHtml(options, text, p);
-            const assistantBody = options.html ? text : markdownToHtml(text);
+            const assistantBody = getPanelKey(p) === 'employee'
+                ? buildEmployeeAssistantBubbleContent(text, options, p)
+                : (options.html ? text : markdownToHtml(text));
             row.innerHTML = `
                 ${avatarHtml}
                 <div class="chat-bubble chat-bubble-assistant">${assistantBody}</div>
@@ -6645,11 +7455,171 @@
 
     // 处理主输入框回车键
     function handleMainInput(event) {
+        const panel = getActiveWorkbenchPanel();
+        const mentionMenu = panel?.querySelector?.('.input-at-mention-menu');
+        if (mentionMenu && !mentionMenu.hidden) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+            }
+            return;
+        }
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             sendMainMessage();
         }
     }
+
+    function handleSupportSidebarAction(action) {
+        if (!document.body.classList.contains('support-tab-active')) {
+            switchWorkbenchTab('support');
+        }
+        const panel = document.getElementById('workbench-panel-support') || getActiveWorkbenchPanel();
+        if (!panel) return;
+
+        window.AppShell?.returnToMainSessionView?.({ resetChat: false });
+
+        const titleMap = {
+            'today-tasks': '今日任务',
+            exceptions: '异常提醒',
+            approval: '待办事项',
+            announcement: '通知公告'
+        };
+        const sessionTitle = titleMap[action] || '业务支持对话';
+        const messagesEl = getPanelEl('ai-chat-messages', panel);
+        const state = getPanelState(panel);
+        if (messagesEl) messagesEl.innerHTML = '';
+        state.supportChatMessages = [];
+        state.currentSessionId = null;
+        state.currentTaskAgentId = null;
+        state.currentTask = null;
+        state.currentTodoStep = null;
+
+        let agentId = null;
+        let userMessage = `查看${sessionTitle}`;
+        let assistantMessage = '';
+        let assistantOptions = { html: true };
+
+        if (action === 'today-tasks') {
+            agentId = SUPPORT_INPUT_AGENT_DAILY_TASK;
+            assistantMessage = buildSupportDailyTasksSummaryHtml({ forChatCard: true });
+        } else if (action === 'exceptions') {
+            agentId = SUPPORT_INPUT_AGENT_EXCEPTIONS;
+            assistantMessage = buildSupportAllExceptionsChatHtml();
+        } else if (action === 'approval') {
+            agentId = 'shenpi';
+            userMessage = EMPLOYEE_ASSISTANT_INPUT_PROMPTS.shenpi;
+            assistantMessage = buildApprovalProgressReply(userMessage);
+            assistantOptions = {};
+        } else if (action === 'announcement') {
+            agentId = 'tongzhi';
+            userMessage = EMPLOYEE_ASSISTANT_INPUT_PROMPTS.tongzhi;
+            assistantMessage = buildNoticeDocumentSummaryReply(userMessage);
+            assistantOptions = {};
+        }
+
+        if (agentId) {
+            setSupportInputAgent(panel, agentId);
+        } else {
+            deselectSupportInputAssistant(panel);
+        }
+
+        enterSupportChatMode(panel);
+        appendSupportChatMessage(userMessage, 'user', panel);
+        setTimeout(() => {
+            appendSupportChatMessage(assistantMessage, 'assistant', panel, {
+                ...assistantOptions,
+                agentId,
+                userMessage
+            });
+        }, 300);
+    }
+
+    function handleEmployeeSidebarAction(action) {
+        if (document.body.classList.contains('support-tab-active') || document.body.classList.contains('org-tab-active')) {
+            switchWorkbenchTab('employee');
+        }
+        const panel = document.getElementById('workbench-panel-employee') || getActiveWorkbenchPanel();
+        if (!panel) return;
+
+        window.AppShell?.returnToMainSessionView?.({ resetChat: false });
+
+        const titleMap = {
+            'today-tasks': '今日任务',
+            exceptions: '异常提醒',
+            travel: '差旅分析',
+            approval: '待办事项',
+            announcement: '通知公告'
+        };
+
+        const sessionTitle = titleMap[action] || '新会话';
+        deselectEmployeeInputAssistant(panel);
+        applyEmployeeChatModeUI(panel, {
+            useWorkbenchAssistant: true,
+            showWelcome: false,
+            clearMessages: true,
+            createHistory: true,
+            sessionTitle
+        });
+
+        let userMessage = `查看${sessionTitle}`;
+        if (action === 'approval') userMessage = EMPLOYEE_ASSISTANT_INPUT_PROMPTS.shenpi;
+        if (action === 'announcement') userMessage = EMPLOYEE_ASSISTANT_INPUT_PROMPTS.tongzhi;
+
+        appendChatMessage(userMessage, 'user', panel);
+
+        if (action === 'today-tasks') {
+            appendChatMessage(buildEmployeeAllDailyTasksChatHtml(), 'assistant', panel, {
+                html: true,
+                assistantAvatarKey: 'tasks',
+                assistantDisplayName: '今日任务助手',
+                userMessage
+            });
+            return;
+        }
+        if (action === 'exceptions') {
+            appendChatMessage(buildEmployeeAllExceptionsChatHtml(), 'assistant', panel, {
+                html: true,
+                assistantAvatarKey: 'exceptions',
+                assistantDisplayName: '异常提醒助手',
+                userMessage
+            });
+            return;
+        }
+        if (action === 'travel') {
+            const html = typeof window.buildTravelAnalysisSummaryChatHtml === 'function'
+                ? window.buildTravelAnalysisSummaryChatHtml()
+                : `<p class="chat-md-h2">差旅分析</p><p>当前暂无可用的差旅分析汇总。</p>`;
+            appendChatMessage(html, 'assistant', panel, {
+                html: true,
+                assistantAvatarKey: 'travel',
+                assistantDisplayName: '差旅分析助手',
+                userMessage
+            });
+            return;
+        }
+        if (action === 'approval') {
+            appendChatMessage(buildApprovalProgressReply(userMessage), 'assistant', panel, {
+                chatIndex: 5,
+                assistantAvatarKey: 'approval',
+                assistantDisplayName: '审批助手',
+                userMessage
+            });
+            return;
+        }
+        if (action === 'announcement') {
+            appendChatMessage(buildNoticeDocumentSummaryReply(userMessage), 'assistant', panel, {
+                chatIndex: 6,
+                assistantAvatarKey: 'tongzhi',
+                assistantDisplayName: '通知公告助手',
+                userMessage
+            });
+        }
+    }
+
+    window.WorkbenchMenuActions = {
+        handleEmployeeSidebarAction,
+        handleSupportSidebarAction
+    };
     
     // 发送消息并智能路由
     function sendMainMessage(overrideMsg) {
@@ -6662,6 +7632,7 @@
         const message = formatMessageWithSelectedSkill(raw, panel);
         
         if (input) input.value = '';
+        syncMainSendButtonState(panel);
 
         if (getPanelKey(panel) === 'org') {
             appendOrgChatMessage(message, 'user', panel);
@@ -9035,6 +10006,7 @@
         }
         bindOverlayScrollbar(document.getElementById('employee-daily-tasks-scroll'));
         renderEmployeeDailyTasks();
+        updateEmployeeSidebarNavCounts();
         bindEmployeeDailyTaskEvents();
         document.getElementById('new-task-btn')?.addEventListener('click', openWorkLog);
     }
@@ -9077,16 +10049,16 @@
 
     function renderEmployeeDailyTasks() {
         const listEl = document.getElementById('employee-daily-tasks-list');
-        const countEl = document.getElementById('sidebar-tasks-count');
         const tasks = (getEmployeeDailyTasks() || []).slice().sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-        if (!listEl) return;
-
-        const countText = String(tasks.length);
-        if (countEl) countEl.textContent = countText;
+        if (!listEl) {
+            updateEmployeeSidebarNavCounts();
+            return;
+        }
 
         if (!tasks.length) {
             listEl.innerHTML = '<li class="employee-task-empty">暂无今日任务，点击「新建任务」添加</li>';
             closeEmployeeTaskDetail();
+            updateEmployeeSidebarNavCounts();
             return;
         }
 
@@ -9104,12 +10076,40 @@
                 </div>
             </li>
         `).join('');
+        updateEmployeeSidebarNavCounts();
     }
 
     function formatEmployeeTaskDateTime(task) {
         const date = task.date || '';
         const time = (task.time || '').slice(0, 5);
         return `${date} ${time}`.trim();
+    }
+
+    function buildEmployeeAllDailyTasksChatHtml() {
+        const tasks = (getEmployeeDailyTasks() || []).slice().sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        const count = tasks.length;
+        if (!count) {
+            return `
+                <p class="chat-md-h2">今日任务</p>
+                <p>当前暂无今日任务。</p>
+            `;
+        }
+        return `
+            <p class="chat-md-h2">今日任务（${count}）</p>
+            <p>点击任一任务，即可把任务详情发送到对话里继续处理。</p>
+            <div class="chat-task-list">
+                ${tasks.map((task) => `
+                    <button type="button" class="chat-task-card" data-task-id="${escapeHtmlAttr(task.id)}">
+                        <div class="chat-task-card-title">${escapeHtmlText(task.title || '')}</div>
+                        <div class="chat-task-card-meta">
+                            <span class="chat-task-card-source">${escapeHtmlText(task.source || '业务助理')}</span>
+                            <span class="chat-task-card-time">${escapeHtmlText(formatEmployeeTaskDateTime(task))}</span>
+                        </div>
+                        <div class="chat-task-card-summary">${escapeHtmlText(task.summary || '')}</div>
+                    </button>
+                `).join('')}
+            </div>
+        `;
     }
 
     function openEmployeeTaskDetail(taskId) {

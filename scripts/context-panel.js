@@ -7,11 +7,281 @@
     const state = {
         outputs: [],
         models: [],
-        customers: []
+        customers: [],
+        fullBundle: null,
+        collapsedOutputIds: new Set()
     };
+
+    function isOutputExpanded(outputId) {
+        return !state.collapsedOutputIds.has(outputId);
+    }
 
     function escapeHtml(str) {
         return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function stableOutputId(seed) {
+        const base = String(seed || 'output').replace(/[^a-zA-Z0-9\u4e00-\u9fff]+/g, '-').replace(/^-+|-+$/g, '');
+        return `out-${base || Date.now()}`;
+    }
+
+    function matchOutputKey(item) {
+        return `${item?.fileName || ''}|${item?.title || ''}`.toLowerCase();
+    }
+
+    function buildDetailSection(title, items) {
+        const rows = (items || []).map((row) => `<li>${escapeHtml(row)}</li>`).join('');
+        return `<p class="context-output-summary-section"><strong>${escapeHtml(title)}</strong></p><ul class="context-output-summary-list">${rows}</ul>`;
+    }
+
+    function buildDetailSummaryHtml(title, sections) {
+        return `<p class="context-output-summary-title">${escapeHtml(title)}</p>${sections.join('')}`;
+    }
+
+    const OUTPUT_SUMMARY_RULES = [
+        {
+            test: (item) => /定向增发方案设计手册|方案设计手册/.test(matchOutputKey(item)),
+            brief: '方案设计手册演示版，含发行要素、时间安排与认购对象说明。',
+            buildDetail: () => buildDetailSummaryHtml('定向增发方案设计手册', [
+                buildDetailSection('1. 核心内容', [
+                    '发行要素与定价机制说明',
+                    '发行时间安排与里程碑节点',
+                    '认购对象类型与配售原则'
+                ]),
+                buildDetailSection('2. 适用场景', [
+                    '上市公司定增方案初步设计',
+                    '内部评审与跨部门方案沟通'
+                ]),
+                buildDetailSection('3. 使用建议', [
+                    '可结合 Word 模板快速起草项目方案',
+                    '如需定制支持，请联系张明（工号8012）'
+                ])
+            ])
+        },
+        {
+            test: (item) => /方案设计模板|方案word模板/.test(matchOutputKey(item)),
+            brief: '可编辑方案模板，用于快速起草项目方案。',
+            buildDetail: () => buildDetailSummaryHtml('定增方案设计模板', [
+                buildDetailSection('1. 模板结构', [
+                    '项目背景与发行目的',
+                    '发行规模、定价与认购安排',
+                    '募资用途与实施计划'
+                ]),
+                buildDetailSection('2. 适用场景', [
+                    '方案初稿撰写与内部讨论',
+                    '与客户沟通前的方案框架整理'
+                ]),
+                buildDetailSection('3. 使用建议', [
+                    '按章节逐项补充客户与项目数据',
+                    '与方案设计手册配套使用效果更佳'
+                ])
+            ])
+        },
+        {
+            test: (item) => /募集资金|可研报告/.test(matchOutputKey(item)),
+            brief: '募投项目可研报告框架示例。',
+            buildDetail: () => buildDetailSummaryHtml('募投项目可研报告框架', [
+                buildDetailSection('1. 框架要点', [
+                    '项目建设必要性与可行性分析',
+                    '投资估算、效益测算与风险提示',
+                    '募投项目合规性说明'
+                ]),
+                buildDetailSection('2. 适用场景', [
+                    '定增募投项目材料准备',
+                    '可研报告初稿结构搭建'
+                ]),
+                buildDetailSection('3. 使用建议', [
+                    '按模板章节补充项目数据与测算',
+                    '提交前建议与业务、合规同事交叉核验'
+                ])
+            ])
+        },
+        {
+            test: (item) => /企业多维分析|多维分析报告/.test(matchOutputKey(item)),
+            brief: '基于资产、行为、交易、合作记录等维度形成的企业量化分析摘要。',
+            buildDetail: (item) => buildDetailSummaryHtml((item.title || '企业多维分析报告').replace(/\.(pdf|docx?)$/i, ''), [
+                buildDetailSection('1. 分析维度', [
+                    '资产规模与持仓结构',
+                    '交易行为与合作记录',
+                    '风险等级与跟进建议'
+                ]),
+                buildDetailSection('2. 核心结论', [
+                    '客户价值与业务机会识别',
+                    '重点跟进事项与风险提示'
+                ]),
+                buildDetailSection('3. 下一步建议', [
+                    '结合业务分析助手进一步研判',
+                    '按需生成方案或服务跟进清单'
+                ])
+            ])
+        },
+        {
+            test: (item) => /方案草案/.test(matchOutputKey(item)),
+            brief: '含发行规模、募资用途与认购安排的方案草案摘要。',
+            buildDetail: (item) => buildDetailSummaryHtml((item.title || '方案草案').replace(/\.(pdf|docx?)$/i, ''), [
+                buildDetailSection('1. 方案要素', [
+                    '发行规模与定价思路',
+                    '募资用途与项目安排',
+                    '认购对象与配售原则'
+                ]),
+                buildDetailSection('2. 待确认事项', [
+                    '发行窗口与监管口径',
+                    '材料清单与内部审批节点'
+                ]),
+                buildDetailSection('3. 下一步建议', [
+                    '补充客户确认后进入执行清单',
+                    '联系方案支持同事做合规预检'
+                ])
+            ])
+        },
+        {
+            test: (item) => /执行清单/.test(matchOutputKey(item)),
+            brief: '材料补齐、内部立项、认购沟通、发行窗口研判等执行事项清单。',
+            buildDetail: (item) => buildDetailSummaryHtml((item.title || '方案设计执行清单').replace(/\.(docx?|pdf)$/i, ''), [
+                buildDetailSection('1. 近期事项', [
+                    '材料补齐与内部立项',
+                    '认购沟通与买方对接'
+                ]),
+                buildDetailSection('2. 关键节点', [
+                    '发行窗口研判',
+                    '信披与合规预检'
+                ]),
+                buildDetailSection('3. 协同建议', [
+                    '按事项逐项跟进并反馈进展',
+                    '与客户服务助手联动买方跟进'
+                ])
+            ])
+        },
+        {
+            test: (item) => /跟进清单|客户服务/.test(matchOutputKey(item)),
+            brief: '材料催办、买方对接、信披预检、窗口期沟通等待跟进事项。',
+            buildDetail: (item) => buildDetailSummaryHtml((item.title || '客户服务跟进清单').replace(/\.(docx?|pdf)$/i, ''), [
+                buildDetailSection('1. 待跟进事项', [
+                    '材料催办与补充说明',
+                    '买方对接与反馈收集'
+                ]),
+                buildDetailSection('2. 风险提示', [
+                    '信披预检与窗口期沟通',
+                    '客户诉求与内部资源协调'
+                ]),
+                buildDetailSection('3. 下一步计划', [
+                    '按优先级逐项闭环',
+                    '同步更新客户沟通记录'
+                ])
+            ])
+        },
+        {
+            test: (item) => /买方匹配/.test(matchOutputKey(item)),
+            brief: '买方候选及首轮接触建议摘要。',
+            buildDetail: (item) => buildDetailSummaryHtml((item.title || '买方匹配简版').replace(/\.(pdf|docx?)$/i, ''), [
+                buildDetailSection('1. 匹配结果', [
+                    '买方候选机构与匹配理由',
+                    '首轮接触建议与沟通要点'
+                ]),
+                buildDetailSection('2. 协同建议', [
+                    '结合客户诉求调整推介口径',
+                    '跟进买方反馈并更新清单'
+                ])
+            ])
+        },
+        {
+            test: (item) => /待审批|进度清单/.test(matchOutputKey(item)),
+            brief: '汇总待审批事项当前节点与预计完成时间。',
+            buildDetail: (item) => buildDetailSummaryHtml('待审批事项进度清单', [
+                buildDetailSection('1. 当前进度', [
+                    '开户绿色通道、融资配套材料等事项节点',
+                    '各事项责任人与预计完成时间'
+                ]),
+                buildDetailSection('2. 风险提示', [
+                    '临近截止事项需优先跟进',
+                    '材料缺失可能影响审批时效'
+                ]),
+                buildDetailSection('3. 下一步计划', [
+                    '按事项逐项催办并反馈进展',
+                    '必要时升级协同处理'
+                ])
+            ])
+        },
+        {
+            test: (item) => /通知公告摘要/.test(matchOutputKey(item)),
+            brief: '包含最新通知公告要点摘要。',
+            buildDetail: () => buildDetailSummaryHtml('公司最新通知公告摘要', [
+                buildDetailSection('1. 核心内容', [
+                    '2026年二季度投行业务协同专项安排',
+                    '员工工作台功能升级说明'
+                ]),
+                buildDetailSection('2. 关注要点', [
+                    '执行时间与适用范围',
+                    '相关协同与反馈要求'
+                ])
+            ])
+        },
+        {
+            test: (item) => /正式发文摘要/.test(matchOutputKey(item)),
+            brief: '包含最新正式发文要点摘要。',
+            buildDetail: () => buildDetailSummaryHtml('公司最新正式发文摘要', [
+                buildDetailSection('1. 核心内容', [
+                    '投行业务材料报送管理办法（2026修订）',
+                    '业务支持中心异常提醒处置指引'
+                ]),
+                buildDetailSection('2. 关注要点', [
+                    '报送标准与闭环时限',
+                    '异常分级与处置要求'
+                ])
+            ])
+        },
+        {
+            test: (item) => /材料清单/.test(matchOutputKey(item)),
+            brief: '含基础工商、财务、股权合规、募投项目等材料清单。',
+            buildDetail: (item) => buildDetailSummaryHtml((item.title || '客户材料清单').replace(/\.(docx?|pdf)$/i, ''), [
+                buildDetailSection('1. 材料类别', [
+                    '基础工商与财务资料',
+                    '股权合规与募投项目材料'
+                ]),
+                buildDetailSection('2. 使用建议', [
+                    '按清单逐项收集并标注缺口',
+                    '提交前与合规口径交叉核验'
+                ])
+            ])
+        }
+    ];
+
+    function resolveOutputSummaryRule(item) {
+        return OUTPUT_SUMMARY_RULES.find((rule) => rule.test(item)) || null;
+    }
+
+    function buildOutputBriefSummary(item) {
+        const rule = resolveOutputSummaryRule(item);
+        if (rule?.brief) return rule.brief;
+        const source = String(item?.briefSummary || item?.content || item?.downloadText || '').trim();
+        if (!source) return '暂无摘要内容';
+        return source.replace(/^来源：[\s\S]*$/m, '').trim().slice(0, 120) || '暂无摘要内容';
+    }
+
+    function buildOutputDetailSummaryHtml(item) {
+        if (item?.summaryHtml) return item.summaryHtml;
+        const rule = resolveOutputSummaryRule(item);
+        if (rule?.buildDetail) return rule.buildDetail(item);
+        const title = (item?.title || item?.fileName || '输出物').replace(/\.(pdf|docx?|pptx?|txt)$/i, '');
+        const brief = buildOutputBriefSummary(item);
+        return buildDetailSummaryHtml(title, [
+            buildDetailSection('1. 文档概要', [brief]),
+            buildDetailSection('2. 使用建议', ['可在会话中继续追问，获取更完整的分析与协同支持。'])
+        ]);
+    }
+
+    function enrichOutputSummaries(item) {
+        const rule = resolveOutputSummaryRule(item);
+        return {
+            ...item,
+            briefSummary: item.briefSummary || rule?.brief || buildOutputBriefSummary(item),
+            summaryHtml: item.summaryHtml || (rule?.buildDetail ? rule.buildDetail(item) : '')
+        };
+    }
+
+    function getBriefSummaryByDocName(docName, docUrl) {
+        const probe = { fileName: docName, title: docName, content: docUrl || '' };
+        return buildOutputBriefSummary(probe);
     }
 
     function getFileIcon(kind) {
@@ -31,44 +301,42 @@
         return `${(size / (1024 * 1024)).toFixed(2)} MB`;
     }
 
+    function getFileIconSvg(kind) {
+        const safeKind = String(kind || 'txt').replace(/[^a-z0-9_-]/gi, '');
+        return `<svg class="context-output-icon-svg context-output-icon-svg--${safeKind}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+    }
+
     function render() {
-        renderList('context-outputs-list', state.outputs, (item) =>
-            `<div class="context-card" data-type="output" data-id="${item.id}">
-                <div class="context-file-title-row">
-                    <span class="context-file-icon context-file-icon--${escapeHtml(item.fileKind || 'txt')}">${getFileIcon(item.fileKind)}</span>
-                    <div class="context-file-title-text">
-                        <div class="context-card-title">${escapeHtml(item.title)}</div>
-                        <span class="context-file-type-suffix">${escapeHtml(getFileTypeSuffix(item.fileKind))}</span>
+        const countEl = document.getElementById('context-outputs-count');
+        if (countEl) countEl.textContent = `${state.outputs.length}项`;
+
+        renderList('context-outputs-list', state.outputs, (item) => {
+            const kind = item.fileKind || 'txt';
+            const icon = getFileIconSvg(kind);
+            const fileName = escapeHtml(item.fileName || item.title || '输出物');
+            const isExpanded = isOutputExpanded(item.id);
+            const previewClass = 'context-output-preview context-output-preview--detail';
+            return `
+                <div class="context-output-item${isExpanded ? ' is-expanded' : ' is-collapsed'}" data-type="output" data-id="${item.id}">
+                    <div class="context-output-top">
+                        ${icon}
+                        <div class="context-output-filename">${fileName}</div>
+                        <svg class="context-output-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
+                    ${isExpanded ? `
+                    <div class="${previewClass}">
+                        <div class="context-output-preview-text">${buildOutputDetailSummaryHtml(item)}</div>
+                    </div>` : ''}
                 </div>
-                <div class="context-card-meta">修改时间：${escapeHtml(item.modifiedAt || item.time)} · 大小：${escapeHtml(formatFileSize(item.sizeBytes))}</div>
-                <div class="context-output-actions">
-                    <button type="button" class="context-action-btn" data-action="preview" data-output-id="${item.id}">预览</button>
-                    <button type="button" class="context-action-btn" data-action="download" data-output-id="${item.id}">下载</button>
-                </div>
-            </div>`
-        );
-
-        renderList('context-models-list', state.models, (item) =>
-            `<div class="context-card" data-type="model" data-id="${item.id}">
-                <div class="context-card-title">${escapeHtml(item.name)}</div>
-                <div class="context-card-meta">${escapeHtml(item.category || '')}</div>
-            </div>`
-        );
-
-        renderList('context-customers-list', state.customers, (item) =>
-            `<div class="context-card" data-type="customer" data-id="${item.id}">
-                <div class="context-card-title">${escapeHtml(item.name)}</div>
-                <div class="context-card-meta">${escapeHtml(item.type || '客户')}</div>
-            </div>`
-        );
+            `;
+        });
     }
 
     function renderList(containerId, items, tpl) {
         const el = document.getElementById(containerId);
         if (!el) return;
         if (!items.length) {
-            el.innerHTML = '<div class="context-empty">暂无</div>';
+            el.innerHTML = '<div class="context-empty">暂无输出物</div>';
             return;
         }
         el.innerHTML = items.map(tpl).join('');
@@ -99,39 +367,41 @@
             const kind = payloadOrTitle.fileKind || 'txt';
             const textBody = payloadOrTitle.downloadText || payloadOrTitle.content || '';
             const approxSize = payloadOrTitle.sizeBytes || new Blob([textBody]).size;
-            return {
-                id: 'out-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+            const fileName = payloadOrTitle.fileName || `输出物-${Date.now()}.${kind === 'word' ? 'docx' : (kind === 'ppt' ? 'pptx' : kind)}`;
+            return enrichOutputSummaries({
+                id: payloadOrTitle.id || stableOutputId(fileName),
                 title: payloadOrTitle.title || '会话输出',
                 type: payloadOrTitle.type || getFileBadgeByKind(kind),
                 content: payloadOrTitle.content || '',
-                fileName: payloadOrTitle.fileName || `输出物-${Date.now()}.${kind === 'word' ? 'docx' : (kind === 'ppt' ? 'pptx' : kind)}`,
+                fileName,
                 fileKind: kind,
                 mime: payloadOrTitle.mime || 'text/plain;charset=utf-8',
                 downloadText: payloadOrTitle.downloadText || payloadOrTitle.content || '',
                 sizeBytes: approxSize,
                 time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
                 modifiedAt: payloadOrTitle.modifiedAt || new Date().toLocaleString('zh-CN', { hour12: false })
-            };
+            });
         }
 
         const fallbackText = content || '';
-        return {
-            id: 'out-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        const fileName = `会话输出-${Date.now()}.txt`;
+        return enrichOutputSummaries({
+            id: stableOutputId(fileName),
             title: payloadOrTitle || '会话输出',
             type: type || '文本',
             content: content || '',
-            fileName: `会话输出-${Date.now()}.txt`,
+            fileName,
             fileKind: 'txt',
             mime: 'text/plain;charset=utf-8',
             downloadText: fallbackText,
             sizeBytes: new Blob([fallbackText]).size,
             time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
             modifiedAt: new Date().toLocaleString('zh-CN', { hour12: false })
-        };
+        });
     }
 
     function hasContextData() {
-        return state.outputs.length > 0 || state.models.length > 0 || state.customers.length > 0;
+        return state.outputs.length > 0;
     }
 
     function syncContextPanelVisibility() {
@@ -337,6 +607,8 @@
         state.outputs = [];
         state.models = [];
         state.customers = [];
+        state.fullBundle = null;
+        state.collapsedOutputIds.clear();
         render();
     }
 
@@ -434,36 +706,107 @@
         };
     }
 
-    function loadSnapshot(bundle) {
+    function matchOutputToDocName(output, docName) {
+        const target = String(docName || '').trim().toLowerCase();
+        if (!target) return false;
+        const fileName = String(output?.fileName || '').trim().toLowerCase();
+        const title = String(output?.title || '').trim().toLowerCase();
+        const targetBase = target.replace(/\.(pdf|docx?|pptx?|txt)$/i, '');
+        const fileBase = fileName.replace(/\.(pdf|docx?|pptx?|txt)$/i, '');
+        const titleBase = title.replace(/\.(pdf|docx?|pptx?|txt)$/i, '');
+        return fileName === target
+            || title === target
+            || fileName.includes(target)
+            || target.includes(fileName)
+            || fileBase.includes(targetBase)
+            || targetBase.includes(fileBase)
+            || titleBase.includes(targetBase)
+            || targetBase.includes(titleBase);
+    }
+
+    function findOutputForDocCard(outputs, docName, docUrl) {
+        const urlName = String(docUrl || '').split('/').pop()?.split('?')[0] || '';
+        return (outputs || []).find((item) =>
+            matchOutputToDocName(item, docName) || matchOutputToDocName(item, urlName)
+        ) || null;
+    }
+
+    function loadSnapshot(bundle, options = {}) {
         if (!bundleHasItems(bundle)) return;
-        state.outputs = (bundle.outputs || []).map((item) => normalizeOutput(item));
-        state.models = (bundle.models || []).map((item, index) => normalizeSnapshotModel(item, index));
-        state.customers = (bundle.customers || []).map((item) => normalizeCustomer(item));
+        const normalizedOutputs = (bundle.outputs || []).map((item) => normalizeOutput(item));
+        state.fullBundle = {
+            outputs: normalizedOutputs.map((item) => ({ ...item })),
+            models: (bundle.models || []).map((item, index) => normalizeSnapshotModel(item, index)),
+            customers: (bundle.customers || []).map((item) => normalizeCustomer(item))
+        };
+        state.outputs = normalizedOutputs;
+        state.models = state.fullBundle.models;
+        state.customers = state.fullBundle.customers;
+        state.collapsedOutputIds.clear();
+
         render();
         syncContextPanelVisibility();
     }
 
-    function attachSnapshotToBubble(bubble, bundle) {
-        if (!bubble || !bundleHasItems(bundle)) return;
-        bubble.dataset.contextSnapshot = JSON.stringify(bundle);
-        bubble.classList.add('has-context-snapshot', 'is-context-clickable');
-        loadSnapshot(bundle);
+    function toggleOutputCard(outputId) {
+        if (state.collapsedOutputIds.has(outputId)) {
+            state.collapsedOutputIds.delete(outputId);
+        } else {
+            state.collapsedOutputIds.add(outputId);
+        }
+        render();
     }
 
-    function restoreSnapshotFromBubble(bubble) {
+    function linkDocCardsInBubble(bubble, bundle) {
+        if (!bubble || !bundle?.outputs?.length) return;
+        const outputs = (bundle.outputs || []).map((item) => normalizeOutput(item));
+        bubble.querySelectorAll('.chat-doc-card').forEach((card) => {
+            const docName = card.dataset.docName || '';
+            const docUrl = card.dataset.docUrl || '';
+            const matched = findOutputForDocCard(outputs, docName, docUrl);
+            if (matched) {
+                card.dataset.outputId = matched.id;
+                const previewEl = card.querySelector('.chat-doc-card-preview-text, .doc-card-desc');
+                const brief = matched.briefSummary || buildOutputBriefSummary(matched);
+                if (previewEl) previewEl.textContent = brief;
+            }
+        });
+    }
+
+    function showOutputFromBubble(bubble, options = {}) {
         if (!bubble?.dataset?.contextSnapshot) return;
         try {
             const bundle = JSON.parse(bubble.dataset.contextSnapshot);
-            loadSnapshot(bundle);
+            loadSnapshot(bundle, options);
         } catch (err) {
-            console.warn('restoreSnapshotFromBubble failed', err);
+            console.warn('showOutputFromBubble failed', err);
         }
+    }
+
+    function attachSnapshotToBubble(bubble, bundle) {
+        if (!bubble || !bundleHasItems(bundle)) return;
+        const normalized = {
+            ...bundle,
+            outputs: (bundle.outputs || []).map((item) => normalizeOutput(item))
+        };
+        bubble.dataset.contextSnapshot = JSON.stringify(normalized);
+        bubble.classList.add('has-context-snapshot', 'is-context-clickable');
+        linkDocCardsInBubble(bubble, normalized);
+        loadSnapshot(normalized);
+    }
+
+    function restoreSnapshotFromBubble(bubble) {
+        showOutputFromBubble(bubble, {});
     }
 
     function isInteractiveChatTarget(target) {
         return !!target?.closest?.(
-            '.chat-prompt-card, .chat-doc-card, .ib-guide-feedback-btn, .ib-guide-feedback-actions, .ib-guide-option, button, a, input, textarea, select, label'
+            '.chat-prompt-card, .ib-guide-feedback-btn, .ib-guide-feedback-actions, .ib-guide-option, button, a, input, textarea, select, label'
         );
+    }
+
+    function isDocCardDownloadTarget(target) {
+        return !!target?.closest?.('.chat-doc-card-dl, .doc-card-dl');
     }
 
     function patchSendMessage() {
@@ -506,36 +849,29 @@
             setTimeout(patchModelGuide, 800);
 
             document.addEventListener('click', (event) => {
+                const docCard = event.target.closest('.chat-doc-card[data-doc-url]');
+                if (docCard) {
+                    if (isDocCardDownloadTarget(event.target)) return;
+                    event.stopPropagation();
+                    const bubble = docCard.closest('.chat-bubble-assistant');
+                    showOutputFromBubble(bubble, {
+                        focusOutputId: docCard.dataset.outputId,
+                        focusFileName: docCard.dataset.docName,
+                        focusDocUrl: docCard.dataset.docUrl
+                    });
+                    return;
+                }
+
                 const bubble = event.target.closest('.chat-bubble-assistant.has-context-snapshot');
                 if (!bubble || isInteractiveChatTarget(event.target)) return;
                 restoreSnapshotFromBubble(bubble);
             });
 
             document.getElementById('context-panel')?.addEventListener('click', (event) => {
-                const previewBtn = event.target.closest('[data-action="preview"][data-output-id]');
-                if (previewBtn) {
-                    event.stopPropagation();
-                    openOutputPreview(previewBtn.dataset.outputId);
-                    return;
-                }
-
-                const downloadBtn = event.target.closest('[data-action="download"][data-output-id]');
-                if (downloadBtn) {
-                    event.stopPropagation();
-                    downloadOutput(downloadBtn.dataset.outputId);
-                    return;
-                }
-
-                const customerCard = event.target.closest('.context-card[data-type="customer"][data-id]');
-                if (customerCard) {
-                    openCustomerDetail(customerCard.dataset.id);
-                    return;
-                }
-
-                const outputCard = event.target.closest('.context-card[data-type="output"][data-id]');
-                if (outputCard) {
-                    openOutputPreview(outputCard.dataset.id);
-                }
+                const outputCard = event.target.closest('.context-output-item[data-type="output"][data-id]');
+                if (!outputCard) return;
+                if (event.target.closest('button, a')) return;
+                toggleOutputCard(outputCard.dataset.id);
             });
         });
     }
@@ -548,8 +884,11 @@
         loadSnapshot,
         attachSnapshotToBubble,
         restoreSnapshotFromBubble,
+        showOutputFromBubble,
         extractBundleFromMarkdown,
         bundleHasItems,
+        getBriefSummaryByDocName,
+        buildOutputBriefSummary,
         openOutputPreview,
         downloadOutput,
         openCustomerDetail,

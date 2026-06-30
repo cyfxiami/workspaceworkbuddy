@@ -19,14 +19,18 @@
 }
 
 .wb-layout.is-sidebar-collapsed .sidebar-shell {
-    width: 0;
-    min-width: 0;
+    width: var(--sidebar-collapsed-w);
+    min-width: var(--sidebar-collapsed-w);
+}
+
+.wb-layout.is-sidebar-collapsed .sidebar {
+    width: var(--sidebar-collapsed-w);
 }
 
 .sidebar {
     width: var(--sidebar-w);
     height: 100vh;
-    background: var(--wb-surface);
+    background: #f8f9fa;
     border-right: 1px solid var(--wb-border);
     display: flex;
     flex-direction: column;
@@ -79,7 +83,7 @@ body.support-exceptions-view-active .main-area-header {
 }
 
 .wb-layout.is-sidebar-collapsed .main-toolbar {
-    display: flex;
+    display: none;
 }
 
 .wb-layout:not(.is-sidebar-collapsed) .main-toolbar {
@@ -150,10 +154,11 @@ body.support-exceptions-view-active .main-area-header {
     transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 
-.panel-collapse-btn:hover {
-    color: var(--brand-gold-dark);
-    border-color: var(--brand-gold);
-    background: var(--brand-gold-soft);
+.panel-collapse-btn:hover,
+.panel-collapse-btn:focus-visible {
+    color: var(--brand-blue);
+    border-color: var(--brand-blue-border);
+    background: var(--brand-blue-soft);
 }
 
 .panel-collapse-btn .layout-toggle-icon {

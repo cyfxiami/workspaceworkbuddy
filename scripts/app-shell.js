@@ -219,6 +219,33 @@
                 ensurePanelActiveByNavItem(item);
 
                 if (item.classList.contains('bc-item-nav')) {
+                    const action = item.dataset.action;
+                    const isSupport = document.body.classList.contains('support-tab-active');
+                    const isEmployee = !isSupport && !document.body.classList.contains('org-tab-active');
+                    if (isEmployee && action && typeof window.WorkbenchMenuActions?.handleEmployeeSidebarAction === 'function') {
+                        getSidebarBcItems().forEach((other) => {
+                            other.classList.remove('is-expanded', 'is-center-active');
+                            const otherPanel = other.querySelector('.bc-panel');
+                            if (otherPanel) otherPanel.hidden = true;
+                        });
+                        item.classList.add('is-center-active');
+                        currentBcMenu = item.dataset.bc || 'session';
+                        returnToMainSessionView({ resetChat: false });
+                        window.WorkbenchMenuActions.handleEmployeeSidebarAction(action);
+                        return;
+                    }
+                    if (isSupport && action && typeof window.WorkbenchMenuActions?.handleSupportSidebarAction === 'function') {
+                        getSidebarBcItems().forEach((other) => {
+                            other.classList.remove('is-expanded', 'is-center-active');
+                            const otherPanel = other.querySelector('.bc-panel');
+                            if (otherPanel) otherPanel.hidden = true;
+                        });
+                        item.classList.add('is-center-active');
+                        currentBcMenu = item.dataset.bc || 'session';
+                        returnToMainSessionView({ resetChat: false });
+                        window.WorkbenchMenuActions.handleSupportSidebarAction(action);
+                        return;
+                    }
                     getSidebarBcItems().forEach((other) => {
                         other.classList.remove('is-expanded', 'is-center-active');
                         const otherPanel = other.querySelector('.bc-panel');
@@ -333,6 +360,60 @@
 
     function saveLayoutState(state) {
         localStorage.setItem(LAYOUT_KEY, JSON.stringify(state));
+    }
+
+    function setEmployeeSessionsCollapsed(collapsed) {
+        const btn = document.getElementById('employee-sessions-toggle');
+        const body = document.getElementById('employee-sessions-body');
+        if (btn) btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        if (body) body.hidden = !!collapsed;
+    }
+
+    function initEmployeeSessionsCollapse() {
+        const btn = document.getElementById('employee-sessions-toggle');
+        const body = document.getElementById('employee-sessions-body');
+        if (!btn || !body) return;
+        if (btn.dataset.bound === 'true') return;
+        btn.dataset.bound = 'true';
+
+        const state = loadLayoutState();
+        const collapsed = state.employeeSessionsCollapsed === true;
+        setEmployeeSessionsCollapsed(collapsed);
+
+        btn.addEventListener('click', () => {
+            const willCollapse = btn.getAttribute('aria-expanded') !== 'false';
+            setEmployeeSessionsCollapsed(willCollapse);
+            const next = loadLayoutState();
+            next.employeeSessionsCollapsed = willCollapse;
+            saveLayoutState(next);
+        });
+    }
+
+    function setSupportSessionsCollapsed(collapsed) {
+        const btn = document.getElementById('support-sessions-toggle');
+        const body = document.getElementById('support-sessions-body');
+        if (btn) btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        if (body) body.hidden = !!collapsed;
+    }
+
+    function initSupportSessionsCollapse() {
+        const btn = document.getElementById('support-sessions-toggle');
+        const body = document.getElementById('support-sessions-body');
+        if (!btn || !body) return;
+        if (btn.dataset.bound === 'true') return;
+        btn.dataset.bound = 'true';
+
+        const state = loadLayoutState();
+        const collapsed = state.supportSessionsCollapsed === true;
+        setSupportSessionsCollapsed(collapsed);
+
+        btn.addEventListener('click', () => {
+            const willCollapse = btn.getAttribute('aria-expanded') !== 'false';
+            setSupportSessionsCollapsed(willCollapse);
+            const next = loadLayoutState();
+            next.supportSessionsCollapsed = willCollapse;
+            saveLayoutState(next);
+        });
     }
 
     function getSessions() {
@@ -464,6 +545,7 @@
         layout.classList.toggle('is-sidebar-collapsed', state.sidebarCollapsed === true);
         layout.classList.toggle('is-context-collapsed', state.contextCollapsed !== false);
         updatePanelToggleState();
+        setEmployeeSessionsCollapsed(state.employeeSessionsCollapsed === true);
     }
 
     function setContextPanelCollapsed(collapsed, options = {}) {
@@ -614,6 +696,8 @@
         initBreadcrumbMenu();
         initSidebarTabs();
         initSupportSidebarTabs();
+        initEmployeeSessionsCollapse();
+        initSupportSessionsCollapse();
 
         document.querySelectorAll('.quick-chip').forEach((chip) => {
             chip.addEventListener('click', () => {
@@ -621,6 +705,7 @@
                 if (input) {
                     input.value = chip.dataset.prompt || chip.textContent;
                     input.focus();
+                    window.syncMainSendButtonState?.(document.getElementById('workbench-panel-employee'));
                 }
             });
         });
@@ -665,7 +750,7 @@
             field.parentNode.replaceChild(textarea, field);
             field = textarea;
         }
-        field.placeholder = '开启我的工作';
+        field.placeholder = '发消息...';
         field.classList.add('enhanced-textarea');
     }
 

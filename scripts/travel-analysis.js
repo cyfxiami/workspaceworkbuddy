@@ -196,6 +196,52 @@
         }
     };
 
+    function escapeHtmlText(text) {
+        return String(text ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    window.buildTravelAnalysisSummaryChatHtml = function () {
+        const sections = [
+            { key: 'flight', title: '机票/住宿', icon: '✈️' },
+            { key: 'meal', title: '餐费', icon: '🍱' },
+            { key: 'car', title: '用车', icon: '🚗' }
+        ];
+
+        const renderItems = (items) => {
+            return (items || []).map((item) => {
+                const text = typeof item === 'string' ? item : item?.text;
+                const warning = typeof item === 'object' && item?.warning;
+                return `<li${warning ? ' class="is-warning"' : ''}>${escapeHtmlText(text || '')}</li>`;
+            }).join('');
+        };
+
+        const html = sections.map((sec) => {
+            const data = TAB_DATA[sec.key];
+            if (!data) return '';
+            return `
+                <div class="travel-chat-section">
+                    <p class="chat-md-h3">${escapeHtmlText(sec.icon)} ${escapeHtmlText(sec.title)} · ${escapeHtmlText(data.subtitle || '')}</p>
+                    <p><strong>行为异常</strong></p>
+                    <ul class="chat-md-list travel-chat-list">${renderItems(data.behavior)}</ul>
+                    <p><strong>节省建议</strong></p>
+                    <ul class="chat-md-list travel-chat-list">${renderItems(data.saving)}</ul>
+                    <p><strong>解释口径</strong>：${escapeHtmlText(data.explain || '')}</p>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <p class="chat-md-h2">差旅分析汇总</p>
+            <p>我已将机票/住宿、餐费、用车三类差旅的费用对比、行为异常与节省建议汇总如下，您可继续说明需重点核查的项。</p>
+            ${html}
+        `;
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('travel-dashboard')) {
             window.initTravelAnalysis();

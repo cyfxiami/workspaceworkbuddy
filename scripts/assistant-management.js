@@ -408,6 +408,9 @@
         if (typeof window.updateDigitalAvatarsScrollButtons === 'function') {
             window.updateDigitalAvatarsScrollButtons();
         }
+        if (typeof window.updateSupportAvatarPendingDots === 'function') {
+            window.updateSupportAvatarPendingDots();
+        }
     }
 
     function getSupportHomeCardDesc(agent) {
@@ -434,25 +437,17 @@
     function buildSupportHomeCardHtml(agent) {
         if (agent.supportCard) {
             const label = agent.supportCard === 'tasks' ? '查看今日任务助手' : '查看异常提醒助手';
+            const iconHtml = agent.supportCard === 'tasks'
+                ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M7 3.5V7"/><path d="M17 3.5V7"/><path d="M3.5 9h17"/></svg>`
+                : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l9 16H3l9-16z"/><path d="M12 9v5"/><circle cx="12" cy="17.2" r="1" fill="currentColor" stroke="none"/></svg>`;
             return `
-                <div class="ai-card-fan support-home-card" data-support-card="${agent.supportCard}" role="button" tabindex="0" aria-label="${label}">
-                    <div class="ai-card-fan-inner">
-                        <div class="ai-card-fan-avatar support-home-card-avatar ${agent.avatarClass}">${buildSupportHomeCardAvatarHtml(agent)}</div>
-                        <div class="ai-card-fan-name">${escapeHtml(agent.name)}</div>
-                        <div class="ai-card-fan-desc">${escapeHtml(getSupportHomeCardDesc(agent))}</div>
-                    </div>
-                </div>
+                <button type="button" class="employee-home-assistant-tab support-home-card support-home-card-tab ${agent.supportCard === 'tasks' ? 'support-home-card-tab--tasks' : 'support-home-card-tab--exceptions'}" data-support-card="${agent.supportCard}" aria-label="${label}">
+                    <span class="employee-home-assistant-tab-icon support-home-card-tab-icon" aria-hidden="true">${iconHtml}</span>
+                    <span class="employee-home-assistant-tab-text">${escapeHtml(agent.supportCard === 'tasks' ? '今日任务' : '异常提醒')}</span>
+                </button>
             `;
         }
-        return `
-            <div class="ai-card-fan support-home-card support-home-card--assistant" data-assistant-id="${agent.id}" role="button" tabindex="0" aria-label="召唤${escapeHtml(agent.name)}">
-                <div class="ai-card-fan-inner">
-                    <div class="ai-card-fan-avatar support-home-card-avatar ${agent.avatarClass}">${escapeHtml(agent.emoji || '🤖')}</div>
-                    <div class="ai-card-fan-name">${escapeHtml(agent.name)}</div>
-                    <div class="ai-card-fan-desc">${escapeHtml(agent.desc || '')}</div>
-                </div>
-            </div>
-        `;
+        return '';
     }
 
     function syncSupportHomeCards(panel) {
@@ -468,7 +463,7 @@
 
         fanEl.innerHTML = installed.map((id) => {
             const agent = catalogMap[id];
-            if (!agent) return '';
+            if (!agent?.supportCard) return '';
             return buildSupportHomeCardHtml(agent);
         }).join('') || '<div class="manage-empty-hint">暂无已展示助手，请前往「新增」添加</div>';
 

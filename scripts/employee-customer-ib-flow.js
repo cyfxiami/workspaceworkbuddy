@@ -417,6 +417,240 @@
     const BUSINESS_HANDOFF_PROMPT = '请业务分析助手分析该企业的投行业务机会';
     const BUSINESS_HANDOFF_SEND_MESSAGE = '我手头有陈明精工这家制造业上市公司，营收20亿，想融资扩产';
     const BUSINESS_ANALYSIS_ASSISTANT_INDEX = 1;
+    const DESIGN_ASSISTANT_INDEX = 2;
+    const SERVICE_ASSISTANT_INDEX = 4;
+
+    function generateChenmingDesignReply(message) {
+        const L = [];
+        L.push('## ' + COMPANY_DEMO_SHORT + ' · 定增方案设计草案');
+        L.push('');
+        L.push('> 项目对象：**' + COMPANY_DEMO_FULL + '**（603882）| 先进制造/装备制造 | 年营收 **20亿元** | 合作意图：**融资扩产**（资本性支出缺口约 **3.2亿元**）');
+        L.push('');
+        L.push('### 一、发行基本要素');
+        L.push('| 要素 | 方案建议 | 说明 |');
+        L.push('|------|---------|------|');
+        L.push('| 发行方式 | 向特定对象非公开发行 | 发行对象不超过35名 |');
+        L.push('| 发行规模 | **3.00亿元** | 净资产20%与3亿元孰低 |');
+        L.push('| 发行价格 | 不低于前20日均价×80% | 定价基准日为发行期首日 |');
+        L.push('| 锁定期 | 6个月 | 自发行结束日起 |');
+        L.push('| 募资用途 | 扩产70% + 补流30% | 智能产线扩产项目已备案 |');
+        L.push('');
+        L.push('### 二、募集资金用途结构');
+        L.push('- **智能产线扩产项目**：2.24亿元（70%），符合先进制造产业政策方向');
+        L.push('- **补充流动资金**：0.96亿元（30%），保障扩产期间营运周转');
+        L.push('- **认购安排**：控股股东参与 + 2–3家产业协同/财务投资人');
+        L.push('');
+        L.push('### 三、发行时间安排（标准周期4–6个月）');
+        L.push('| 阶段 | 时间 | 主要工作 |');
+        L.push('|------|------|---------|');
+        L.push('| 方案论证 | 1–2周 | 定规模、用途、定价策略 |');
+        L.push('| 尽职调查 | 2–4周 | 财务、法律、业务尽调 |');
+        L.push('| 董事会/股东大会 | T+1月 | 审议通过发行方案 |');
+        L.push('| 申报审核 | 2–3月 | 交易所审核、证监会注册 |');
+        L.push('| 发行阶段 | 1月 | 路演、簿记建档、定价 |');
+        L.push('');
+        L.push('### 四、材料缺口与下一步');
+        L.push('- 待补充：近3期审计报告、募投项目备案文件、股东名册');
+        L.push('- 核对结论：核心要素已核对 **6/8** 项');
+        L.push('- 执行建议：发起内部立项评审，同步客户材料清单，预约发行窗口沟通');
+        L.push('');
+        L.push('### 📄 可下载文档');
+        L.push('- **[' + COMPANY_DEMO_SHORT + '-定增方案草案.pdf](/docs/' + COMPANY_DEMO_SHORT + '-定增方案草案.pdf)** — PDF');
+        L.push('- **[定增方案Word模板](/templates/定增方案设计模板.docx)** — 可编辑');
+        L.push('- **[募集资金可研报告模板](/templates/募集资金可行性研究报告.docx)** — 框架示例');
+        L.push('');
+        L.push('> 👤 方案支持：张明（工号8012）| zhangm@company.com');
+        L.push('');
+        L.push('---');
+        L.push('>>> ' + COMPANY_DEMO_SHORT + '的发行条件和准入标准是什么？');
+        L.push('>>> ' + COMPANY_DEMO_SHORT + '定增需要准备什么材料？');
+        L.push('>>> 帮我核验这个定增方案，看看有没有合规问题');
+        return L.join('\n');
+    }
+
+    function generateChenmingBuyerReply(message) {
+        const L = [];
+        L.push('## ' + COMPANY_DEMO_SHORT + ' · 买方分析结果');
+        L.push('');
+        L.push('> 分析对象：**' + COMPANY_DEMO_FULL + '** | 先进制造/装备制造 | 年营收20亿元 | 融资扩产配套');
+        L.push('');
+        L.push('### 匹配维度');
+        L.push('- 产业协同：装备升级、产线扩产上下游整合意愿');
+        L.push('- 区域布局：长三角产业基金与制造业并购活跃度');
+        L.push('- 投资偏好：历史定增/并购案例、审批周期、资金实力');
+        L.push('');
+        L.push('### 买方候选（优先级排序）');
+        L.push('1. **华创产业资本** — 先进制造赛道布局，近期参与2单装备类定增');
+        L.push('2. **精机控股** — 产业链协同强，可与扩产项目形成供应协同');
+        L.push('3. **东方装备基金** — 财务投资人，认购节奏快、尽调效率高');
+        L.push('');
+        L.push('### 首轮接触建议');
+        L.push('- 先签署保密协议，提供扩产项目摘要与财务亮点一页纸');
+        L.push('- 由张明（工号8012）牵头组织买方路演，目标2周内完成首轮反馈');
+        L.push('');
+        L.push('### 待确认事项');
+        L.push('- 估值区间（建议参考18–22倍PE）');
+        L.push('- 交易时间表与认购比例意向');
+        L.push('- 保密协议签署与尽调资料清单');
+        return L.join('\n');
+    }
+
+    function generateChenmingServiceFollowUpReply(message) {
+        const L = [];
+        L.push('## ' + COMPANY_DEMO_SHORT + ' · 客户服务跟进清单');
+        L.push('');
+        L.push('> 服务对象：**' + COMPANY_DEMO_FULL + '**（603882）| 合作意图：融资扩产 | 最近沟通：2026-06-10 融资方案沟通');
+        L.push('');
+        L.push('### 待跟进事项');
+        L.push('1. **方案沟通纪要确认** — 6月10日融资方案沟通纪要待客户签字确认（负责人：张明）');
+        L.push('2. **配套材料催办** — 近3期审计报告、股东名册（T+3个工作日）');
+        L.push('3. **买方对接** — 路演名单与NDA待签署（买方分析模型输出待复核）');
+        L.push('4. **信披预检** — 定增启动前需准备《前次募集资金使用情况》');
+        L.push('5. **内部评审排期** — 投行部立项会 T+2 确认');
+        L.push('');
+        L.push('### 下一步建议');
+        L.push('- 并行推进材料补齐与买方首轮触达');
+        L.push('- 6月内发行窗口研判，预沟通董事会审议安排');
+        return L.join('\n');
+    }
+
+    function generateChenmingDisclosureReply(message) {
+        const L = [];
+        L.push('## ' + COMPANY_DEMO_SHORT + ' · 信披合规判断');
+        L.push('');
+        L.push('### 判断要点');
+        L.push('- 定增启动披露：董事会决议、发行方案摘要、前次募集资金使用情况');
+        L.push('- 募投项目进展：扩产项目备案与环评披露口径');
+        L.push('- 关联交易：认购对象关联关系识别与回避表决');
+        L.push('- 业绩预告：是否触发业绩预告或快报披露标准');
+        L.push('');
+        L.push('### 输出结论');
+        L.push('拟启动定增需按顺序准备：**董事会决议公告** → **股东大会通知** → **发行方案披露**；同步更新募投项目进展说明。');
+        L.push('');
+        L.push('### 待补充');
+        L.push('- 扩产项目投资进度量化说明');
+        L.push('- 事项影响范围与对经营的量化描述');
+        return L.join('\n');
+    }
+
+    function generateChenmingAnnouncementReply(message) {
+        const L = [];
+        L.push('## ' + COMPANY_DEMO_SHORT + ' · 临时公告草案框架');
+        L.push('');
+        L.push('### 公告要素');
+        L.push('- 证券代码：603882');
+        L.push('- 公告类型：融资筹划事项提示性公告（框架）');
+        L.push('- 触发事项：筹划非公开发行股票事项');
+        L.push('');
+        L.push('### 草案结构');
+        L.push('1. 筹划事项说明（智能产线扩产融资）');
+        L.push('2. 对经营影响的不确定性提示');
+        L.push('3. 后续安排（尽调、内部决策、监管申报）');
+        L.push('');
+        L.push('### 待补充');
+        L.push('- 董事会决议日期、财务数据核对表、法务复核意见');
+        return L.join('\n');
+    }
+
+    function getDesignAssistantReply(message) {
+        const il = (message || '').toLowerCase();
+        const bizName = ibExtractBusinessName(il) || '定增';
+        if (ibAnyKeyword(il, ['发行条件', '准入标准', '准入条件', '发行要求', '资质要求'])) {
+            return ibGenerateAdmission(bizName);
+        }
+        if (ibAnyKeyword(il, ['怎么做', '如何做', '操作步骤', '具体步骤', '操作指引', '怎么操作'])) {
+            return ibGenerateHowTo(bizName);
+        }
+        if (ibAnyKeyword(il, ['材料', '文件清单', '准备什么', '需要什么', '资料清单'])) {
+            return ibGenerateMaterials(bizName);
+        }
+        if (ibAnyKeyword(il, ['找谁', '联系', '对接', '谁负责', '支持'])) {
+            return '**' + bizName + '业务支持人员**\n\n- **张明**（工号8012）— 方案设计、发行定价\n- **王强**（工号8034）— 条款设计、转股测算\n- **赵敏**（工号8045）— 评级沟通、发行窗口\n\n>>> 为' + COMPANY_DEMO_SHORT + '生成一套融资扩产方案草案';
+        }
+        return generateChenmingDesignReply(message);
+    }
+
+    function getServiceAssistantReply(message) {
+        const text = (message || '').trim();
+        if (/待跟进|梳理|服务事项|跟进事项/.test(text)) {
+            return generateChenmingServiceFollowUpReply(message);
+        }
+        if (/信披|披露|合规/.test(text)) {
+            return generateChenmingDisclosureReply(message);
+        }
+        if (/公告|业绩预告|临时公告/.test(text)) {
+            return generateChenmingAnnouncementReply(message);
+        }
+        if (/买方|投资人|匹配/.test(text)) {
+            return generateChenmingBuyerReply(message);
+        }
+        return generateChenmingBuyerReply(message);
+    }
+
+    function buildChenmingDesignContextBundle() {
+        const ts = new Date().toLocaleString('zh-CN', { hour12: false });
+        return {
+            models: ibResolveContextModels('定增', 'design', { limit: 4 }),
+            outputs: [
+                {
+                    title: COMPANY_DEMO_SHORT + '-定增方案草案',
+                    type: 'PDF',
+                    fileKind: 'pdf',
+                    fileName: COMPANY_DEMO_SHORT + '-定增方案草案.pdf',
+                    modifiedAt: ts,
+                    content: '陈明精工定增方案草案，含发行规模、募资用途与认购安排。',
+                    downloadText: '陈明精工定增方案草案，含发行规模、募资用途与认购安排。'
+                },
+                {
+                    title: COMPANY_DEMO_SHORT + '-方案设计执行清单',
+                    type: 'Word',
+                    fileKind: 'word',
+                    fileName: COMPANY_DEMO_SHORT + '-方案设计执行清单.docx',
+                    modifiedAt: ts,
+                    content: '材料补齐、内部立项、认购沟通、发行窗口研判。',
+                    downloadText: '材料补齐、内部立项、认购沟通、发行窗口研判。'
+                }
+            ],
+            customers: [{
+                name: COMPANY_DEMO_FULL,
+                type: '上市公司',
+                source: '方案生成助手会话'
+            }]
+        };
+    }
+
+    function buildChenmingServiceContextBundle(kind) {
+        const ts = new Date().toLocaleString('zh-CN', { hour12: false });
+        const isFollowUp = kind === 'followup';
+        return {
+            models: [{
+                name: isFollowUp ? '客户服务事项梳理' : '买方分析模型',
+                category: '客户服务 / ' + COMPANY_DEMO_SHORT
+            }],
+            outputs: isFollowUp ? [{
+                title: COMPANY_DEMO_SHORT + '-客户服务跟进清单',
+                type: 'Word',
+                fileKind: 'word',
+                fileName: COMPANY_DEMO_SHORT + '-客户服务跟进清单.docx',
+                modifiedAt: ts,
+                content: '材料催办、买方对接、信披预检、窗口期沟通等待跟进事项。',
+                downloadText: '材料催办、买方对接、信披预检、窗口期沟通等待跟进事项。'
+            }] : [{
+                title: COMPANY_DEMO_SHORT + '-买方匹配简版',
+                type: 'PDF',
+                fileKind: 'pdf',
+                fileName: COMPANY_DEMO_SHORT + '-买方匹配简版.pdf',
+                modifiedAt: ts,
+                content: '买方候选3家及首轮接触建议。',
+                downloadText: '买方候选3家及首轮接触建议。'
+            }],
+            customers: [{
+                name: COMPANY_DEMO_FULL,
+                type: '上市公司',
+                source: '客户服务助手会话'
+            }]
+        };
+    }
 
     /** 用户输入已包含企业名称，无需再追问确认 */
     function isExplicitCompanyAnalysisRequest(message) {
@@ -685,6 +919,13 @@
         if (/业务推荐结果/.test(text)) {
             return buildRecommendContextBundle();
         }
+        if (/陈明精工 · 定增方案设计草案/.test(text) || (assistantIndex === DESIGN_ASSISTANT_INDEX && /定增方案设计草案/.test(text))) {
+            return buildChenmingDesignContextBundle();
+        }
+        if (assistantIndex === SERVICE_ASSISTANT_INDEX && /待跟进事项|买方候选|信披合规判断|临时公告草案/.test(text)) {
+            const kind = /待跟进事项/.test(text) ? 'followup' : 'buyer';
+            return buildChenmingServiceContextBundle(kind);
+        }
 
         if (assistantIndex === 0 && userMessage && isCompanyAnalysisRequest(userMessage)) {
             if (/^\*\*审批助手\*\*|^\*\*通知公告助手\*\*/.test(text.trim())) {
@@ -711,6 +952,12 @@
         if (assistantIndex === BUSINESS_ANALYSIS_ASSISTANT_INDEX) {
             return ibLocalReply(message);
         }
+        if (assistantIndex === DESIGN_ASSISTANT_INDEX) {
+            return getDesignAssistantReply(message);
+        }
+        if (assistantIndex === SERVICE_ASSISTANT_INDEX) {
+            return getServiceAssistantReply(message);
+        }
         return ibLocalReply(message);
     }
 
@@ -730,8 +977,13 @@
         resolveContextModels: ibResolveContextModels,
         resolvePromptHandoff,
         usesGuidedFlow(assistantIndex) {
-            return assistantIndex === 0 || assistantIndex === BUSINESS_ANALYSIS_ASSISTANT_INDEX;
+            return assistantIndex === 0
+                || assistantIndex === BUSINESS_ANALYSIS_ASSISTANT_INDEX
+                || assistantIndex === DESIGN_ASSISTANT_INDEX
+                || assistantIndex === SERVICE_ASSISTANT_INDEX;
         },
+        DESIGN_ASSISTANT_INDEX,
+        SERVICE_ASSISTANT_INDEX,
         isCompanyAnalysisRequest,
         isExplicitCompanyAnalysisRequest,
         // 兼容旧引用

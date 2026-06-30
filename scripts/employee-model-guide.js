@@ -18,9 +18,9 @@
             '比对破产重整公司准入条件'
         ],
         2: [
-            '设计定增发行方案核心要素',
-            '编制IPO发行方案要点清单',
-            '梳理破产重整偿债与转股方案'
+            '为陈明精工生成一套融资扩产方案草案',
+            '设计陈明精工定增发行方案核心要素',
+            '梳理陈明精工募投项目发行规模与定价安排'
         ],
         3: [
             '交叉验证定增项目财务数据一致性',
@@ -28,11 +28,70 @@
             '比对并购标的治理结构与公开披露'
         ],
         4: [
-            '生成买方客户分析报告框架',
-            '判断上市公司信披合规要点',
-            '起草临时公告（业绩预告）'
+            '帮我梳理陈明精工待跟进的客户服务事项',
+            '为陈明精工匹配产业协同买方',
+            '判断陈明精工定增启动前的信披合规要点'
         ]
     };
+
+    const CHENMING_COMPANY_FULL = '陈明精工股份有限公司';
+    const CHENMING_COMPANY_SHORT = '陈明精工';
+    const CHENMING_STOCK_CODE = '603882';
+
+    const CHENMING_DESIGN_PAYLOAD = {
+        bizName: '定增',
+        category: '发行规模 / 小额快速发行规模',
+        model: '净资产的20%与3亿元孰低'
+    };
+
+    function isChenmingRelatedMessage(message) {
+        const text = String(message || '').trim();
+        if (!text) return false;
+        return /陈明精工|603882/.test(text)
+            || (/融资扩产|制造业上市|智能产线|扩产项目/.test(text) && /(方案|定增|发行|设计|生成)/.test(text));
+    }
+
+    function isChenmingServiceFollowUpMessage(message) {
+        const text = String(message || '').trim();
+        return /陈明精工/.test(text) && /待跟进|梳理|服务事项|跟进事项/.test(text);
+    }
+
+    function resolveChenmingDesignPayload() {
+        return { ...CHENMING_DESIGN_PAYLOAD };
+    }
+
+    function resolveChenmingServicePayload(message) {
+        const text = String(message || '').trim();
+        if (isChenmingServiceFollowUpMessage(text)) {
+            return {
+                bizName: '客户服务',
+                category: '服务跟进',
+                model: '客户服务事项梳理'
+            };
+        }
+        if (/信披|披露|公告|合规/.test(text)) {
+            const service = getServiceModels().find((s) => s.name.includes('信披'));
+            return {
+                bizName: '客户服务',
+                category: service?.tagline || '识信披',
+                model: service?.name || '信披判断模型'
+            };
+        }
+        if (/公告|业绩预告|临时公告/.test(text)) {
+            const service = getServiceModels().find((s) => s.name.includes('公告'));
+            return {
+                bizName: '客户服务',
+                category: service?.tagline || '写公告',
+                model: service?.name || '临时公告生成模型'
+            };
+        }
+        const buyer = getServiceModels().find((s) => s.name.includes('买方'));
+        return {
+            bizName: '客户服务',
+            category: buyer?.tagline || '找买方',
+            model: buyer?.name || '买方分析模型'
+        };
+    }
 
     const CUSTOMER_ANALYSIS_MODELS = [
         { bizName: '客户分析', model: '客户多维分析模型', desc: '资产、行为、交易、合作记录' },
@@ -195,33 +254,14 @@
             };
         }
 
-        const serviceModels = getServiceModels();
-        let matched = null;
-
-        serviceModels.forEach((service) => {
-            const shortName = service.name.replace('模型', '');
-            if (text.includes(service.name) || text.includes(shortName)) {
-                matched = service;
-            }
-        });
-
-        if (!matched && (text.includes('买方') || text.includes('投资人'))) {
-            matched = serviceModels.find((s) => s.name.includes('买方'));
-        }
-        if (!matched && (text.includes('信披') || text.includes('披露') || text.includes('合规'))) {
-            matched = serviceModels.find((s) => s.name.includes('信披'));
-        }
-        if (!matched && (text.includes('公告') || text.includes('业绩预告') || text.includes('临时公告'))) {
-            matched = serviceModels.find((s) => s.name.includes('公告'));
-        }
-        if (!matched) {
-            matched = serviceModels[0];
+        if (assistantIndex === 4) {
+            return resolveChenmingServicePayload(text);
         }
 
         return {
             bizName: '客户服务',
-            category: matched?.tagline || null,
-            model: matched?.name || '客户服务处理模型'
+            category: null,
+            model: '客户服务处理模型'
         };
     }
 
@@ -557,21 +597,114 @@
                 </ul>
             `;
         }
+        if (assistantIndex === 2) {
+            const useChenmingCase = isChenmingRelatedMessage(userMessage)
+                || payload?.model === CHENMING_DESIGN_PAYLOAD.model;
+            const issueScale = v % 2 === 0 ? '3.00亿元（净资产20%与3亿元孰低）' : '2.80亿元（复核后口径）';
+            const priceFloor = v % 2 === 0 ? '前20交易日均价×80%（待取数日确认）' : '前20交易日均价×80%（已锁定测算日）';
+            const checkConclusion = v % 2 === 0
+                ? '核心要素已核对 6/8 项'
+                : '核心要素已核对 7/8 项（更新发行规模口径后）';
+            const materialGap = v % 2 === 0
+                ? '待补充材料 2 项（近3期审计报告、募投项目备案文件）'
+                : '待补充材料 1 项（股东名册及前次募集资金使用情况）';
+            const nextStep = v % 2 === 0
+                ? '下一步：发起内部立项评审，同步客户材料清单，预约发行窗口沟通'
+                : '下一步：安排交叉验证并锁定认购对象沟通时间表';
+            const projectLabel = useChenmingCase
+                ? `${CHENMING_COMPANY_FULL}（${CHENMING_STOCK_CODE}）`
+                : userMessage;
+            if (useChenmingCase) {
+                return `
+                <ul class="ib-guide-result-list">
+                    <li>项目对象：${escapeHtml(projectLabel)}</li>
+                    <li>调用：${escapeHtml(modelLabel)} · ${escapeHtml(payload.model || CHENMING_DESIGN_PAYLOAD.model)}</li>
+                    <li>发行规模：${escapeHtml(issueScale)}，不超过总股本30%</li>
+                    <li>募资用途：智能产线扩产项目 2.24亿元（70%）+ 补充流动资金 0.96亿元（30%）</li>
+                    <li>发行底价：${escapeHtml(priceFloor)}；认购安排：控股股东参与 + 2–3家产业/财务投资人</li>
+                    <li>核对结论：${escapeHtml(checkConclusion)}</li>
+                    <li>材料缺口：${escapeHtml(materialGap)}</li>
+                    <li>执行建议：${escapeHtml(nextStep)}</li>
+                    <li>版本：${v + 1}</li>
+                </ul>
+            `;
+            }
+        }
         if (assistantIndex === 4) {
             const modelName = payload.model || '';
+            const isChenming = !/(张某|测试科技|城投|客户李四)/.test(String(userMessage || ''));
             let detailLines;
+            if (modelName.includes('梳理') || payload.category === '服务跟进') {
+                detailLines = v % 2 === 0
+                    ? [
+                        `服务对象：${CHENMING_COMPANY_FULL}（${CHENMING_STOCK_CODE}），合作意图融资扩产`,
+                        '待跟进①：6月10日融资方案沟通纪要待客户确认（负责人：张明）',
+                        '待跟进②：配套材料提交催办（近3期审计报告、股东名册）',
+                        '待跟进③：买方路演名单与NDA签署（买方分析模型输出待复核）',
+                        '待跟进④：定增启动前信披合规预检（前次募集资金使用情况）'
+                    ]
+                    : [
+                        `服务对象：${CHENMING_COMPANY_FULL}（${CHENMING_STOCK_CODE}）`,
+                        '待跟进①：内部立项评审排期确认（投行部，T+2）',
+                        '待跟进②：募投项目可研报告客户侧补充章节',
+                        '待跟进③：机构投资人首轮触达话术与保密协议',
+                        '待跟进④：6月内发行窗口研判与董事会预沟通'
+                    ];
+                return `
+                <ul class="ib-guide-result-list">
+                    <li>任务：${escapeHtml(userMessage)}</li>
+                    <li>处理模块：${escapeHtml(modelName || '客户服务事项梳理')}</li>
+                    <li>${escapeHtml(detailLines[0])}</li>
+                    <li>${escapeHtml(detailLines[1])}</li>
+                    <li>${escapeHtml(detailLines[2])}</li>
+                    <li>${escapeHtml(detailLines[3])}</li>
+                    <li>${escapeHtml(detailLines[4])}</li>
+                    <li>版本：${v + 1}</li>
+                </ul>
+            `;
+            }
             if (modelName.includes('买方')) {
                 detailLines = v % 2 === 0
-                    ? ['匹配维度：产业协同、财务投资意愿、历史并购案例', '输出：买方候选 3 家（优先级排序）+ 首轮接触建议', '待确认：标的估值区间、交易时间表']
-                    : ['匹配维度：区域集中度、资金实力、审批周期', '输出：买方候选 4 家（更新匹配分）+ 二次触达话术', '待确认：保密协议签署、尽调资料清单'];
+                    ? [
+                        `分析对象：${isChenming ? CHENMING_COMPANY_SHORT : '目标客户'}（先进制造/装备制造，年营收20亿元）`,
+                        '匹配维度：产业协同、装备升级并购意愿、长三角产业基金布局',
+                        '输出：买方候选 3 家（华创产业资本、精机控股、东方装备基金）+ 首轮接触建议',
+                        '待确认：估值区间（18–22倍PE）、交易时间表、保密协议签署安排'
+                    ]
+                    : [
+                        `分析对象：${isChenming ? CHENMING_COMPANY_SHORT : '目标客户'}`,
+                        '匹配维度：区域集中度、资金实力、审批周期、历史定增参与记录',
+                        '输出：买方候选 4 家（更新匹配分）+ 二次触达话术与路演排期',
+                        '待确认：认购比例意向、尽调资料清单、联合承销协同安排'
+                    ];
             } else if (modelName.includes('信披')) {
                 detailLines = v % 2 === 0
-                    ? ['判断要点：重大事项标准、披露时限、公告格式', '输出：是否触发披露义务 + 建议公告类型', '待补充：事项金额、影响范围、董事会决议日期']
-                    : ['判断要点：关联交易识别、回避表决、披露口径', '输出：披露义务结论（更新）+ 合规风险提示 2 条', '待补充：交易对手关联关系证明'];
+                    ? [
+                        `判断对象：${isChenming ? CHENMING_COMPANY_FULL : '上市公司客户'}`,
+                        '判断要点：定增启动披露、募投项目进展、关联交易与业绩预告触发标准',
+                        '输出：拟启动定增需准备《前次募集资金使用情况》+ 董事会/股东大会决议披露路径',
+                        '待补充：扩产项目投资进度说明、事项影响范围量化描述'
+                    ]
+                    : [
+                        `判断对象：${isChenming ? CHENMING_COMPANY_FULL : '上市公司客户'}`,
+                        '判断要点：关联交易识别、回避表决、披露口径与窗口期要求',
+                        '输出：披露义务结论（更新）+ 合规风险提示 2 条',
+                        '待补充：交易对手关联关系证明、财务数据核对表'
+                    ];
             } else {
                 detailLines = v % 2 === 0
-                    ? ['公告要素：债券代码、余额、到期日、主体评级', '输出：临时公告草案（业绩预告框架）', '待补充：触发事项说明、对经营影响量化描述']
-                    : ['公告要素：触发事项、披露时点、后续安排', '输出：临时公告草案（修订版）+ 信披流程节点', '待补充：财务数据核对表、法务复核意见'];
+                    ? [
+                        `公告主体：${isChenming ? CHENMING_COMPANY_SHORT + '（' + CHENMING_STOCK_CODE + '）' : '目标客户'}`,
+                        '公告要素：募投项目进展、融资筹划事项说明、对经营影响',
+                        '输出：临时公告草案（融资筹划事项提示性公告框架）',
+                        '待补充：触发事项说明、董事会决议日期、后续安排'
+                    ]
+                    : [
+                        `公告主体：${isChenming ? CHENMING_COMPANY_SHORT : '目标客户'}`,
+                        '公告要素：触发事项、披露时点、后续安排',
+                        '输出：临时公告草案（修订版）+ 信披流程节点清单',
+                        '待补充：财务数据核对表、法务复核意见'
+                    ];
             }
             return `
                 <ul class="ib-guide-result-list">
@@ -580,6 +713,7 @@
                     <li>${escapeHtml(detailLines[0])}</li>
                     <li>${escapeHtml(detailLines[1])}</li>
                     <li>${escapeHtml(detailLines[2])}</li>
+                    <li>${escapeHtml(detailLines[3])}</li>
                     <li>版本：${v + 1}</li>
                 </ul>
             `;
@@ -889,48 +1023,25 @@
             ],
             2: [
                 {
-                    name: '示例资本管理有限公司',
-                    type: '机构客户',
+                    name: CHENMING_COMPANY_FULL,
+                    type: '上市公司',
                     dimensions: [
                         {
-                            section: '机构概况',
+                            section: '企业概况',
                             items: [
-                                { label: '管理规模（AUM）', value: '128.60 亿元' },
-                                { label: '在管产品数', value: '24 只' },
-                                { label: '成立日期', value: '2015-07-22' },
-                                { label: '备案编号', value: 'P1063287' }
+                                { label: '证券代码', value: CHENMING_STOCK_CODE },
+                                { label: '行业分类', value: '先进制造 / 装备制造' },
+                                { label: '年营收规模', value: '20.00亿元（2025年报）' },
+                                { label: '合作意图', value: '融资扩产（资本性支出缺口约3.2亿元）' }
                             ]
                         },
                         {
-                            section: '业绩指标（近12月）',
+                            section: '方案要素（草案）',
                             items: [
-                                { label: '组合收益率', value: '+9.8%' },
-                                { label: '最大回撤', value: '-4.2%' },
-                                { label: '夏普比率', value: '1.36' },
-                                { label: '年化波动率', value: '11.5%' }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    name: '星云并购基金',
-                    type: '机构客户',
-                    dimensions: [
-                        {
-                            section: '基金概况',
-                            items: [
-                                { label: '基金规模', value: '15.00 亿元' },
-                                { label: '已投项目数', value: '6 个' },
-                                { label: '剩余可投金额', value: '4.20 亿元' },
-                                { label: '基金到期日', value: '2028-12-31' }
-                            ]
-                        },
-                        {
-                            section: '在投项目（TOP3）',
-                            items: [
-                                { label: '项目A', value: '投资 2.50 亿元 / 持股 18.0%' },
-                                { label: '项目B', value: '投资 1.80 亿元 / 持股 22.5%' },
-                                { label: '项目C', value: '投资 1.20 亿元 / 持股 15.0%' }
+                                { label: '拟采用业务', value: '定增' },
+                                { label: '发行规模', value: '3.00亿元（净资产20%与3亿元孰低）' },
+                                { label: '募资用途', value: '智能产线扩产70% + 补流30%' },
+                                { label: '方案支持', value: '张明（工号8012）' }
                             ]
                         }
                     ]
@@ -986,48 +1097,25 @@
             ],
             4: [
                 {
-                    name: '某省城投集团',
-                    type: '机构客户',
+                    name: CHENMING_COMPANY_FULL,
+                    type: '上市公司',
                     dimensions: [
                         {
-                            section: '主体评级',
+                            section: '服务背景',
                             items: [
-                                { label: '主体信用评级', value: 'AAA' },
-                                { label: '评级机构', value: '中诚信国际' },
-                                { label: '评级日期', value: '2026-03-15' },
-                                { label: '展望', value: '稳定' }
+                                { label: '证券代码', value: CHENMING_STOCK_CODE },
+                                { label: '合作年限', value: '5年' },
+                                { label: '当前诉求', value: '融资扩产配套服务' },
+                                { label: '最近沟通', value: '2026-06-10 融资方案沟通' }
                             ]
                         },
                         {
-                            section: '债务概况',
+                            section: '待跟进事项',
                             items: [
-                                { label: '有息负债总额', value: '428.60 亿元' },
-                                { label: '一年内到期', value: '86.20 亿元（20.1%）' },
-                                { label: '综合融资成本', value: '4.35%' },
-                                { label: '现金短债比', value: '1.28 倍' }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    name: '客户李四（私募签约）',
-                    type: '个人客户',
-                    dimensions: [
-                        {
-                            section: '签约信息',
-                            items: [
-                                { label: '签约产品', value: '星云稳健1号私募证券投资基金' },
-                                { label: '签约金额', value: '500.00 万元' },
-                                { label: '签约日期', value: '2026-06-10' },
-                                { label: '产品封闭期', value: '12 个月' }
-                            ]
-                        },
-                        {
-                            section: '账户表现',
-                            items: [
-                                { label: '当前净值', value: '1.0326' },
-                                { label: '成立以来收益率', value: '+3.26%' },
-                                { label: '持仓份额', value: '484,200.00 份' }
+                                { label: '材料催办', value: '近3期审计报告、股东名册' },
+                                { label: '买方对接', value: '路演名单与NDA待签署' },
+                                { label: '信披预检', value: '前次募集资金使用情况' },
+                                { label: '服务经理', value: '张明（工号8012）' }
                             ]
                         }
                     ]
@@ -1045,7 +1133,62 @@
 
     function getDemoOutputsByAssistant(assistantIndex, payload, userMessage) {
         const ts = new Date().toLocaleString('zh-CN', { hour12: false });
+        const isChenming = isChenmingRelatedMessage(userMessage)
+            || /陈明精工|603882/.test(String(userMessage || ''))
+            || assistantIndex === 2
+            || assistantIndex === 4;
         const base = `任务：${userMessage}\n业务：${payload.bizName || '—'}\n模型：${payload.model || '—'}\n生成时间：${ts}\n`;
+
+        if (assistantIndex === 2 && isChenming) {
+            return [
+                {
+                    title: `${CHENMING_COMPANY_SHORT}-定增方案草案`,
+                    type: 'PDF',
+                    fileKind: 'pdf',
+                    fileName: `${CHENMING_COMPANY_SHORT}-定增方案草案.pdf`,
+                    sizeBytes: 2_180_000,
+                    modifiedAt: ts,
+                    content: `${base}\n【方案摘要】\n- 发行规模3.00亿元\n- 募资用途：智能产线扩产+补流\n- 认购安排与时间安排`,
+                    downloadText: `${base}\n（演示版PDF文本内容）`
+                },
+                {
+                    title: `${CHENMING_COMPANY_SHORT}-方案设计执行清单`,
+                    type: 'Word',
+                    fileKind: 'word',
+                    fileName: `${CHENMING_COMPANY_SHORT}-方案设计执行清单.docx`,
+                    sizeBytes: 720_000,
+                    modifiedAt: ts,
+                    content: `${base}\n【执行清单】\n1. 材料补齐\n2. 内部立项\n3. 认购沟通\n4. 发行窗口研判`,
+                    downloadText: `${base}\n（演示版Word文本内容）`
+                }
+            ];
+        }
+
+        if (assistantIndex === 4 && isChenming) {
+            return [
+                {
+                    title: `${CHENMING_COMPANY_SHORT}-客户服务跟进清单`,
+                    type: 'Word',
+                    fileKind: 'word',
+                    fileName: `${CHENMING_COMPANY_SHORT}-客户服务跟进清单.docx`,
+                    sizeBytes: 580_000,
+                    modifiedAt: ts,
+                    content: `${base}\n【跟进事项】\n- 材料催办\n- 买方对接\n- 信披预检\n- 窗口期沟通`,
+                    downloadText: `${base}\n（演示版Word文本内容）`
+                },
+                {
+                    title: `${CHENMING_COMPANY_SHORT}-买方匹配简版`,
+                    type: 'PDF',
+                    fileKind: 'pdf',
+                    fileName: `${CHENMING_COMPANY_SHORT}-买方匹配简版.pdf`,
+                    sizeBytes: 1_560_000,
+                    modifiedAt: ts,
+                    content: `${base}\n【买方候选】\n- 产业协同买方3家\n- 首轮接触建议\n- 待确认事项`,
+                    downloadText: `${base}\n（演示版PDF文本内容）`
+                }
+            ];
+        }
+
         return [
             {
                 title: `${payload.bizName || '业务'}分析报告`,
@@ -1194,13 +1337,15 @@
         }
 
         const intent = matchIntentFromMessage(message, assistantIndex);
-        const payload = resolveAnalysisPayloadFromIntent(assistantIndex, intent);
+        let payload = resolveAnalysisPayloadFromIntent(assistantIndex, intent);
+        if (assistantIndex === 2 && (isChenmingRelatedMessage(message) || !intent?.bizKey)) {
+            payload = resolveChenmingDesignPayload();
+        }
         deliverResult(panel, assistantIndex, payload, message);
     }
 
     function usesIbModelGuide(assistantIndex) {
-        const column = getAssistantColumn(assistantIndex);
-        return column === 'analysis' || column === 'design' || column === 'validation';
+        return assistantIndex === 3;
     }
 
     function getGuideWelcomeText(assistantIndex) {
@@ -1208,9 +1353,9 @@
         const lines = {
             0: `**客户分析助手**\n\n从资产、行为、交易、合作记录等维度量化分析客户价值与风险。\n\n输入示例：帮我分析陈明精工这家公司`,
             1: `**业务分析助手**\n\n基于业务分析模型（${tagline}）自动识别意图并直接生成结果卡片。`,
-            2: `**方案生成助手**\n\n基于方案设计模型（${tagline}）自动识别意图并直接生成结果卡片。`,
+            2: `**方案生成助手**\n\n基于方案设计模型（${tagline}）为陈明精工等客户生成定增/发行方案草案，自动识别意图并直接生成结果卡片。`,
             3: `**交叉验证助手**\n\n基于交叉验证模型（${tagline}）自动识别意图并直接生成结果卡片。`,
-            4: `**客户服务助手**\n\n处理买方分析、信披判断、临时公告生成等任务。点选提示词或输入事项，直接生成处理结果。`
+            4: `**客户服务助手**\n\n围绕陈明精工等服务对象，处理买方分析、信披判断、服务事项梳理等任务，直接生成处理结果。`
         };
         const assistant = window.getEmployeeAssistant?.(assistantIndex);
         return lines[assistantIndex] || `**${assistant?.name || '助手'}**\n\n说明当前能力与操作入口。`;
