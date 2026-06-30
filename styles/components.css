@@ -1763,6 +1763,11 @@ body.support-tab-active .center-agents-grid .avatar-img-wrap {
     overflow: visible;
 }
 
+/* 信用业务助理（Avatar9）在业务支持中心与员工工作台一致：裁切放大去掉素材白圈 */
+body.support-tab-active .center-agents-grid .avatar-item[data-avatar-type="credit"] .avatar-img-wrap {
+    overflow: hidden;
+}
+
 body.support-tab-active .center-agents-grid .avatar-task-badge {
     top: -5px;
     right: -5px;
