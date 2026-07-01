@@ -507,7 +507,7 @@
                 name: payloadOrName.name || '未命名客户',
                 type: payloadOrName.type || '客户',
                 dimensions: payloadOrName.dimensions || getDefaultCustomerDimensions(payloadOrName.name, payloadOrName.type),
-                source: payloadOrName.source || '业务团队工作台',
+                source: payloadOrName.source || '员工工作台',
                 time: payloadOrName.time || new Date().toLocaleString('zh-CN', { hour12: false })
             };
         }
@@ -516,7 +516,7 @@
             name: payloadOrName || '未命名客户',
             type: type || '客户',
             dimensions: getDefaultCustomerDimensions(payloadOrName, type),
-            source: '业务团队工作台',
+            source: '员工工作台',
             time: new Date().toLocaleString('zh-CN', { hour12: false })
         };
     }
@@ -589,7 +589,7 @@
         if (dimensionsEl) {
             dimensionsEl.innerHTML = buildCustomerDimensionsHtml(item.dimensions);
         }
-        document.getElementById('context-customer-detail-source').textContent = `来源：${item.source || '业务团队工作台'}`;
+        document.getElementById('context-customer-detail-source').textContent = `来源：${item.source || '员工工作台'}`;
         document.getElementById('context-customer-detail-time').textContent = `关联时间：${item.time || ''}`;
 
         drawer.hidden = false;

@@ -723,6 +723,14 @@ body.support-tab-active .sidebar-scroll {
     line-height: 1.35;
 }
 
+.support-task-group-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
 .support-task-group .support-daily-task-chevron {
     width: 14px;
     height: 14px;

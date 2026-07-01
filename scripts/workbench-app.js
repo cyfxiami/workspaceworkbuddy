@@ -1,4 +1,4 @@
-﻿    // 登录处理函数
+    // 登录处理函数
     function handleLogin() {
         alert('登录功能即将上线，敬请期待！');
     }
@@ -32,12 +32,6 @@
             'quant': '量化业务助理'
         };
         const avatarName = avatarNames[avatarType] || '业务助理';
-        
-        // 如果是资管业务助理，打开资管业务支持中心对话页面（徽商银行）
-        if (avatarType === 'asset') {
-            openAssetSupportDetail('徽商银行');
-            return;
-        }
         
         alert(`正在连接${avatarName}...\n\n数字人对话功能即将上线！`);
     }
@@ -497,7 +491,7 @@
                 '梳理定增项目关键审批流程',
                 '对比近期同行业IPO定价策略'
             ],
-            getReply: (msg) => `您好，我是投行业务助理。关于「${msg}」，我将从项目尽调、发行方案、合规审查等维度为您提供支持。请补充具体项目名称或客户信息，以便进一步分析。`
+            getReply: (msg) => `关于「${msg}」，我将从项目尽调、发行方案、合规审查等维度为你提供支持。请补充具体项目名称或客户信息，以便进一步分析。`
         },
         {
             id: 'asset',
@@ -512,7 +506,7 @@
                 '梳理私募产品投资者准入认定流程（金融资产≥300万元）',
                 '撰写资管产品路演材料提纲'
             ],
-            getReply: (msg) => `您好，我是资管业务助理。针对「${msg}」，我可以协助您完成产品设计、风险匹配与合规要点梳理。请告诉我目标客户类型与产品方向。`
+            getReply: (msg) => `针对「${msg}」，我可以协助你完成产品设计、风险匹配与合规要点梳理。请告诉我目标客户类型与产品方向。`
         },
         {
             id: 'retail',
@@ -527,7 +521,7 @@
                 '撰写理财产品营销话术要点',
                 '分析近期活跃客户交易行为特征'
             ],
-            getReply: (msg) => `您好，我是零售业务助理。关于「${msg}」，我将结合客户分析结果与业务规则为您提供建议。请补充客户基本情况。`
+            getReply: (msg) => `关于「${msg}」，我将结合客户分析结果与业务规则为你提供建议。请补充客户基本情况。`
         },
         {
             id: 'invest',
@@ -542,7 +536,7 @@
                 '分析宏观政策对某板块的影响',
                 '整理投研会议纪要关键结论'
             ],
-            getReply: (msg) => `您好，我是投资业务助理。针对「${msg}」，我将从对比对象、比较维度、资产负债与现金流等方面协助您。请提供具体行业或标的名称。`
+            getReply: (msg) => `针对「${msg}」，我将从对比对象、比较维度、资产负债与现金流等方面协助你。请提供具体行业或标的名称。`
         },
         {
             id: 'sales',
@@ -557,7 +551,7 @@
                 '对比同类债券发行利率水平',
                 '整理机构客户分级服务体系'
             ],
-            getReply: (msg) => `您好，我是销交业务助理。关于「${msg}」，我可以协助整理对接流程、路演材料与交易策略。请说明具体业务场景。`
+            getReply: (msg) => `关于「${msg}」，我可以协助整理对接流程、路演材料与交易策略。请说明具体业务场景。`
         },
         {
             id: 'institution',
@@ -572,7 +566,7 @@
                 '整理跨境业务合作合规要点',
                 '分析重点机构客户业务渗透空间'
             ],
-            getReply: (msg) => `您好，我是机构业务助理。针对「${msg}」，我将协助您完成准入材料、合作方案与客户分析。请提供机构客户名称。`
+            getReply: (msg) => `针对「${msg}」，我将协助你完成准入材料、合作方案与客户分析。请提供机构客户名称。`
         },
         {
             id: 'research',
@@ -587,7 +581,7 @@
                 '生成Research Memo研究提纲',
                 '汇总最新政策对行业影响分析'
             ],
-            getReply: (msg) => `您好，我是研究业务助理。关于「${msg}」，我将从资产负债、现金流、资产配置及对比维度等方面协助您。请提供具体研究主题或标的。`
+            getReply: (msg) => `关于「${msg}」，我将从资产负债、现金流、资产配置及对比维度等方面协助你。请提供具体研究主题或标的。`
         },
         {
             id: 'credit',
@@ -602,7 +596,7 @@
                 '撰写信用风险预警报告框架',
                 '对比同业信用业务产品方案'
             ],
-            getReply: (msg) => `您好，我是信用业务助理。针对「${msg}」，我将从授信评估、风险监控、合规审查等维度为您提供支持。请补充客户或项目基本情况。`
+            getReply: (msg) => `针对「${msg}」，我将从授信评估、风险监控、合规审查等维度为你提供支持。请补充客户或项目基本情况。`
         },
         {
             id: 'verify',
@@ -617,7 +611,7 @@
                 '验证定价模型关键参数与公开数据一致性',
                 '比对招股书与公开披露信息差异'
             ],
-            getReply: (msg) => `您好，我是交叉验证助理。关于「${msg}」，我将从数据一致性、结论复核、合规核验等维度为您交叉验证。请提供需验证的材料或数据来源。`
+            getReply: (msg) => `关于「${msg}」，我将从数据一致性、结论复核、合规核验等维度为你交叉验证。请提供需验证的材料或数据来源。`
         }
     ];
 
@@ -631,13 +625,13 @@
 
     function getOrgDefaultPromptReply(message) {
         const replies = {
-            '请示事项：帮我汇总本周待审批请示事项，并跟踪流转进度': '您好，这里是组织协同管理平台。我已收到您的请示事项查询，可为您汇总本周待审批事项清单、跟踪各节点流转进度，并提醒即将到期的关键审批。请说明具体请示类型、涉及部门或优先级，我将为您整理明细。',
-            '经营看板：展示各业务条线核心经营指标、收入成本与同比环比趋势': '您好，这里是组织协同管理平台。我可以为您展示投行、资管、经纪等各业务条线的核心经营指标，包括收入、成本、利润及同比环比变化趋势。请告诉我您关注的业务条线、统计口径或时间范围（如本月、本季度）。',
-            '风险提示：汇总当前合规、操作与市场等各类风险提示清单': '您好，这里是组织协同管理平台。我可以汇总当前需关注的合规风险、操作风险与市场风险预警信息，并按优先级分类展示。请说明您需要查看的风险类别（如合规、信用、流动性等）或关注范围。',
-            '队伍状况：查看各部门人员配置、出勤情况与团队绩效概况': '您好，这里是组织协同管理平台。我可以提供各部门人员编制、在岗出勤、梯队结构及绩效达成概况，帮助您掌握队伍运行状态。请告诉我您需要了解的部门、团队或管理层级范围。',
-            '应急组织：展示应急预案、应急联络机制与当前响应状态': '您好，这里是组织协同管理平台。我可以展示现有应急预案、各层级应急联络机制及当前响应状态，协助您快速掌握应急组织运行情况。请说明需要查看的应急场景或事件类型（如系统故障、舆情、业务中断等）。'
+            '请示事项：帮我汇总本周待审批请示事项，并跟踪流转进度': '你好，这里是组织协同管理平台。我已收到你的请示事项查询，可为你汇总本周待审批事项清单、跟踪各节点流转进度，并提醒即将到期的关键审批。请说明具体请示类型、涉及部门或优先级，我将为你整理明细。',
+            '经营看板：展示各业务条线核心经营指标、收入成本与同比环比趋势': '你好，这里是组织协同管理平台。我可以为你展示投行、资管、经纪等各业务条线的核心经营指标，包括收入、成本、利润及同比环比变化趋势。请告诉我你关注的业务条线、统计口径或时间范围（如本月、本季度）。',
+            '风险提示：汇总当前合规、操作与市场等各类风险提示清单': '你好，这里是组织协同管理平台。我可以汇总当前需关注的合规风险、操作风险与市场风险预警信息，并按优先级分类展示。请说明你需要查看的风险类别（如合规、信用、流动性等）或关注范围。',
+            '队伍状况：查看各部门人员配置、出勤情况与团队绩效概况': '你好，这里是组织协同管理平台。我可以提供各部门人员编制、在岗出勤、梯队结构及绩效达成概况，帮助你掌握队伍运行状态。请告诉我你需要了解的部门、团队或管理层级范围。',
+            '应急组织：展示应急预案、应急联络机制与当前响应状态': '你好，这里是组织协同管理平台。我可以展示现有应急预案、各层级应急联络机制及当前响应状态，协助你快速掌握应急组织运行情况。请说明需要查看的应急场景或事件类型（如系统故障、舆情、业务中断等）。'
         };
-        return replies[message] || `您好，这里是组织协同管理平台。关于「${message}」，我将从组织协同视角为您提供支持。您也可以先选择上方业务助理获得更专业的协助。`;
+        return replies[message] || `你好，这里是组织协同管理平台。关于「${message}」，我将从组织协同视角为你提供支持。你也可以先选择上方业务助理获得更专业的协助。`;
     }
 
     function getActiveWorkbenchPanel() {
@@ -1795,7 +1789,7 @@
 
     function buildExceptionAssistantReplyHtml(item, action) {
         const categoryLabel = getExceptionCategoryLabel(item.category);
-        const header = `<p>您好，我是<strong>异常提醒助手</strong>。以下为您汇总「${escapeHtmlText(item.title)}」${categoryLabel}信息：</p>`;
+        const header = `<p>以下为你汇总「${escapeHtmlText(item.title)}」${categoryLabel}信息：</p>`;
         const meta = `
             <p><strong>异常类型：</strong>${categoryLabel}</p>
             <p><strong>责任部门/人员：</strong>${escapeHtmlText(item.dept || '—')}</p>
@@ -1834,7 +1828,7 @@
                 <li>同步合规、风控及相关负责人</li>
                 <li>制定处置方案并在截止节点前提交结论</li>
             </ul>
-            <p>如需我继续协助撰写说明、安排会商或推进审批，请直接告知。</p>`;
+            <p>如需继续协助撰写说明、安排会商或推进审批，直接告知。</p>`;
     }
 
     function sendSupportExceptionAlert(item, action) {
@@ -2332,7 +2326,7 @@
         if (!items.length) {
             return '<p>当前暂无异常提醒。</p>';
         }
-        let html = `<p>您好，我是<strong>异常提醒助手</strong>。以下是当前全部 <strong>${items.length}</strong> 项异常提醒：</p>`;
+        let html = `<p>以下是当前全部 <strong>${items.length}</strong> 项异常提醒：</p>`;
         items.forEach((item, index) => {
             html += `<p class="support-chat-todo-line support-chat-todo-title">${index + 1}. <button type="button" class="support-chat-todo-trigger support-exception-item-trigger" data-exception-title="${escapeHtmlAttr(item.title)}"><strong>${escapeHtmlText(item.title)}</strong></button>${item.dept ? ` <span class="support-exception-dept">（${escapeHtmlText(item.dept)}）</span>` : ''}</p>`;
             if (item.desc) {
@@ -2348,9 +2342,9 @@
 
     function buildSupportExceptionReplyHtml(item) {
         if (!item) {
-            return `<p>已收到，我将为您汇总相关背景、影响范围与建议处置步骤。</p>`;
+            return `<p>已收到，我将为你汇总相关背景、影响范围与建议处置步骤。</p>`;
         }
-        return `<p>已收到，正在协助您处理<strong>${escapeHtmlText(item.title)}</strong>。</p>
+        return `<p>已收到，正在协助你处理<strong>${escapeHtmlText(item.title)}</strong>。</p>
             <p><strong>责任部门：</strong>${escapeHtmlText(item.dept || '—')}</p>
             <p>${escapeHtmlText(item.desc || '')}</p>
             <p><strong>当前状态：</strong>${escapeHtmlText(item.status || '待处理')}</p>
@@ -2438,7 +2432,7 @@
         if (base?.welcomeText) {
             return markdownToHtml(base.welcomeText.replace(/^\*\*[^*]+\*\*/, `**${agent.name}**`));
         }
-        return markdownToHtml(`**${agent.name}**\n\n${agent.desc || '我将为您提供相关支持。'}\n\n请直接输入具体事项或相关材料。`);
+        return markdownToHtml(`**${agent.name}**\n\n${agent.desc || '我将为你提供相关支持。'}\n\n请直接输入具体事项或相关材料。`);
     }
 
     function appendEmployeeCatalogAssistantWelcome(agent, panel, options = {}) {
@@ -3360,12 +3354,12 @@
 
     function getSupportWorkbenchAssistantReply(message) {
         if (/异常|提醒|预警|风险/.test(message)) {
-            return `**工作台助手**\n\n您的问题更适合由「异常提醒助手」处理。可点选下方「异常提醒」标签切换。\n\n关于「${message}」，我已记录需求，请补充更多背景信息以便跟进。`;
+            return `**工作台助手**\n\n你的问题更适合由「异常提醒助手」处理。可点选下方「异常提醒」标签切换。\n\n关于「${message}」，我已记录需求，请补充更多背景信息以便跟进。`;
         }
         if (/待办|任务|协同|跟进|今日/.test(message)) {
-            return `**工作台助手**\n\n您的问题更适合由「今日任务助手」处理。可点选下方「今日任务」标签切换。\n\n关于「${message}」，我已记录需求，请补充更多背景信息以便跟进。`;
+            return `**工作台助手**\n\n你的问题更适合由「今日任务助手」处理。可点选下方「今日任务」标签切换。\n\n关于「${message}」，我已记录需求，请补充更多背景信息以便跟进。`;
         }
-        return `**工作台助手**\n\n关于「${message}」，我已收到您的需求。\n\n可选下方「今日任务」「异常提醒」等助手标签；也可继续描述，我帮您协调处理。`;
+        return `**工作台助手**\n\n关于「${message}」，我已收到你的需求。\n\n可选下方「今日任务」「异常提醒」等助手标签；也可继续描述，我帮你协调处理。`;
     }
 
     function handleSupportAssistantMessage(message, panel) {
@@ -3630,6 +3624,7 @@
                 const expanded = !collapsedSupportTaskGroups.has(agentId);
                 html += `<section class="support-task-group${expanded ? ' is-expanded' : ''}" data-agent-id="${escapeHtmlAttr(agentId)}">
                     <button type="button" class="support-task-group-toggle" aria-expanded="${expanded}">
+                        <img src="${escapeHtml(agent.image)}" alt="${escapeHtmlText(agent.name)}" class="support-task-group-avatar">
                         <span class="support-task-group-label">${escapeHtmlText(agent.name)}（${allTasks.length}项待办）</span>
                         ${getSupportDailyTaskChevronHtml()}
                     </button>
@@ -3654,7 +3649,7 @@
             });
         });
         if (options.forChatCard) {
-            html += '<p>点击任务项发送到对话框，我将协助您推进处理。</p>';
+            html += '<p>点击任务项发送到对话框，协助推进处理。</p>';
         } else {
             html += '<p>请点击任务项，或选择带角标的业务助理头像，快速发起对话。</p>';
         }
@@ -3664,11 +3659,11 @@
     function buildSupportAgentTasksGuideHtml(agentId) {
         const agent = getSupportAgent(agentId);
         const allTasks = getSupportAgentAllTasks(agentId);
-        let html = `<p>您好，我是${getSupportAgentIntroHtml(agentId)}。您有 <strong>${allTasks.length}</strong> 项今日待办，建议优先处理：</p>`;
+        let html = `<p>你有 <strong>${allTasks.length}</strong> 项今日待办，建议优先处理：</p>`;
         allTasks.forEach((task, index) => {
             html += buildSupportTodoLineGuideHtml(agentId, task, index);
         });
-        html += '<p>请在下方对话框输入具体待办内容，或<strong>直接点击</strong>上方待办文字快速发送，我将协助您推进处理。</p>';
+        html += '<p>请在下方对话框输入具体待办内容，或<strong>直接点击</strong>上方待办文字快速发送，协助推进处理。</p>';
         return html;
     }
 
@@ -3875,6 +3870,9 @@
         if (agentMeta.id === SUPPORT_INPUT_AGENT_DAILY_TASK) {
             return buildEmployeeBotAvatarHtml('今日任务助手', 'tasks');
         }
+        if (agentMeta.image) {
+            return `<div class="chat-avatar support-chat-avatar"><img src="${escapeHtml(agentMeta.image)}" alt="${escapeHtmlText(agentMeta.name || '')}"></div>`;
+        }
         const name = getEmployeeAssistantDisplayName(agentMeta, WORKBENCH_ASSISTANT.name);
         const avatarKey = getEmployeeAssistantAvatarKey(agentMeta);
         return buildEmployeeBotAvatarHtml(name, avatarKey);
@@ -3987,19 +3985,19 @@
     }
 
     function buildSupportStepReplyHtml(task, agentId, stepText) {
-        let html = `<p>好的，我来协助您推进「${escapeHtmlText(task.title)}」中的：<strong>${escapeHtmlText(stepText)}</strong>。</p>`;
+        let html = `<p>好的，我来协助你推进「${escapeHtmlText(task.title)}」中的：<strong>${escapeHtmlText(stepText)}</strong>。</p>`;
         html += '<p><strong>执行建议</strong></p><ul class="chat-md-list support-task-exec-steps">';
         supportExecSuggestions.forEach(execStep => {
             html += `<li>${buildSupportTodoTriggerHtml(agentId, task, execStep, stepText, 'exec')}</li>`;
         });
-        html += '</ul><p>您可<strong>直接点击</strong>上方执行建议快速发送，我将协助您推进处理；也可在对话框继续输入具体事项。</p>';
+        html += '</ul><p>你可<strong>直接点击</strong>上方执行建议快速发送，协助推进处理；也可在对话框继续输入具体事项。</p>';
         return html;
     }
 
     function buildSupportExecStepReplyHtml(task, agentId, parentStepText, execStepText) {
-        let html = `<p>收到，我是${getSupportAgentIntroHtml(agentId)}。正在协助您处理「${escapeHtmlText(task.title)}」—「${escapeHtmlText(parentStepText)}」中的：<strong>${escapeHtmlText(execStepText)}</strong>。</p>`;
+        let html = `<p>收到，我是${getSupportAgentIntroHtml(agentId)}。正在协助你处理「${escapeHtmlText(task.title)}」—「${escapeHtmlText(parentStepText)}」中的：<strong>${escapeHtmlText(execStepText)}</strong>。</p>`;
         html += getSupportExecProcessingHtml(task, parentStepText, execStepText);
-        html += '<p>如需我继续帮您起草文档、整理清单或安排会议，请直接告诉我。</p>';
+        html += '<p>如需我继续帮你起草文档、整理清单或安排会议，请直接告诉我。</p>';
         return html;
     }
 
@@ -4042,11 +4040,11 @@
                     <li>相关文档链接或附件清单，便于团队查阅跟踪</li>
                 </ul>`
         };
-        return maps[execStepText] || `<p>我将围绕「${escapeHtmlText(execStepText)}」为您梳理处理思路，请补充更多具体信息以便进一步协助。</p>`;
+        return maps[execStepText] || `<p>我将围绕「${escapeHtmlText(execStepText)}」为你梳理处理思路，请补充更多具体信息以便进一步协助。</p>`;
     }
 
     function buildSupportTaskReplyHtml(task, agentId) {
-        let html = `<p>您好，我是${getSupportAgentIntroHtml(agentId)}。已收到您关于「${escapeHtmlText(task.title)}」的跟进请求。</p>`;
+        let html = `<p>已收到你关于「${escapeHtmlText(task.title)}」的跟进请求。</p>`;
         html += `<p><strong>任务概况</strong><br>${escapeHtmlText(task.description)}</p>`;
         html += '<p><strong>已完成步骤</strong></p><ul class="chat-md-list support-task-steps-list">';
         task.completedSteps.forEach(step => {
@@ -4056,7 +4054,7 @@
         task.nextSteps.forEach(step => {
             html += `<li>${buildSupportTodoTriggerHtml(agentId, task, step, step, 'step')}</li>`;
         });
-        html += '</ul><p>如需我协助撰写材料、安排会议或推进审批，请直接点击上方建议步骤，或在对话框告诉我。</p>';
+        html += '</ul><p>如需协助撰写材料、安排会议或推进审批，请直接点击上方建议步骤，或在对话框输入。</p>';
         return html;
     }
 
@@ -4130,7 +4128,7 @@
     function getSupportTaskReply(task, agentId) {
         const done = task.completedSteps.map(s => `• ${s}`).join('\n');
         const next = task.nextSteps.map(s => `• ${s}`).join('\n');
-        return `您好，我是${getSupportAgentDisplayLabel(agentId)}。已收到您关于「${task.title}」的跟进请求。\n\n**任务概况**\n${task.description}\n\n**已完成步骤**\n${done}\n\n**建议下一步**\n${next}\n\n如需我协助撰写材料、安排会议或推进审批，请直接告诉我。`;
+        return `已收到你关于「${task.title}」的跟进请求。\n\n**任务概况**\n${task.description}\n\n**已完成步骤**\n${done}\n\n**建议下一步**\n${next}\n\n如需协助撰写材料、安排会议或推进审批，请直接输入。`;
     }
 
     function getSupportAgentReply(message, agentId) {
@@ -4140,14 +4138,14 @@
                 for (const task of getSupportAgentAllTasks(id)) {
                     const matchedStep = task.nextSteps.find(step => message.includes(step) || step.includes(message));
                     if (matchedStep || message.includes(task.title)) {
-                        return `您好，该待办属于**${getSupportAgentDisplayLabel(id)}**。\n\n` + getSupportTaskReply(task, id).replace(/^您好[^\n]+\n\n/, '');
+                        return `你好，该待办属于**${getSupportAgentDisplayLabel(id)}**。\n\n` + getSupportTaskReply(task, id).replace(/^你好[^\n]+\n\n/, '');
                     }
                 }
             }
             const badgeHint = supportBadgeAgentIds.map(id => {
                 return `**${getSupportAgentDisplayLabel(id)}**（${getSupportAgentTaskCount(id)}）`;
             }).join('、');
-            return `您好，我已收到您的消息。您可在上方点击${badgeHint}选择对应助理；也可直接在对话框输入具体待办内容，我将协助您跟进处理。`;
+            return `你好，我已收到你的消息。你可在上方点击${badgeHint}选择对应助理；也可直接在对话框输入具体待办内容，我将协助你跟进处理。`;
         }
         const supportState = getPanelState(document.getElementById('workbench-panel-support'));
         const task = supportState?.currentTask;
@@ -4155,16 +4153,16 @@
             return getSupportTaskReply(task, agentId || supportState.currentTaskAgentId);
         }
         if (agentId === SUPPORT_INPUT_AGENT_DAILY_TASK) {
-            return `您好，我是今日任务助手。关于「${message}」，我将为您汇总待办并协助跟进处理。请补充具体事项或相关材料。`;
+            return `关于「${message}」，我将为你汇总待办并协助跟进处理。请补充具体事项或相关材料。`;
         }
         if (agentId === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
-            return `您好，我是异常提醒助手。关于「${message}」，我将为您汇总需关注的异常并协助推进处理。请补充具体事项或相关材料。`;
+            return `关于「${message}」，我将为你汇总需关注的异常并协助推进处理。请补充具体事项或相关材料。`;
         }
         const extra = getExtraAssistantById(agentId);
         if (extra) {
             return getAssistantReply(message, 0, null, { chatIndex: extra.chatIndex });
         }
-        return `您好，我是${getSupportAgentDisplayLabel(agentId)}。关于「${message}」，我将结合当前任务进展为您提供支持。请补充具体事项或相关材料。`;
+        return `关于「${message}」，我将结合当前任务进展为你提供支持。请补充具体事项或相关材料。`;
     }
 
     function customizeOrgPanel(panel) {
@@ -4833,7 +4831,7 @@
             name: '客户分析助手',
             emoji: '🧠',
             avatarClass: 'canmou',
-            welcomeText: `**客户分析助手**\n\n从资产、行为、交易、合作记录等维度分析客户价值与风险，并结合客户情况推荐投行业务机会。\n\n**【我能帮您】**\n1. 客户综合分析 — 描述客户情况，输出业务机会推荐\n2. 操作指引与材料清单 — 获取步骤与尽调材料要求\n3. 对接支持人员 — 查询各业务投行专业人员\n\n请直接描述您的客户情况，我开始协助您。`
+            welcomeText: `**客户分析助手**\n\n从资产、行为、交易、合作记录等维度分析客户价值与风险，并结合客户情况推荐投行业务机会。\n\n**【我能帮你】**\n1. 客户综合分析 — 描述客户情况，输出业务机会推荐\n2. 操作指引与材料清单 — 获取步骤与尽调材料要求\n3. 对接支持人员 — 查询各业务投行专业人员\n\n请直接描述你的客户情况，我开始协助你。`
         },
         {
             index: 1,
@@ -4888,7 +4886,7 @@
         name: '工作台助手',
         emoji: '💼',
         avatarClass: 'workbench',
-        welcomeText: `**工作台助手**\n\n我是您的工作台助手，可帮您协调各业务助手、处理通用工作台事务。\n\n如需专业分析，可点选下方助手标签切换；也可直接描述需求，我来协助您。`
+        welcomeText: `**工作台助手**\n\n我是你的工作台助手，可帮你协调各业务助手、处理通用工作台事务。\n\n如需专业分析，可点选下方助手标签切换；也可直接描述需求，我来协助你。`
     };
 
     const EMPLOYEE_ASSISTANT_AVATAR_NAME_MAP = {
@@ -4989,7 +4987,7 @@
 | 陈明精工融资扩产配套材料提交 | 部门负责人审批 | 1 个工作日内 |
 | 零售团队差异化费率方案 | 合规复核 | 2 个工作日内 |
 
-如需催办某一事项，请直接告知事项名称。`;
+如需催办某一事项，可直接告知事项名称。`;
     }
 
     function buildNoticeDocumentSummaryReply(message) {
@@ -5007,7 +5005,7 @@
 - **《投行业务材料报送管理办法（2026修订）》**（投行〔2026〕12号）：更新尽调材料清单、电子归档路径及报送时限，6月24日起执行。
 - **《业务支持中心异常提醒处置指引》**（运管〔2026〕08号）：明确异常分级标准与闭环时限，要求一线于收到提醒后2个工作日内反馈处置进展。
 
-如需查看全文，请继续说明。`;
+如需查看全文，可继续说明。`;
     }
 
     function buildApprovalContextBundle() {
@@ -5402,9 +5400,9 @@
         const routedIndex = resolveEmployeeAssistantIndexFromMessage(message);
         const routedName = aiAssistants[routedIndex]?.name;
         if (routedName && shouldShowEmployeeRoutingToast(message)) {
-            return `**工作台助手**\n\n您的问题更适合由「${routedName}」处理。可点选下方对应助手标签切换。\n\n关于「${message}」，我已记录需求，请补充更多背景信息以便跟进。`;
+            return `**工作台助手**\n\n你的问题更适合由「${routedName}」处理。可点选下方对应助手标签切换。\n\n关于「${message}」，我已记录需求，请补充更多背景信息以便跟进。`;
         }
-        return `**工作台助手**\n\n关于「${message}」，我已收到您的需求。\n\n如需专业分析，可选下方助手标签；也可继续描述，我帮您协调处理。`;
+        return `**工作台助手**\n\n关于「${message}」，我已收到你的需求。\n\n如需专业分析，可选下方助手标签；也可继续描述，我帮你协调处理。`;
     }
 
     function isWorkbenchAssistantReplyText(text) {
@@ -7749,8 +7747,8 @@
             setTimeout(() => {
                 const agentId = getPanelState(panel).currentOrgAgent;
                 const reply = agentId
-                    ? `已收到文件「${file.name}」，我将结合${getOrgAgent(agentId).name}能力为您提取关键信息并协助处理。`
-                    : `已收到文件「${file.name}」，我将为您提取关键信息并协助后续处理。`;
+                    ? `已收到文件「${file.name}」，我将结合${getOrgAgent(agentId).name}能力为你提取关键信息并协助处理。`
+                    : `已收到文件「${file.name}」，我将为你提取关键信息并协助后续处理。`;
                 appendOrgChatMessage(reply, 'assistant', panel);
             }, 400);
             return;
@@ -7763,14 +7761,14 @@
                 setTimeout(() => {
                     if (isSupportWorkbenchAssistantMode(supportState)) {
                         appendSupportChatMessage(
-                            `**工作台助手**\n\n已收到文件「${file.name}」，我将为您提取关键信息并协助后续处理。`,
+                            `**工作台助手**\n\n已收到文件「${file.name}」，我将为你提取关键信息并协助后续处理。`,
                             'assistant',
                             panel,
                             { workbenchAssistant: true }
                         );
                     } else {
                         appendSupportAssistantReply(
-                            `已收到文件「${file.name}」，我将结合当前任务为您解析内容。`,
+                            `已收到文件「${file.name}」，我将结合当前任务为你解析内容。`,
                             getSupportInputReplyAgentId(supportState),
                             panel
                         );
@@ -7838,7 +7836,7 @@
             
             recognition.start();
         } else {
-            alert('您的浏览器不支持语音输入');
+            alert('你的浏览器不支持语音输入');
         }
     }
     
@@ -7867,7 +7865,7 @@
             <div class="toast-content">
                 <span class="toast-icon">🤖</span>
                 <div class="toast-text">
-                    <p class="toast-title">已识别您的意图</p>
+                    <p class="toast-title">已识别你的意图</p>
                     <p class="toast-detail">"${message.substring(0, 30)}${message.length > 30 ? '...' : ''}"</p>
                     <p class="toast-assistant">路由至 <strong>${assistantName}</strong></p>
                 </div>
@@ -8166,7 +8164,7 @@
             'bank': '银行客户',
             'enterprise': '企业客户'
         };
-        alert(`正在调整${typeNames[customerType]}的资讯内容...\n\n您可以：\n1. 选择/取消选择特定资讯\n2. 编辑资讯内容\n3. 添加自定义资讯\n\n调整完成后点击"发送"按钮推送至客户。`);
+        alert(`正在调整${typeNames[customerType]}的资讯内容...\n\n你可以：\n1. 选择/取消选择特定资讯\n2. 编辑资讯内容\n3. 添加自定义资讯\n\n调整完成后点击"发送"按钮推送至客户。`);
     }
     
     // 个人客户列表（用于发送资讯）
@@ -9005,7 +9003,7 @@
         }
 
         // 其他客户显示呼叫提示
-        alert(`📞 正在呼叫${centerName}...\n\n客户：${customerName}\n\n已通知相关支持人员，稍后将有专人与您对接！`);
+        alert(`📞 正在呼叫${centerName}...\n\n客户：${customerName}\n\n已通知相关支持人员，稍后将有专人与你对接！`);
 
         // 这里可以添加实际的通知逻辑，比如发送消息给后台
         console.log(`呼叫${centerName}，客户：${customerName}`);
@@ -9098,7 +9096,7 @@
                 <div class="dialogue-item system-answer" style="opacity: 0; animation: fadeInUp 0.5s ease forwards;">
                     <div class="dialogue-content">
                         <div class="dialogue-text">
-                            <p>这是介绍华创证券资管产品在股份制商业银行和城商行代销情况的报告，供您参考：</p>
+                            <p>这是介绍华创证券资管产品在股份制商业银行和城商行代销情况的报告，供你参考：</p>
                         </div>
                         <!-- 文档标识 -->
                         <div class="document-indicator">
@@ -9273,13 +9271,13 @@
             
             recognition.start();
         } else {
-            alert('您的浏览器不支持语音输入，请使用文字输入');
+            alert('你的浏览器不支持语音输入，请使用文字输入');
         }
     }
     
     // ========== AI大模型分析配置 ==========
     // 【重要】配置说明：
-    // 1. 如需使用真实大模型，请将 useMock 改为 false，并填入您的API密钥
+    // 1. 如需使用真实大模型，请将 useMock 改为 false，并填入你的API密钥
     // 2. 支持的提供商：doubao（豆包）、openai（GPT）、claude、wenxin（文心一言）、tongyi（通义千问）
     // 3. API密钥获取方式：
     //    - 豆包：https://www.volcengine.com/product/doubao
@@ -9633,7 +9631,7 @@
             <div class="analysis-section ai-summary">
                 <h5>🤖 AI参谋分析摘要</h5>
                 <div class="ai-thinking-box">
-                    <p class="ai-thinking-text">收到您的分析请求：「${input}」。我已启动多维度分析引擎，对该标的进行全面评估。以下是基于当前市场数据和历史趋势的初步分析结果。</p>
+                    <p class="ai-thinking-text">收到你的分析请求：「${input}」。我已启动多维度分析引擎，对该标的进行全面评估。以下是基于当前市场数据和历史趋势的初步分析结果。</p>
                 </div>
             </div>
             <div class="analysis-section">
@@ -9876,8 +9874,8 @@
         [/输入需求/g, '输入事项'],
         [/查询需求/g, '查询事项'],
         [/具体需求/g, '具体事项'],
-        [/您的需求/g, '您的意图'],
-        [/已识别您的需求/g, '已识别您的意图'],
+        [/你的需求/g, '你的意图'],
+        [/已识别你的需求/g, '已识别你的意图'],
         [/流动性需求/g, '流动性安排'],
         [/算力需求/g, '算力订单'],
         [/下游需求/g, '下游订单'],
@@ -9995,22 +9993,11 @@
             title: '基金定投缺口8户，待外呼权益类持仓≥60%且未开定投客户35人',
             summary: '完成率73%（22/30户），筛选条件：权益类持仓≥60%、未开通定投',
             content: '本月营业部基金定投新增签约目标30户，已完成22户，缺口8户，完成率73%。筛选存量客户：持有权益仓位≥60%的基金且未开通定投功能，共35人；该群体近12个月有权益类交易记录，近6个月同类客户定投签约率28%。建议按名单外呼，说明定投规则与操作步骤，于本月20日前补齐缺口8户。',
-            source: '业务团队工作台',
+            source: '员工工作台',
             sourceType: 'workbench',
             date: '2026-06-16',
             time: '11:15',
             timestamp: new Date('2026-06-16T11:15:00').getTime()
-        },
-        {
-            id: 'seed-5',
-            title: '客户周八（风险测评C1）持有R4产品，待出具不匹配警示书',
-            summary: '不匹配规则：C1客户持仓R4产品；需重测并出具警示书、系统留痕',
-            content: '客户周八两年前风险测评结果为保守型（C1），期间未更新测评。系统监测：当前持仓含「测试一号」私募基金（产品风险等级R4），触发规则「客户风险等级C1–C2不得持有R4及以上产品」。处理步骤：1）重新测评；2）若仍为C1，出具风险不匹配警示书并客户签字；3）扫描上传CRM留痕。',
-            source: '交叉验证助理',
-            sourceType: 'agent',
-            date: '2026-06-16',
-            time: '14:00',
-            timestamp: new Date('2026-06-16T14:00:00').getTime()
         },
         {
             id: 'seed-6',
@@ -10175,7 +10162,7 @@
         document.getElementById('employee-task-detail-title').textContent = task.title;
         document.getElementById('employee-task-detail-summary').textContent = task.summary || '暂无摘要';
         document.getElementById('employee-task-detail-content').textContent = task.content || '暂无事项内容';
-        document.getElementById('employee-task-detail-source').textContent = `来源：${task.source || '业务团队工作台'}`;
+        document.getElementById('employee-task-detail-source').textContent = `来源：${task.source || '员工工作台'}`;
         document.getElementById('employee-task-detail-time').textContent = `创建时间：${formatEmployeeTaskDateTime(task)}`;
 
         drawer.hidden = false;
@@ -10313,7 +10300,7 @@
             title,
             summary,
             content,
-            source: '业务团队工作台',
+            source: '员工工作台',
             sourceType: 'workbench',
             date,
             time,
