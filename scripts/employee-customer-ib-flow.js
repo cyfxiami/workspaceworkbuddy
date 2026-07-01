@@ -219,7 +219,7 @@
         else if (il.includes('建设')) purpose = '项目建设';
         const isListed = il.includes('上市公司');
         const info = ibExtractCustomerInfo(rawInput);
-        L.push('根据您提供的客户信息，我为您分析了以下投行业务机会：');
+        L.push('根据提供的客户信息，分析了以下投行业务机会：');
         L.push('');
         L.push('📊 业务推荐结果');
         L.push('');
@@ -263,7 +263,7 @@
         if (revenueStr) L.push('年营收' + revenueStr + '，高于同行业上市公司营收中位数12.6亿元');
         if (info.industry) L.push(info.industry + '行业内定增案例多，审核路径相对成熟');
         L.push('');
-        L.push('您可以继续问我：');
+        L.push('可以继续问：');
         L.push('');
         L.push('>>> 定增业务怎么做？— 获取详细的操作指引');
         L.push('>>> 定增找谁支持？— 直接对接投行支持人员');
@@ -414,7 +414,7 @@
 
     const COMPANY_DEMO_FULL = '陈明精工股份有限公司';
     const COMPANY_DEMO_SHORT = '陈明精工';
-    const BUSINESS_HANDOFF_PROMPT = '请业务分析助手分析该企业的投行业务机会';
+    const BUSINESS_HANDOFF_PROMPT = '业务分析助手分析该企业的投行业务机会';
     const BUSINESS_HANDOFF_SEND_MESSAGE = '我手头有陈明精工这家制造业上市公司，营收20亿，想融资扩产';
     const BUSINESS_ANALYSIS_ASSISTANT_INDEX = 1;
     const DESIGN_ASSISTANT_INDEX = 2;
@@ -691,6 +691,8 @@
         if (text === BUSINESS_HANDOFF_PROMPT) return true;
         if (text.includes('业务分析助手') && /投行业务|业务机会/.test(text)) return true;
         if (text.includes(BUSINESS_HANDOFF_SEND_MESSAGE) && /业务分析|投行业务/.test(text)) return true;
+        if (text.includes('帮我设计一个') || (text.includes('设计') && text.includes('方案'))) return true;
+        if (text.includes('发行条件') || text.includes('准入标准') || text.includes('准入条件')) return true;
         return false;
     }
 
@@ -928,7 +930,7 @@
         }
 
         if (assistantIndex === 0 && userMessage && isCompanyAnalysisRequest(userMessage)) {
-            if (/^\*\*审批助手\*\*|^\*\*通知公告助手\*\*/.test(text.trim())) {
+            if (/^\*\*待办事项助手\*\*|^\*\*通知公告助手\*\*/.test(text.trim())) {
                 return null;
             }
             return buildCompanyContextBundle();
@@ -942,7 +944,7 @@
             const intentConfirm = !isExplicitCompanyAnalysisRequest(message);
             return generateCompanyCustomerAnalysis({ intentConfirm, message });
         }
-        return '**客户分析助手**\n\n请输入「帮我分析陈明精工这家公司」，我将从资产、行为、交易、合作记录等维度为您量化分析。';
+        return '**客户分析助手**\n\n请输入「帮我分析陈明精工这家公司」，我将从资产、行为、交易、合作记录等维度为你量化分析。';
     }
 
     function getReply(message, assistantIndex) {
@@ -963,11 +965,14 @@
 
     function resolvePromptHandoff(promptText) {
         if (!isBusinessHandoffPrompt(promptText)) return null;
+        const text = (promptText || '').trim();
+        const isDesignRequest = text.includes('帮我设计一个') || (text.includes('设计') && text.includes('方案'));
+        const targetIndex = isDesignRequest ? DESIGN_ASSISTANT_INDEX : BUSINESS_ANALYSIS_ASSISTANT_INDEX;
         return {
             handoff: true,
-            targetAssistantIndex: BUSINESS_ANALYSIS_ASSISTANT_INDEX,
-            sendMessage: BUSINESS_HANDOFF_SEND_MESSAGE,
-            displayMessage: BUSINESS_HANDOFF_PROMPT
+            targetAssistantIndex: targetIndex,
+            sendMessage: promptText,
+            displayMessage: promptText
         };
     }
 

@@ -1304,6 +1304,20 @@ button.exception-status-tag:focus-visible {
     flex: 1;
 }
 
+.bc-nav-dot {
+    display: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #ef4444;
+    flex-shrink: 0;
+    margin-left: 4px;
+}
+
+.bc-nav-dot.show {
+    display: block;
+}
+
 .bc-badge {
     font-size: 0.7rem;
     padding: 1px 7px;

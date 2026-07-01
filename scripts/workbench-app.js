@@ -777,15 +777,15 @@
                 : userLabel;
             sidebarUserAvatarEl.textContent = avatarSource ? avatarSource.charAt(0) : '';
         }
-        // 员工端首页主标题为“释放你的AI超能力”，不随角色标题变更
+        // 员工端首页主标题为“员工 AI 工作台”，不随角色标题变更
 
         const supportHeroTitle = document.querySelector('#workbench-panel-support #center-hero-title-support');
         const supportHeroSub = document.querySelector('#workbench-panel-support .center-hero-sub');
         if (supportHeroTitle && resolvedRole === 'support') {
-            supportHeroTitle.textContent = '释放你的 AI 超能力';
+            supportHeroTitle.textContent = '员工 AI 工作台';
         }
         if (supportHeroSub && resolvedRole === 'support') {
-            supportHeroSub.textContent = '你的业务超能力';
+            supportHeroSub.textContent = '基于公司自动驾驶大模型驱动';
         }
 
         const titleEl = document.getElementById('nav-page-title');
@@ -875,6 +875,11 @@
         currentWorkbenchRole = resolvedRole;
         sessionStorage.setItem(WORKBENCH_LOGIN_STORAGE_KEY, 'true');
         sessionStorage.setItem(WORKBENCH_ROLE_STORAGE_KEY, resolvedRole);
+
+        localStorage.removeItem('workbench_employee_exceptions_read');
+        localStorage.removeItem('workbench_employee_approval_read');
+        localStorage.removeItem('workbench_support_exceptions_read');
+        localStorage.removeItem('workbench_support_approval_read');
 
         document.getElementById('login-page')?.setAttribute('hidden', '');
         document.getElementById('app-workbench')?.removeAttribute('hidden');
@@ -2168,6 +2173,8 @@
         const tasksLabelEl = document.querySelector('#menu-today-tasks .bc-label');
         const exceptionsLabelEl = document.querySelector('#menu-exceptions .bc-label');
         const approvalLabelEl = document.querySelector('#menu-approval .bc-label');
+        const exceptionsDotEl = document.getElementById('sidebar-nav-exceptions-dot');
+        const approvalDotEl = document.getElementById('sidebar-nav-approval-dot');
         const taskCount = getEmployeeDailyTaskCount();
         const exceptionCount = getEmployeeExceptionAlertCount();
         const approvalCount = getEmployeeApprovalPendingCount();
@@ -2188,9 +2195,21 @@
         updateNavLabelCount(tasksLabelEl, '今日任务', taskCount);
         updateNavLabelCount(exceptionsLabelEl, '异常提醒', exceptionCount);
         updateNavLabelCount(approvalLabelEl, '待办事项', approvalCount);
+
+        if (exceptionsDotEl) {
+            const hasUnread = !localStorage.getItem('workbench_employee_exceptions_read') && exceptionCount > 0;
+            exceptionsDotEl.classList.toggle('show', hasUnread);
+        }
+        if (approvalDotEl) {
+            const hasUnread = !localStorage.getItem('workbench_employee_approval_read') && approvalCount > 0;
+            approvalDotEl.classList.toggle('show', hasUnread);
+        }
     }
 
     function updateSupportSidebarNavCounts() {
+        const exceptionCount = collectSupportExceptionAlerts().length;
+        const approvalCount = getEmployeeApprovalPendingCount();
+        
         updateNavLabelCount(
             document.querySelector('#support-menu-today-tasks .bc-label'),
             '今日任务',
@@ -2199,13 +2218,25 @@
         updateNavLabelCount(
             document.querySelector('#support-menu-exceptions .bc-label'),
             '异常提醒',
-            collectSupportExceptionAlerts().length
+            exceptionCount
         );
         updateNavLabelCount(
             document.querySelector('#support-menu-approval .bc-label'),
             '待办事项',
-            getEmployeeApprovalPendingCount()
+            approvalCount
         );
+
+        const exceptionsDotEl = document.getElementById('sidebar-nav-support-exceptions-dot');
+        const approvalDotEl = document.getElementById('sidebar-nav-support-approval-dot');
+        
+        if (exceptionsDotEl) {
+            const hasUnread = !localStorage.getItem('workbench_support_exceptions_read') && exceptionCount > 0;
+            exceptionsDotEl.classList.toggle('show', hasUnread);
+        }
+        if (approvalDotEl) {
+            const hasUnread = !localStorage.getItem('workbench_support_approval_read') && approvalCount > 0;
+            approvalDotEl.classList.toggle('show', hasUnread);
+        }
     }
 
     function buildEmployeeAllExceptionsChatHtml() {
@@ -2311,7 +2342,7 @@
                 html += `<p class="support-chat-exception-status">状态：${escapeHtmlText(item.status)}</p>`;
             }
         });
-        html += '<p>点击异常项发送到对话框，我将协助您推进处理。</p>';
+        html += '<p>点击异常项发送到对话框，协助推进处理。</p>';
         return html;
     }
 
@@ -2897,6 +2928,7 @@
         const prompt = getSupportAssistantInputPrompt(p);
         if (!input.value.trim() || (prevPrompt && input.value === prevPrompt)) {
             input.value = '';
+            syncMainSendButtonState(p);
         }
         input.placeholder = prompt || '发消息...';
         input.dataset.suggestedPrompt = prompt;
@@ -2911,6 +2943,7 @@
         if (!input || !prompt || input.value.trim()) return;
         input.value = prompt;
         autoResizeTextarea(input);
+        syncMainSendButtonState(p);
     }
 
     function initSupportMainInputPromptBehavior(panel) {
@@ -4832,10 +4865,10 @@
         },
         {
             index: 5,
-            name: '审批助手',
+            name: '待办事项助手',
             emoji: '✅',
             avatarClass: 'shenpi',
-            welcomeText: `**审批助手**\n\n查询审批进度、发起审批申请、催办提醒与流程跟踪。\n\n输入：审批事项、单号或待办描述。`
+            welcomeText: `**待办事项助手**\n\n查询审批进度、发起审批申请、催办提醒与流程跟踪。\n\n输入：审批事项、单号或待办描述。`
         },
         {
             index: 6,
@@ -4847,7 +4880,7 @@
     ];
 
     const employeeExtraAssistants = [
-        { id: 'shenpi', name: '审批助手', emoji: '✅', avatarClass: 'shenpi', chatIndex: 5 },
+        { id: 'shenpi', name: '待办事项助手', emoji: '✅', avatarClass: 'shenpi', chatIndex: 5 },
         { id: 'tongzhi', name: '通知公告助手', emoji: '📢', avatarClass: 'tongzhi', chatIndex: 6 }
     ];
 
@@ -4868,7 +4901,7 @@
         '差旅分析': 'travel',
         '差旅分析汇总': 'travel',
         '待办事项助手': 'approval',
-        '审批助手': 'approval',
+        '待办事项助手': 'approval',
         '通知公告助手': 'tongzhi',
         '客户分析助手': 'canmou',
         '业务分析助手': 'tanma',
@@ -4944,7 +4977,7 @@
     }
 
     function buildApprovalProgressReply(message) {
-        return `**审批助手**
+        return `**待办事项助手**
 
 任务：查询「${message}」相关审批进度。
 
@@ -4974,7 +5007,7 @@
 - **《投行业务材料报送管理办法（2026修订）》**（投行〔2026〕12号）：更新尽调材料清单、电子归档路径及报送时限，6月24日起执行。
 - **《业务支持中心异常提醒处置指引》**（运管〔2026〕08号）：明确异常分级标准与闭环时限，要求一线于收到提醒后2个工作日内反馈处置进展。
 
-如需查看全文或起草新公告，请继续说明。`;
+如需查看全文，请继续说明。`;
     }
 
     function buildApprovalContextBundle() {
@@ -5073,6 +5106,7 @@
         const prompt = getEmployeeAssistantInputPrompt(p);
         if (!input.value.trim() || (prevPrompt && input.value === prevPrompt)) {
             input.value = '';
+            syncMainSendButtonState(p);
         }
         input.placeholder = prompt || getMainInputDefaultPlaceholder(p);
         input.dataset.suggestedPrompt = prompt;
@@ -5087,6 +5121,7 @@
         if (!input || !prompt || input.value.trim()) return;
         input.value = prompt;
         autoResizeTextarea(input);
+        syncMainSendButtonState(p);
     }
 
     function initEmployeeMainInputPromptBehavior(panel) {
@@ -5561,6 +5596,7 @@
                 input.value = sendText;
                 input.focus();
             }
+            syncMainSendButtonState(panel);
             sendMainMessage(sendText);
             return;
         }
@@ -5569,6 +5605,7 @@
             input.value = promptText;
             input.focus();
         }
+        syncMainSendButtonState(panel);
         sendMainMessage(promptText);
     }
 
@@ -7053,7 +7090,7 @@
             : (typeof options.assistantIndex === 'number' ? options.assistantIndex : null);
         const userMessage = options.userMessage || '';
 
-        if (/^\*\*审批助手\*\*/.test(text.trim()) && /名下待审批事项|待审批事项/.test(text)) {
+        if (/^\*\*待办事项助手\*\*/.test(text.trim()) && /名下待审批事项|待审批事项/.test(text)) {
             return buildApprovalContextBundle();
         }
         if (/^\*\*通知公告助手\*\*/.test(text.trim()) && /最新通知公告/.test(text)) {
@@ -7202,12 +7239,12 @@
                 return buildApprovalProgressReply(message);
             }
             if (lowerMsg.includes('进度') || lowerMsg.includes('查询') || lowerMsg.includes('单号')) {
-                return `**审批助手**\n\n任务：查询「${message}」相关审批进度。\n\n结果：当前节点为部门负责人审批，预计 1 个工作日内完成。`;
+                return `**待办事项助手**\n\n任务：查询「${message}」相关审批进度。\n\n结果：当前节点为部门负责人审批，预计 1 个工作日内完成。`;
             }
             if (lowerMsg.includes('催办') || lowerMsg.includes('提醒')) {
-                return `**审批助手**\n\n任务：对「${message}」发起催办提醒。\n\n操作：已通知当前审批人，并记录催办时间。`;
+                return `**待办事项助手**\n\n任务：对「${message}」发起催办提醒。\n\n操作：已通知当前审批人，并记录催办时间。`;
             }
-            return `**审批助手**\n\n任务：处理「${message}」。\n\n操作：查询审批进度、发起审批申请或催办提醒。`;
+            return `**待办事项助手**\n\n任务：处理「${message}」。\n\n操作：查询审批进度、发起审批申请或催办提醒。`;
         }
         if (chatIndex === 6) {
             if (isNoticeDocumentSummaryPrompt(message)) {
@@ -7476,6 +7513,13 @@
         const panel = document.getElementById('workbench-panel-support') || getActiveWorkbenchPanel();
         if (!panel) return;
 
+        if (action === 'exceptions') {
+            localStorage.setItem('workbench_support_exceptions_read', 'true');
+        } else if (action === 'approval') {
+            localStorage.setItem('workbench_support_approval_read', 'true');
+        }
+        updateSupportSidebarNavCounts();
+
         window.AppShell?.returnToMainSessionView?.({ resetChat: false });
 
         const titleMap = {
@@ -7541,6 +7585,13 @@
         const panel = document.getElementById('workbench-panel-employee') || getActiveWorkbenchPanel();
         if (!panel) return;
 
+        if (action === 'exceptions') {
+            localStorage.setItem('workbench_employee_exceptions_read', 'true');
+        } else if (action === 'approval') {
+            localStorage.setItem('workbench_employee_approval_read', 'true');
+        }
+        updateEmployeeSidebarNavCounts();
+
         window.AppShell?.returnToMainSessionView?.({ resetChat: false });
 
         const titleMap = {
@@ -7601,7 +7652,7 @@
             appendChatMessage(buildApprovalProgressReply(userMessage), 'assistant', panel, {
                 chatIndex: 5,
                 assistantAvatarKey: 'approval',
-                assistantDisplayName: '审批助手',
+                assistantDisplayName: '待办事项助手',
                 userMessage
             });
             return;
