@@ -8,8 +8,11 @@
         outputs: [],
         models: [],
         customers: [],
+        inputs: [],
+        tasks: [],
         fullBundle: null,
-        collapsedOutputIds: new Set()
+        collapsedOutputIds: new Set(),
+        activeTab: 'outputs'
     };
 
     function isOutputExpanded(outputId) {
@@ -306,9 +309,21 @@
         return `<svg class="context-output-icon-svg context-output-icon-svg--${safeKind}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>`;
     }
 
+    function setSectionCount(id, count) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = String(count);
+    }
+
+    function updateContextCount() {
+        setSectionCount('context-related-count', (window.AppShell?.getRelatedSessions?.() || []).length);
+        setSectionCount('context-customers-count', state.customers.length);
+        setSectionCount('context-tasks-count', state.tasks.length);
+        setSectionCount('context-inputs-count', state.inputs.length);
+        setSectionCount('context-outputs-count', state.outputs.length);
+    }
+
     function render() {
-        const countEl = document.getElementById('context-outputs-count');
-        if (countEl) countEl.textContent = `${state.outputs.length}项`;
+        updateContextCount();
 
         renderList('context-outputs-list', state.outputs, (item) => {
             const kind = item.fileKind || 'txt';
@@ -323,10 +338,9 @@
                         <div class="context-output-filename">${fileName}</div>
                         <svg class="context-output-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
-                    ${isExpanded ? `
                     <div class="${previewClass}">
                         <div class="context-output-preview-text">${buildOutputDetailSummaryHtml(item)}</div>
-                    </div>` : ''}
+                    </div>
                 </div>
             `;
         });
@@ -340,6 +354,206 @@
             return;
         }
         el.innerHTML = items.map(tpl).join('');
+    }
+
+    function renderEmpty(containerId, text) {
+        const el = document.getElementById(containerId);
+        if (el) el.innerHTML = `<div class="context-empty">${escapeHtml(text)}</div>`;
+    }
+
+    function renderInputs() {
+        const el = document.getElementById('context-inputs-list');
+        if (!el) return;
+        if (!state.inputs.length) {
+            el.innerHTML = '<div class="context-empty">暂无输入物</div>';
+            return;
+        }
+        el.innerHTML = state.inputs.map((item) => {
+            const kind = item.fileKind || 'txt';
+            const icon = getFileIconSvg(kind);
+            const fileName = escapeHtml(item.fileName || item.title || '输入物');
+            const size = item.sizeText || '';
+            return `
+                <div class="context-output-item is-collapsed" data-type="input">
+                    <div class="context-output-top">
+                        ${icon}
+                        <div class="context-output-filename">${fileName}</div>
+                        ${size ? `<span class="context-output-size">${escapeHtml(size)}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderCustomers() {
+        const el = document.getElementById('context-customers-list');
+        if (!el) return;
+        if (!state.customers.length) {
+            el.innerHTML = '<div class="context-empty">暂无关联客户</div>';
+            return;
+        }
+        el.innerHTML = state.customers.map((c) => {
+            const name = escapeHtml(c.name || '客户');
+            const type = escapeHtml(c.type || '');
+            return `
+                <div class="context-customer-card" data-customer-id="${escapeHtml(c.id || '')}">
+                    <div class="context-customer-avatar">${escapeHtml((name || '?').slice(0, 1))}</div>
+                    <div class="context-customer-info">
+                        <div class="context-customer-name">${name}</div>
+                        ${type ? `<div class="context-customer-type">${type}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderTasks() {
+        const el = document.getElementById('context-tasks-list');
+        if (!el) return;
+        if (!state.tasks.length) {
+            el.innerHTML = '<div class="context-empty">暂无关联任务</div>';
+            return;
+        }
+        el.innerHTML = state.tasks.map((t) => {
+            const title = escapeHtml(t.title || '任务');
+            const status = escapeHtml(t.status || '待处理');
+            const due = t.dueDate ? escapeHtml(t.dueDate) : '';
+            return `
+                <div class="context-task-item" data-task-id="${escapeHtml(t.id || '')}">
+                    <div class="context-task-status" data-status="${status}"></div>
+                    <div class="context-task-body">
+                        <div class="context-task-title">${title}</div>
+                        <div class="context-task-meta">
+                            <span class="context-task-status-text">${status}</span>
+                            ${due ? `<span class="context-task-due">截止：${due}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function formatRelativeTime(ts) {
+        const diff = Date.now() - ts;
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1) return '刚刚';
+        if (mins < 60) return mins + '分钟前';
+        const hours = Math.floor(mins / 60);
+        if (hours < 24) return hours + '小时前';
+        const days = Math.floor(hours / 24);
+        return days + '天前';
+    }
+
+    function renderRelatedSessions() {
+        const el = document.getElementById('context-related-list');
+        if (!el) return;
+        const currentId = window.AppShell?.getCurrentSessionId?.();
+        const relatedIds = window.AppShell?.getRelatedSessions?.(currentId) || [];
+        if (!relatedIds.length) {
+            el.innerHTML = '<div class="context-empty">暂无关联会话</div>';
+            return;
+        }
+        el.innerHTML = relatedIds.map((id) => {
+            const s = window.AppShell?.getSessionById?.(id);
+            if (!s) return '';
+            const title = escapeHtml(s.title || '会话');
+            const time = formatRelativeTime(s.timestamp || Date.now());
+            const status = s.status || '推进中';
+            const statusClass = window.AppShell?.getStatuses?.() ? (window.AppShell?.getSessionStatus?.(id) || status) : status;
+            return `
+                <div class="context-related-item" data-related-session-id="${escapeHtml(id)}">
+                    <span class="context-related-item-title" data-action="jump" title="跳转到该会话">${title}</span>
+                    <span class="session-status-tag ${getStatusColorClass(status)}">${status}</span>
+                    <span class="context-related-item-time">${time}</span>
+                    <button type="button" class="context-related-item-del" data-action="unlink" title="取消关联">×</button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function getStatusColorClass(status) {
+        const map = {
+            '推进中': 'status-active',
+            '目标达成': 'status-done',
+            '已暂停': 'status-paused',
+            '已取消': 'status-cancelled'
+        };
+        return map[status] || 'status-active';
+    }
+
+    function switchContextTab(tabKey) {
+        // 兼容旧调用：单面板模式下统一刷新所有区块
+        state.activeTab = tabKey;
+        renderAllSections();
+    }
+
+    function renderAllSections() {
+        renderRelatedSessions();
+        renderCustomers();
+        renderTasks();
+        renderInputs();
+        render();
+        updateContextCount();
+    }
+
+    // 关联现有会话弹层
+    let linkPopover = null;
+    function openLinkExistingPopover(anchorEl) {
+        closeLinkExistingPopover();
+        const currentId = window.AppShell?.getCurrentSessionId?.();
+        const sessions = (window.AppShell?.getSessions?.() || []).slice().sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        const relatedIds = window.AppShell?.getRelatedSessions?.(currentId) || [];
+        const candidates = sessions.filter((s) => s.id !== currentId && !relatedIds.includes(s.id));
+        const popover = document.createElement('div');
+        popover.className = 'context-link-popover';
+        popover.innerHTML = `
+            <div class="context-link-popover-header">
+                <span>选择要关联的会话</span>
+                <button type="button" class="context-link-popover-close" data-action="close">×</button>
+            </div>
+            <div class="context-link-popover-list">
+                ${candidates.length ? candidates.map((s) => `
+                    <div class="context-link-popover-item" data-action="pick" data-session-id="${escapeHtml(s.id)}">
+                        <span class="context-link-popover-item-title">${escapeHtml(s.title || '会话')}</span>
+                        <span class="context-link-popover-item-time">${formatRelativeTime(s.timestamp || Date.now())}</span>
+                    </div>
+                `).join('') : '<div class="context-link-popover-empty">暂无可关联的会话</div>'}
+            </div>
+        `;
+        document.body.appendChild(popover);
+        // 定位
+        if (anchorEl) {
+            const rect = anchorEl.getBoundingClientRect();
+            const popoverRect = popover.getBoundingClientRect();
+            let left = rect.left;
+            let top = rect.bottom + 6;
+            if (left + popoverRect.width > window.innerWidth - 8) {
+                left = window.innerWidth - popoverRect.width - 8;
+            }
+            if (top + popoverRect.height > window.innerHeight - 8) {
+                top = rect.top - popoverRect.height - 6;
+            }
+            popover.style.left = Math.max(8, left) + 'px';
+            popover.style.top = Math.max(8, top) + 'px';
+        }
+        linkPopover = popover;
+        popover.addEventListener('click', (e) => {
+            const closeBtn = e.target.closest('[data-action="close"]');
+            if (closeBtn) { closeLinkExistingPopover(); return; }
+            const pickItem = e.target.closest('[data-action="pick"]');
+            if (pickItem) {
+                const targetId = pickItem.dataset.sessionId;
+                if (currentId && targetId) {
+                    window.AppShell?.linkSessions?.(currentId, targetId);
+                    renderRelatedSessions();
+                    updateContextCount();
+                }
+                closeLinkExistingPopover();
+            }
+        });
+    }
+    function closeLinkExistingPopover() {
+        if (linkPopover) { linkPopover.remove(); linkPopover = null; }
     }
 
     function getFileBadgeByKind(kind) {
@@ -530,6 +744,44 @@
         });
         if (state.customers.length > 15) state.customers.pop();
         render();
+        renderCustomers();
+        updateContextCount();
+        syncContextPanelVisibility();
+    }
+
+    function addInput(payload) {
+        if (!payload) return;
+        const item = {
+            id: payload.id || 'in-' + Date.now(),
+            fileName: payload.fileName || payload.name || '输入文件',
+            title: payload.title || payload.fileName || '输入物',
+            fileKind: payload.fileKind || 'txt',
+            sizeText: payload.sizeText || payload.size || '',
+            time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+        };
+        const exists = state.inputs.some((i) => i.fileName === item.fileName);
+        if (exists) return;
+        state.inputs.unshift(item);
+        if (state.inputs.length > 20) state.inputs.pop();
+        renderInputs();
+        updateContextCount();
+        syncContextPanelVisibility();
+    }
+
+    function addTask(payload) {
+        if (!payload) return;
+        const item = {
+            id: payload.id || 'task-' + Date.now(),
+            title: payload.title || '任务',
+            status: payload.status || '待处理',
+            dueDate: payload.dueDate || ''
+        };
+        const exists = state.tasks.some((t) => t.title === item.title);
+        if (exists) return;
+        state.tasks.unshift(item);
+        if (state.tasks.length > 20) state.tasks.pop();
+        renderTasks();
+        updateContextCount();
         syncContextPanelVisibility();
     }
 
@@ -607,14 +859,16 @@
         state.outputs = [];
         state.models = [];
         state.customers = [];
+        state.inputs = [];
+        state.tasks = [];
         state.fullBundle = null;
         state.collapsedOutputIds.clear();
-        render();
+        renderAllSections();
     }
 
     function bundleHasItems(bundle) {
         if (!bundle) return false;
-        return (bundle.outputs?.length || 0) + (bundle.models?.length || 0) + (bundle.customers?.length || 0) > 0;
+        return (bundle.outputs?.length || 0) + (bundle.models?.length || 0) + (bundle.customers?.length || 0) + (bundle.tasks?.length || 0) + (bundle.inputs?.length || 0) > 0;
     }
 
     function inferFileKindFromUrl(url, title) {
@@ -737,14 +991,18 @@
         state.fullBundle = {
             outputs: normalizedOutputs.map((item) => ({ ...item })),
             models: (bundle.models || []).map((item, index) => normalizeSnapshotModel(item, index)),
-            customers: (bundle.customers || []).map((item) => normalizeCustomer(item))
+            customers: (bundle.customers || []).map((item) => normalizeCustomer(item)),
+            tasks: (bundle.tasks || []).map((item) => ({ ...item })),
+            inputs: (bundle.inputs || []).map((item) => ({ ...item }))
         };
         state.outputs = normalizedOutputs;
         state.models = state.fullBundle.models;
         state.customers = state.fullBundle.customers;
+        state.tasks = state.fullBundle.tasks;
+        state.inputs = state.fullBundle.inputs;
         state.collapsedOutputIds.clear();
 
-        render();
+        renderAllSections();
         syncContextPanelVisibility();
     }
 
@@ -754,7 +1012,13 @@
         } else {
             state.collapsedOutputIds.add(outputId);
         }
-        render();
+        // 直接切换 DOM class，避免重新渲染导致闪烁
+        const card = document.querySelector(`.context-output-item[data-id="${CSS.escape(outputId)}"]`);
+        if (card) {
+            const isExpanded = !state.collapsedOutputIds.has(outputId);
+            card.classList.toggle('is-expanded', isExpanded);
+            card.classList.toggle('is-collapsed', !isExpanded);
+        }
     }
 
     function linkDocCardsInBubble(bubble, bundle) {
@@ -810,15 +1074,15 @@
     }
 
     function patchSendMessage() {
+        // 历史上这里会包装 sendMainMessage，在原函数执行前主动 createSession 并写消息。
+        // 但 sendMainMessage -> startEmployeeChatFromMainInput -> applyEmployeeChatModeUI
+        // (createHistory) -> appendChatMessage -> persistEmployeeChat 已完整负责会话创建与
+        // 消息持久化，额外的 createSession 会导致侧边栏出现重复会话记录，故此处仅保留
+        // 透传调用，不再插手会话/消息写入。
         const orig = window.sendMainMessage;
         if (!orig) return;
-        window.sendMainMessage = function () {
-            const input = document.getElementById('main-chat-input');
-            const text = input?.value?.trim();
-            if (text && window.AppShell?.touchCurrentSession) {
-                window.AppShell.touchCurrentSession(text.slice(0, 30));
-            }
-            orig();
+        window.sendMainMessage = function (...args) {
+            return orig(...args);
         };
     }
 
@@ -842,7 +1106,7 @@
     }
 
     function init() {
-        render();
+        renderAllSections();
         document.addEventListener('DOMContentLoaded', () => {
             patchSendMessage();
             patchDashboard();
@@ -867,11 +1131,65 @@
                 restoreSnapshotFromBubble(bubble);
             });
 
-            document.getElementById('context-panel')?.addEventListener('click', (event) => {
+            const contextPanel = document.getElementById('context-panel');
+            contextPanel?.addEventListener('click', (event) => {
+                // 区块展开/收起（点击 header 切换，但点击 header 内的按钮不触发）
+                const toggleHeader = event.target.closest('[data-context-toggle]');
+                if (toggleHeader && !event.target.closest('button, a')) {
+                    const section = toggleHeader.closest('.context-section');
+                    if (section) section.classList.toggle('is-expanded');
+                    return;
+                }
+                // 输出物卡片展开/收起（点击箭头或卡片顶部区域）
+                const arrowEl = event.target.closest('.context-output-arrow');
                 const outputCard = event.target.closest('.context-output-item[data-type="output"][data-id]');
-                if (!outputCard) return;
-                if (event.target.closest('button, a')) return;
-                toggleOutputCard(outputCard.dataset.id);
+                if (arrowEl && outputCard) {
+                    toggleOutputCard(outputCard.dataset.id);
+                    return;
+                }
+                if (outputCard) {
+                    if (event.target.closest('button, a')) return;
+                    // 点击卡片顶部区域也触发收起/展开
+                    if (event.target.closest('.context-output-top')) {
+                        toggleOutputCard(outputCard.dataset.id);
+                        return;
+                    }
+                }
+                // 关联会话：跳转
+                const jumpEl = event.target.closest('.context-related-item-title[data-action="jump"]');
+                if (jumpEl) {
+                    const item = jumpEl.closest('.context-related-item');
+                    const sid = item?.dataset.relatedSessionId;
+                    if (sid) window.AppShell?.switchToSession?.(sid);
+                    return;
+                }
+                // 关联会话：取消关联
+                const unlinkBtn = event.target.closest('.context-related-item-del[data-action="unlink"]');
+                if (unlinkBtn) {
+                    const item = unlinkBtn.closest('.context-related-item');
+                    const sid = item?.dataset.relatedSessionId;
+                    const currentId = window.AppShell?.getCurrentSessionId?.();
+                    if (sid && currentId) {
+                        window.AppShell?.unlinkSessions?.(currentId, sid);
+                        renderRelatedSessions();
+                        updateContextCount();
+                    }
+                    return;
+                }
+                // 关联现有会话按钮
+                const linkBtn = event.target.closest('#context-link-existing-btn');
+                if (linkBtn) {
+                    openLinkExistingPopover(linkBtn);
+                    return;
+                }
+            });
+
+            // 点击页面其它位置关闭关联会话弹层
+            document.addEventListener('click', (event) => {
+                if (!linkPopover) return;
+                if (linkPopover.contains(event.target)) return;
+                if (event.target.closest('#context-link-existing-btn')) return;
+                closeLinkExistingPopover();
             });
         });
     }
@@ -880,6 +1198,8 @@
         addOutput,
         addModel,
         addCustomer,
+        addInput,
+        addTask,
         reset,
         loadSnapshot,
         attachSnapshotToBubble,
@@ -894,6 +1214,9 @@
         openCustomerDetail,
         closeCustomerDetail,
         closeOutputPreview,
+        switchContextTab,
+        renderRelatedSessions,
+        renderAllSections,
         getState: () => ({ ...state })
     };
 

@@ -1452,7 +1452,7 @@ body.support-manage-view-active .workbench-panel[data-panel="support"] {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 32px 0 16px;
+    padding: 72px 0 16px;
 }
 
 .center-hero.is-hidden {

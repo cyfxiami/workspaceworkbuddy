@@ -467,6 +467,13 @@
                             <div class="input-assistant-tags" id="input-assistant-tags" role="listbox" aria-label="选择助手"></div>
                         </div>
                         <div class="input-actions-right">
+                            <button type="button" class="input-action-btn new-session-btn" id="new-session-btn" onclick="startNewRelatedSession()" aria-label="发起新会话" title="发起新会话（与当前会话关联）">
+                                <svg class="input-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                                    <line x1="12" y1="8" x2="12" y2="13"></line>
+                                    <line x1="9.5" y1="10.5" x2="14.5" y2="10.5"></line>
+                                </svg>
+                            </button>
                             <button type="button" class="input-action-btn upload-btn" onclick="startMainFileUpload()" aria-label="上传文件" title="上传文件">
                                 <svg class="input-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
@@ -883,16 +890,60 @@
             <div class="context-shell" id="context-shell">
                 <aside class="context-panel" id="context-panel">
                     <div class="context-header">
-                        <button type="button" class="panel-collapse-btn context-collapse-btn" id="context-collapse-btn" aria-expanded="true" aria-label="收起会话输出物" title="收起会话输出物">
+                        <button type="button" class="panel-collapse-btn context-collapse-btn" id="context-collapse-btn" aria-expanded="true" aria-label="收起会话上下文" title="收起会话上下文">
                             <svg class="layout-toggle-icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
                         </button>
                         <div class="context-header-title">
-                            <h3>会话输出物</h3>
-                            <span class="context-header-count" id="context-outputs-count">0项</span>
+                            <h3>会话上下文</h3>
                         </div>
                     </div>
                     <div class="context-scroll">
-                        <div id="context-outputs-list"></div>
+                        <section class="context-section is-expanded" data-context-section="related">
+                            <div class="context-section-header" data-context-toggle>
+                                <h4 class="context-section-title">
+                                    <svg class="context-section-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                                    关联会话 <span class="context-section-count" id="context-related-count">0</span>
+                                </h4>
+                                <button type="button" class="context-link-btn" id="context-link-existing-btn" title="关联现有会话">+ 关联</button>
+                            </div>
+                            <div class="context-section-body" id="context-related-list"></div>
+                        </section>
+                        <section class="context-section is-expanded" data-context-section="customers">
+                            <div class="context-section-header" data-context-toggle>
+                                <h4 class="context-section-title">
+                                    <svg class="context-section-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                                    关联客户 <span class="context-section-count" id="context-customers-count">0</span>
+                                </h4>
+                            </div>
+                            <div class="context-section-body" id="context-customers-list"></div>
+                        </section>
+                        <section class="context-section is-expanded" data-context-section="tasks">
+                            <div class="context-section-header" data-context-toggle>
+                                <h4 class="context-section-title">
+                                    <svg class="context-section-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                                    关联任务 <span class="context-section-count" id="context-tasks-count">0</span>
+                                </h4>
+                            </div>
+                            <div class="context-section-body" id="context-tasks-list"></div>
+                        </section>
+                        <section class="context-section is-expanded" data-context-section="inputs">
+                            <div class="context-section-header" data-context-toggle>
+                                <h4 class="context-section-title">
+                                    <svg class="context-section-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                                    输入物 <span class="context-section-count" id="context-inputs-count">0</span>
+                                </h4>
+                            </div>
+                            <div class="context-section-body" id="context-inputs-list"></div>
+                        </section>
+                        <section class="context-section is-expanded" data-context-section="outputs">
+                            <div class="context-section-header" data-context-toggle>
+                                <h4 class="context-section-title">
+                                    <svg class="context-section-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                                    输出物 <span class="context-section-count" id="context-outputs-count">0</span>
+                                </h4>
+                            </div>
+                            <div class="context-section-body" id="context-outputs-list"></div>
+                        </section>
                     </div>
                 </aside>
             </div>
@@ -2017,6 +2068,7 @@
     <script src="scripts/context-panel.js"></script>
     <script src="scripts/travel-analysis.js"></script>
     <script src="scripts/assistant-management.js"></script>
+    <script src="scripts/chat-scroll-markers.js"></script>
     <script src="scripts/app-shell.js"></script>
 </body>
 </html>

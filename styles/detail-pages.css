@@ -4597,6 +4597,7 @@ body.employee-chat-mode .workbench-panel[data-panel="employee"] .input-section.c
 
 .chat-row-user {
     justify-content: flex-end;
+    padding-right: 20px;
 }
 
 .chat-row-assistant {
@@ -4654,6 +4655,7 @@ body.employee-chat-mode .workbench-panel[data-panel="employee"] .input-section.c
     background: #4A90E2;
     color: white;
     border-radius: 12px 12px 4px 12px;
+    margin-right: 20px;
 }
 
 .chat-bubble-assistant {
@@ -9038,6 +9040,10 @@ body.support-tab-active .workbench-panel[data-panel="support"] .support-home-car
     color: #ef4444;
 }
 
+body.support-tab-active .workbench-panel[data-panel="support"] .support-home-cards {
+    display: none !important;
+}
+
 body.support-tab-active .workbench-panel[data-panel="support"] .support-home-cards-add-btn {
     display: none !important;
 }
@@ -9330,7 +9336,7 @@ body.support-tab-active .workbench-panel[data-panel="support"] .support-assistan
 }
 
 body.support-tab-active .workbench-panel[data-panel="support"] .ai-workbench-section.support-workbench-mode.support-chat-mode .chat-bubble-user {
-    background: #111827;
+    background: #3b82f6;
     color: #ffffff;
     border: none;
     border-radius: 16px 2px 16px 16px;
@@ -9420,9 +9426,9 @@ body.support-tab-active .workbench-panel[data-panel="support"] .support-user-ava
     width: 32px;
     height: 32px;
     border-radius: 999px;
-    background: #d1fae5;
-    border: 1px solid #a7f3d0;
-    color: #059669;
+    background: #dbeafe;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
     font-weight: 700;
     font-size: 0.875rem;
     box-shadow: none;
@@ -9524,4 +9530,167 @@ body.support-tab-active .workbench-panel[data-panel="support"] .input-section.ch
 
 body.support-tab-active .workbench-panel[data-panel="support"] .input-section.chat-mode .support-input-top-row {
     display: none !important;
+}
+
+/* ===== 聊天滚动条标记悬浮预览 ===== */
+
+/* 聊天消息容器：滚动条始终保留固定 6px 空间，避免内容/黑块标记随滚动条显隐跳动 */
+/* 覆盖 layout.css 中 overlay-scrollbar 的 width:0 / scrollbar-width:none 机制 */
+.ai-chat-messages.overlay-scrollbar,
+.ai-chat-messages.overlay-scrollbar:not(.is-scrolling) {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+
+.ai-chat-messages.overlay-scrollbar::-webkit-scrollbar,
+.ai-chat-messages.overlay-scrollbar:not(.is-scrolling)::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.ai-chat-messages.overlay-scrollbar::-webkit-scrollbar-track,
+.ai-chat-messages.overlay-scrollbar:not(.is-scrolling)::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.ai-chat-messages.overlay-scrollbar::-webkit-scrollbar-thumb,
+.ai-chat-messages.overlay-scrollbar:not(.is-scrolling)::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 3px;
+}
+
+/* 滚动时显示半透明灰色滚动条 */
+.ai-chat-messages.overlay-scrollbar.is-scrolling {
+    scrollbar-color: rgba(0, 0, 0, 0.22) transparent;
+}
+
+.ai-chat-messages.overlay-scrollbar.is-scrolling::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.22);
+}
+
+/* 轨道宿主：不滚动的父元素，承载绝对定位轨道 */
+.ai-chat-view.has-scroll-markers {
+    position: relative;
+}
+
+/* 标记轨道：固定在原生滚动条左侧，留足间距避免重叠 */
+/* 轨道固定高度并垂直居中，标记集中展示不纵向铺满 */
+.chat-scroll-marker-track {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 200px;
+    width: 10px;
+    pointer-events: none;
+    z-index: 6;
+}
+
+/* 离散短横线色块：1 个色块对应 1 条对话消息（参考 Qoder quest 窗口样式） */
+.chat-scroll-marker {
+    position: absolute;
+    right: 2px;
+    width: 8px;
+    height: 4px;
+    min-height: 4px;
+    background: #9ca3af;
+    border-radius: 1px;
+    pointer-events: auto;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.15s ease, width 0.15s ease, right 0.15s ease, background 0.15s ease;
+}
+
+.chat-scroll-marker:hover {
+    opacity: 1;
+    background: #6b7280;
+    width: 10px;
+}
+
+/* 可见区域内最新用户消息对应的色块：蓝色高亮 */
+.chat-scroll-marker.is-active {
+    background: #4A90E2;
+    opacity: 1;
+}
+
+/* 浅灰色圆角悬浮气泡（参考 Qoder quest 窗口样式） */
+.chat-scroll-marker-bubble {
+    position: fixed;
+    z-index: 10000;
+    width: 280px;
+    max-width: 280px;
+    padding: 10px 14px;
+    background: #f3f4f6;
+    color: #374151;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    word-break: break-word;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(8px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.chat-scroll-marker-bubble.is-visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* 气泡右侧小箭头 */
+.chat-scroll-marker-bubble::after {
+    content: '';
+    position: absolute;
+    right: -5px;
+    top: 14px;
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-left: 5px solid #f3f4f6;
+}
+
+/* 气泡内文本：保留换行 */
+.chat-scroll-marker-bubble-text {
+    white-space: pre-wrap;
+}
+
+/* 气泡内角色标签 */
+.chat-scroll-marker-bubble-role {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0.8;
+    margin-bottom: 4px;
+}
+
+/* ===== 原生滚动条位置调整：适度减小 session-scroll 右侧 padding ===== */
+/* 两侧栏均展开 */
+body.wb-workbench-active.employee-chat-mode .wb-layout:not(.is-sidebar-collapsed):not(.is-context-collapsed) .workbench-panel[data-panel="employee"] .session-scroll.is-chat-active {
+    padding-right: 12px;
+}
+
+/* 左侧栏收起、右侧栏展开 */
+body.wb-workbench-active.employee-chat-mode .wb-layout.is-sidebar-collapsed:not(.is-context-collapsed) .workbench-panel[data-panel="employee"] .session-scroll.is-chat-active {
+    padding-right: 12px;
+}
+
+/* 左侧栏展开、右侧栏收起 */
+body.wb-workbench-active.employee-chat-mode .wb-layout.is-context-collapsed:not(.is-sidebar-collapsed) .workbench-panel[data-panel="employee"] .session-scroll.is-chat-active {
+    padding-right: 12px;
+}
+
+/* 右侧栏收起时 .ai-chat-messages 去掉 max-width 居中，让滚动条靠右 */
+body.wb-workbench-active.employee-chat-mode .wb-layout.is-context-collapsed:not(.is-sidebar-collapsed) .workbench-panel[data-panel="employee"] .ai-chat-messages {
+    max-width: 100%;
+}
+
+/* 两侧栏都收起 */
+body.wb-workbench-active.employee-chat-mode .wb-layout.is-sidebar-collapsed.is-context-collapsed .workbench-panel[data-panel="employee"] .session-scroll.is-chat-active {
+    padding-right: 12px;
+}
+
+body.wb-workbench-active.employee-chat-mode .wb-layout.is-sidebar-collapsed.is-context-collapsed .workbench-panel[data-panel="employee"] .ai-chat-messages {
+    max-width: 100%;
 }

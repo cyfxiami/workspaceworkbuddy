@@ -1,4 +1,4 @@
-    // 登录处理函数
+﻿    // 登录处理函数
     function handleLogin() {
         alert('登录功能即将上线，敬请期待！');
     }
@@ -10,30 +10,34 @@
             return;
         }
         if (getPanelKey() === 'support') {
-            selectSupportAgent(avatarType);
+            openSupportAvatarChat(avatarType);
             return;
         }
         openAvatarChat(avatarType);
     }
 
     function openAvatarChat(avatarType) {
-        const avatarNames = {
-            'ib': '投行业务助理',
-            'asset': '资管业务助理',
-            'retail': '零售业务助理',
-            'invest': '投资业务助理',
-            'sales': '销交业务助理',
-            'institution': '机构业务助理',
-            'research': '研究业务助理',
-            'credit': '信用业务助理',
-            'verify': '交叉验证助理',
-            'wealth': '财富业务助理',
-            'fixed': '固收业务助理',
-            'quant': '量化业务助理'
-        };
-        const avatarName = avatarNames[avatarType] || '业务助理';
-        
-        alert(`正在连接${avatarName}...\n\n数字人对话功能即将上线！`);
+        const assistant = getTopBusinessAssistant(avatarType);
+        if (!assistant) return;
+
+        switchWorkbenchTab('employee');
+        const panel = document.getElementById('workbench-panel-employee');
+        if (!panel) return;
+
+        const state = getPanelState(panel);
+
+        // 点击顶部业务助理不进入聊天模式，仅在输入框显示 @业务助理名 chip
+        state.currentTopBusinessAssistant = assistant.id;
+        state.currentExtraAssistantId = null;
+        state.currentCatalogAssistant = null;
+        state.currentCardIndex = null;
+        state.currentInputSkillId = null;
+        state.exceptionChatActive = false;
+
+        updateTopAvatarActive(avatarType);
+
+        refreshInputSkillPicker(panel);
+        updateEmployeeInputPlaceholder(panel);
     }
     
     // 打开业绩看板详情（客户总资产/总收入）
@@ -239,9 +243,9 @@
     
     // ========== 工作台 Tab 切换 ==========
     const workbenchPanelState = {
-        support: { chatModeActive: false, currentCardIndex: 0, miniAvatarsInitialized: false, currentSupportAgent: null, currentSupportInputAgent: null, currentTaskAgentId: null, currentTask: null, currentTodoStep: null, supportWelcomeShown: false, currentSessionId: null, supportChatMessages: [], currentInputSkillId: null, currentExtraAssistantId: null },
+        support: { chatModeActive: false, currentCardIndex: 0, miniAvatarsInitialized: false, currentSupportAgent: null, currentSupportInputAgent: null, currentTaskAgentId: null, currentTask: null, currentTodoStep: null, supportWelcomeShown: false, currentSessionId: null, supportChatMessages: [], currentInputSkillId: null, currentExtraAssistantId: null, mentionedEmployees: [] },
         org: { chatModeActive: true, currentCardIndex: 0, miniAvatarsInitialized: false, currentOrgAgent: null, currentInputSkillId: null },
-        employee: { chatModeActive: false, currentCardIndex: null, miniAvatarsInitialized: false, currentSessionId: null, chatMessages: [], employeeModelGuide: null, currentInputSkillId: null, currentExtraAssistantId: null, exceptionChatActive: false }
+        employee: { chatModeActive: false, currentCardIndex: null, miniAvatarsInitialized: false, currentSessionId: null, chatMessages: [], employeeModelGuide: null, currentInputSkillId: null, currentExtraAssistantId: null, exceptionChatActive: false, currentTopBusinessAssistant: null, mentionedEmployees: [] }
     };
 
     const supportCategoryAgentTasks = {
@@ -1789,7 +1793,7 @@
 
     function buildExceptionAssistantReplyHtml(item, action) {
         const categoryLabel = getExceptionCategoryLabel(item.category);
-        const header = `<p>以下为你汇总「${escapeHtmlText(item.title)}」${categoryLabel}信息：</p>`;
+        const header = `<p>以下是汇总的「${escapeHtmlText(item.title)}」${categoryLabel}信息：</p>`;
         const meta = `
             <p><strong>异常类型：</strong>${categoryLabel}</p>
             <p><strong>责任部门/人员：</strong>${escapeHtmlText(item.dept || '—')}</p>
@@ -1868,6 +1872,7 @@
         state.currentExtraAssistantId = null;
         state.currentCatalogAssistant = null;
         state.currentInputSkillId = null;
+        state.currentCardIndex = null;
         state.exceptionChatActive = true;
 
         p.querySelectorAll('.ai-mini-avatar').forEach((avatar) => avatar.classList.remove('active'));
@@ -2488,6 +2493,28 @@
     const SUPPORT_INPUT_AGENT_DAILY_TASK = 'daily-task';
     const SUPPORT_INPUT_AGENT_EXCEPTIONS = 'exceptions';
 
+    const TOP_BIZ_INPUT_PROMPTS = {
+        ib: '帮我查一下定增的发行条件和准入标准',
+        asset: '查询「华创稳健成长1号」最新净值与持仓',
+        retail: '查询陈明精工名下零售客户的资产规模',
+        invest: '查询当前自营权益持仓前十大',
+        sales: '查询陈明精工今日委托与成交明细',
+        institution: '查询「测试科技」的机构客户画像',
+        research: '查询陈明精工最新研报观点与评级',
+        credit: '查询陈明精工的维持担保比例'
+    };
+
+    const SUPPORT_TOP_INPUT_PROMPTS = {
+        ib: '复核陈明精工定增项目的申报材料',
+        asset: '审核本月新设资管产品的备案材料',
+        retail: '复核本周待审核的机构客户开户资料',
+        invest: '核查当前自营权益持仓单票集中度',
+        sales: '核对今日客户交易清算数据',
+        institution: '维护「测试科技」机构客户档案信息',
+        research: '审核本周待发布的研究报告',
+        credit: '监控当前维持担保比例低于预警线的客户'
+    };
+
     const SUPPORT_ASSISTANT_INPUT_PROMPTS = {
         [SUPPORT_INPUT_AGENT_DAILY_TASK]: '帮我汇总今天的待办任务并给出优先级建议',
         [SUPPORT_INPUT_AGENT_EXCEPTIONS]: '帮我汇总今天的异常提醒并给出处理建议'
@@ -2687,6 +2714,8 @@
                 html: msg.html,
                 agentId: msg.agentId,
                 workbenchAssistant: !!msg.workbenchAssistant,
+                assistantImage: msg.assistantImage || null,
+                assistantDisplayName: msg.assistantDisplayName || null,
                 chatIndex: extra?.chatIndex,
                 extraAssistantId: extra?.id,
                 userMessage: prevUser?.text || ''
@@ -2694,6 +2723,17 @@
         });
         if (state.supportChatMessages.length) {
             state.chatModeActive = true;
+        }
+        // 恢复顶部业务助理会话状态
+        const topAssistantMsg = state.supportChatMessages.find((m) => m.assistantImage);
+        if (topAssistantMsg?.assistantImage) {
+            const assistant = TOP_SUPPORT_ASSISTANTS.find((a) => a.image === topAssistantMsg.assistantImage);
+            state.currentTopSupportAssistant = assistant?.id || null;
+            state.currentExtraAssistantId = null;
+            state.currentSupportInputAgent = null;
+            updateTopAvatarActive(assistant?.avatarKey || null);
+        } else {
+            state.currentTopSupportAssistant = null;
         }
         updateSupportChatLayout(p);
         updateSupportInputPlaceholder(p);
@@ -2897,6 +2937,12 @@
         if (!p || getPanelKey(p) !== 'support') return '';
         if (!isWorkbenchInputHomePage(p)) return '';
         const state = getPanelState(p);
+        if (state.currentInputSkillId) {
+            return EMPLOYEE_ASSISTANT_INPUT_PROMPTS[state.currentInputSkillId] || '';
+        }
+        if (state.currentTopSupportAssistant) {
+            return SUPPORT_TOP_INPUT_PROMPTS[state.currentTopSupportAssistant] || '';
+        }
         if (state.currentExtraAssistantId) {
             return EMPLOYEE_ASSISTANT_INPUT_PROMPTS[state.currentExtraAssistantId] || '';
         }
@@ -2912,9 +2958,28 @@
         const input = getPanelEl('main-chat-input', p);
         if (!input) return;
 
+        // 输入框内以 chip 显示 @xxx 时，将预设提示词作为 placeholder 展示（浅灰色）
+        const state = getPanelState(p);
+        if (state.currentInputSkillId
+            || state.currentTopSupportAssistant
+            || state.currentExtraAssistantId
+            || state.currentSupportInputAgent) {
+            const chipPrompt = getSupportAssistantInputPrompt(p);
+            const prevChipPrompt = input.dataset.suggestedPrompt || '';
+            if (prevChipPrompt && input.value === prevChipPrompt) {
+                input.value = '';
+                syncMainSendButtonState(p);
+            }
+            input.dataset.suggestedPrompt = chipPrompt;
+            input.placeholder = chipPrompt;
+            refreshInputMentionChip(p);
+            return;
+        }
+
         if (!isWorkbenchInputHomePage(p)) {
             input.dataset.suggestedPrompt = '';
             input.placeholder = getChatModeInputPlaceholder(p);
+            refreshInputMentionChip(p);
             return;
         }
 
@@ -2926,6 +2991,7 @@
         }
         input.placeholder = prompt || '发消息...';
         input.dataset.suggestedPrompt = prompt;
+        refreshInputMentionChip(p);
     }
 
     function fillSupportMainInputPrompt(panel) {
@@ -2949,6 +3015,187 @@
         input.addEventListener('focus', () => fillSupportMainInputPrompt(p));
         input.addEventListener('click', () => fillSupportMainInputPrompt(p));
     }
+
+    function ensureInputMentionChip(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (!p) return null;
+        const wrap = p.querySelector('.enhanced-input-wrap');
+        if (!wrap) return null;
+        let chip = wrap.querySelector('.input-mention-chip');
+        if (!chip) {
+            chip = document.createElement('span');
+            chip.className = 'input-mention-chip';
+            chip.hidden = true;
+            wrap.appendChild(chip);
+            chip.addEventListener('click', () => {
+                const input = getPanelEl('main-chat-input', p);
+                if (!input) return;
+                input.focus();
+                const key = getPanelKey(p);
+                if (key === 'employee') {
+                    fillEmployeeMainInputPrompt(p);
+                } else if (key === 'support') {
+                    fillSupportMainInputPrompt(p);
+                }
+            });
+        }
+        return chip;
+    }
+
+    function resolveCurrentAssistantName(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (!p) return '';
+        const state = getPanelState(p);
+        const key = getPanelKey(p);
+        if (state.currentInputSkillId) {
+            const skill = window.getSkillById?.(state.currentInputSkillId) || getFallbackEmployeeSkillById(state.currentInputSkillId);
+            if (skill?.name) return skill.name;
+        }
+        if (key === 'employee') {
+            if (state.currentTopBusinessAssistant) {
+                const a = (typeof getTopBusinessAssistant === 'function') ? getTopBusinessAssistant(state.currentTopBusinessAssistant) : null;
+                if (a?.name) return a.name;
+            }
+            if (state.currentCatalogAssistant) {
+                return state.currentCatalogAssistant.name || '';
+            }
+            if (state.currentExtraAssistantId) {
+                const extra = getExtraAssistantById(state.currentExtraAssistantId);
+                if (extra?.name) return extra.name;
+            }
+            if (typeof state.currentCardIndex === 'number' && state.currentCardIndex >= 0) {
+                const agents = window.getInstalledEmployeeAssistantsForHome?.() || [];
+                const agent = agents.find((item) => item.listIndex === state.currentCardIndex);
+                if (agent?.name) return agent.name;
+                const assistant = aiAssistants.find((item) => item.index === state.currentCardIndex);
+                if (assistant?.name) return assistant.name;
+            }
+            return '';
+        }
+        if (key === 'support') {
+            if (state.currentTopSupportAssistant) {
+                const a = (typeof getTopSupportAssistant === 'function') ? getTopSupportAssistant(state.currentTopSupportAssistant) : null;
+                if (a?.name) return a.name;
+            }
+            if (state.currentExtraAssistantId) {
+                const extra = getExtraAssistantById(state.currentExtraAssistantId);
+                if (extra?.name) return extra.name;
+            }
+            if (state.currentSupportInputAgent) {
+                return getSupportAgentDisplayLabel(state.currentSupportInputAgent) || '';
+            }
+            return '';
+        }
+        return '';
+    }
+
+    function refreshInputMentionChip(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (!p) return;
+        const chip = ensureInputMentionChip(p);
+        if (!chip) return;
+        const input = getPanelEl('main-chat-input', p);
+        const wrap = p.querySelector('.enhanced-input-wrap');
+        const name = resolveCurrentAssistantName(p);
+        if (name && input) {
+            input.style.paddingLeft = '';
+            const cs = getComputedStyle(input);
+            const origPadLeft = parseFloat(cs.paddingLeft) || 0;
+            const padTop = parseFloat(cs.paddingTop) || 0;
+            const inputOffsetTop = (wrap && input.offsetParent === wrap) ? input.offsetTop : 0;
+            const inputOffsetLeft = (wrap && input.offsetParent === wrap) ? input.offsetLeft : 0;
+            chip.style.top = (inputOffsetTop + padTop) + 'px';
+            chip.style.left = (inputOffsetLeft + origPadLeft) + 'px';
+            chip.style.fontSize = cs.fontSize;
+            chip.style.lineHeight = cs.lineHeight;
+            chip.textContent = '@' + name + ' ';
+            chip.hidden = false;
+            const chipWidth = chip.offsetWidth;
+            input.style.paddingLeft = (origPadLeft + chipWidth + 6) + 'px';
+            wrap?.classList.add('has-mention-chip');
+            bindMentionChipBackspaceDelete(p, input);
+        } else {
+            chip.hidden = true;
+            chip.textContent = '';
+            if (input) {
+                input.style.paddingLeft = '';
+            }
+            wrap?.classList.remove('has-mention-chip');
+        }
+    }
+
+    function bindMentionChipBackspaceDelete(panel, input) {
+        if (input.dataset.mentionBackspaceBound === 'true') return;
+        input.dataset.mentionBackspaceBound = 'true';
+        input.addEventListener('keydown', (event) => {
+            if (event.key !== 'Backspace') return;
+            if (input.value.length > 0) return;
+            const selectionStart = input.selectionStart || 0;
+            const selectionEnd = input.selectionEnd || 0;
+            if (selectionStart !== 0 || selectionEnd !== 0) return;
+            const p = panel || getActiveWorkbenchPanel();
+            if (!p) return;
+            const state = getPanelState(p);
+            const key = getPanelKey(p);
+            event.preventDefault();
+            if (state.currentInputSkillId) {
+                state.currentInputSkillId = null;
+                refreshInputSkillPicker(p);
+                refreshInputMentionChip(p);
+                syncMainSendButtonState(p);
+                if (key === 'employee') {
+                    updateEmployeeInputPlaceholder(p);
+                } else if (key === 'support') {
+                    updateSupportInputPlaceholder(p);
+                }
+                return;
+            }
+            if (key === 'employee') {
+                if (state.currentTopBusinessAssistant) {
+                    state.currentTopBusinessAssistant = null;
+                    updateTopAvatarActive(null);
+                    updateEmployeeInputPlaceholder(p);
+                    return;
+                }
+                if (state.currentCatalogAssistant) {
+                    state.currentCatalogAssistant = null;
+                    updateEmployeeInputPlaceholder(p);
+                    return;
+                }
+                if (state.currentExtraAssistantId) {
+                    clearEmployeeExtraAssistant(p);
+                    return;
+                }
+                if (typeof state.currentCardIndex === 'number' && state.currentCardIndex >= 0) {
+                    state.currentCardIndex = null;
+                    updateEmployeeAssistantSelection(null, p);
+                    collapseTopSections(p);
+                    refreshInputSkillPicker(p);
+                    updateEmployeeInputPlaceholder(p);
+                    return;
+                }
+            }
+            if (key === 'support') {
+                if (state.currentTopSupportAssistant) {
+                    state.currentTopSupportAssistant = null;
+                    updateTopAvatarActive(null);
+                    updateSupportInputPlaceholder(p);
+                    return;
+                }
+                if (state.currentExtraAssistantId) {
+                    clearSupportExtraAssistant(p);
+                    return;
+                }
+                if (state.currentSupportInputAgent) {
+                    deselectSupportInputAssistant(p);
+                    return;
+                }
+            }
+        });
+    }
+
+
+
 
     function getInputSkillPickerEl(panel) {
         return getPanelEl('input-skill-picker', panel);
@@ -3113,6 +3360,14 @@
             btn.setAttribute('aria-selected', active ? 'true' : 'false');
         });
         closeInputSkillPicker(panel);
+        refreshInputMentionChip(panel);
+        // 选中/取消原子模型后同步更新 placeholder（选中时隐藏，取消时恢复）
+        const key = getPanelKey(panel);
+        if (key === 'employee') {
+            updateEmployeeInputPlaceholder(panel);
+        } else if (key === 'support') {
+            updateSupportInputPlaceholder(panel);
+        }
     }
 
     function refreshInputSkillPicker(panel) {
@@ -3349,6 +3604,7 @@
     function isSupportWorkbenchAssistantMode(state) {
         if (!state) return false;
         if (state.currentExtraAssistantId) return false;
+        if (state.currentTopSupportAssistant) return false;
         return !state.currentSupportInputAgent;
     }
 
@@ -3365,6 +3621,17 @@
     function handleSupportAssistantMessage(message, panel) {
         const p = panel || document.getElementById('workbench-panel-support');
         const state = getPanelState(p);
+        if (state.currentTopSupportAssistant) {
+            const assistant = getTopSupportAssistant(state.currentTopSupportAssistant);
+            setTimeout(() => {
+                appendSupportChatMessage(getTopSupportAssistantReply(message, assistant), 'assistant', p, {
+                    html: true,
+                    assistantImage: assistant?.image,
+                    assistantDisplayName: assistant?.name
+                });
+            }, 400);
+            return;
+        }
         if (isSupportWorkbenchAssistantMode(state)) {
             setTimeout(() => {
                 appendSupportChatMessage(getSupportWorkbenchAssistantReply(message), 'assistant', p, {
@@ -3540,6 +3807,7 @@
         }
         updateSupportAssistantTagSelection(panel);
         refreshInputSkillPicker(panel);
+        refreshInputMentionChip(panel);
     }
 
     function bindSupportInputAgentMenuScroll(menu) {
@@ -3684,6 +3952,16 @@
             ? `请协助处理：${task.title}`
             : (sendText || stepText || task?.nextSteps?.[0] || '').trim();
         if (!message) return;
+
+        // 将任务同步到右侧「关联任务」面板
+        if (task) {
+            window.ContextPanel?.addTask?.({
+                id: task.id || `${agentId}-${taskId}`,
+                title: task.title || message,
+                status: task.status || '待处理',
+                dueDate: task.dueDate || ''
+            });
+        }
 
         const state = getPanelState(panel);
         state.currentTaskAgentId = agentId;
@@ -3844,6 +4122,41 @@
         updateSupportChatLayout(p);
     }
 
+    function openSupportAvatarChat(avatarType) {
+        const assistant = getTopSupportAssistant(avatarType);
+        if (!assistant) return;
+
+        if (getPanelKey() !== 'support') {
+            switchWorkbenchTab('support');
+        }
+        const panel = document.getElementById('workbench-panel-support');
+        if (!panel) return;
+
+        const state = getPanelState(panel);
+        const messagesEl = getPanelEl('ai-chat-messages', panel);
+        if (messagesEl) messagesEl.innerHTML = '';
+
+        createSupportSession(`${assistant.name}对话`);
+
+        state.currentTopSupportAssistant = assistant.id;
+        state.currentExtraAssistantId = null;
+        state.currentSupportInputAgent = null;
+        state.currentSupportAgent = null;
+        state.currentTaskAgentId = null;
+
+        enterSupportChatMode(panel);
+        updateTopAvatarActive(avatarType);
+        syncSupportInputAgentPickers(panel);
+
+        appendSupportChatMessage(markdownToHtml(assistant.welcomeText), 'assistant', panel, {
+            html: true,
+            assistantImage: assistant.image,
+            assistantDisplayName: assistant.name
+        });
+
+        updateSupportInputPlaceholder(panel);
+    }
+
     function selectSupportAgent(agentId) {
         const panel = document.getElementById('workbench-panel-support');
         if (!panel) return;
@@ -3943,6 +4256,11 @@
                 <div class="chat-bubble chat-bubble-user">${escapeHtml(text)}</div>
                 <div class="chat-avatar employee-chat-avatar employee-user-avatar support-user-avatar">${escapeHtmlText(initial)}</div>
             `;
+        } else if (options.assistantImage) {
+            row.innerHTML = `
+                <div class="chat-avatar support-chat-avatar"><img src="${escapeHtml(options.assistantImage)}" alt="${escapeHtmlText(options.assistantDisplayName || '')}"></div>
+                <div class="chat-bubble chat-bubble-assistant">${assistantBody}</div>
+            `;
         } else if (options.workbenchAssistant) {
             row.innerHTML = `
                 ${buildWorkbenchChatAvatarHtml()}
@@ -3978,7 +4296,9 @@
                 text,
                 html: !!options.html,
                 agentId: options.agentId || null,
-                workbenchAssistant: !!options.workbenchAssistant
+                workbenchAssistant: !!options.workbenchAssistant,
+                assistantImage: options.assistantImage || null,
+                assistantDisplayName: options.assistantDisplayName || null
             });
         }
         updateSupportChatLayout(p);
@@ -4470,10 +4790,7 @@
     }
 
     function updateSupportAvatarPendingDots() {
-        const isSupportTab = document.body.classList.contains('support-tab-active');
-
         document.querySelectorAll('.avatar-item[data-avatar-type]').forEach(item => {
-            const agentId = item.dataset.avatarType;
             const wrap = item.querySelector('.avatar-img-wrap');
             const nameEl = item.querySelector('.avatar-name');
             if (!wrap || !nameEl) return;
@@ -4482,16 +4799,7 @@
             wrap.querySelector('.avatar-task-badge')?.remove();
             nameEl.querySelector('.avatar-task-badge')?.remove();
 
-            if (!isSupportTab) {
-                restoreAvatarNameLabel(nameEl);
-                return;
-            }
-
             restoreAvatarNameLabel(nameEl);
-
-            if (!supportBadgeAgentIds.includes(agentId)) return;
-            const count = getSupportAgentAllTasks(agentId).length;
-            if (count > 0) setAvatarImgTaskBadge(wrap, count);
         });
     }
 
@@ -4905,7 +5213,8 @@
         '业务分析助手': 'tanma',
         '方案生成助手': 'junshi',
         '交叉验证助手': 'jiaocha',
-        '客户服务助手': 'tianyan'
+        '客户服务助手': 'tianyan',
+        '自动驾驶大模型': 'autopilot'
     };
 
     const EMPLOYEE_ASSISTANT_AVATAR_CLASS_MAP = {
@@ -4933,7 +5242,16 @@
         tanma: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>`,
         junshi: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M10 9H8"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>`,
         jiaocha: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>`,
-        tianyan: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"></path></svg>`
+        tianyan: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"></path></svg>`,
+        'top-ib': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22h18"></path><path d="M5 22V9l7-5 7 5v13"></path><path d="M9 22v-6h6v6"></path><path d="M9 11h.01"></path><path d="M15 11h.01"></path></svg>`,
+        'top-asset': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>`,
+        'top-retail': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><path d="M3 6h18"></path><path d="M16 10a4 4 0 0 1-8 0"></path></svg>`,
+        'top-invest': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M7 15l3-3 3 2 5-6"></path><path d="M18 8h2v2"></path></svg>`,
+        'top-sales': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h13"></path><path d="M7 8l4-4"></path><path d="M7 8l4 4"></path><path d="M17 16H4"></path><path d="M17 16l-4-4"></path><path d="M17 16l-4 4"></path></svg>`,
+        'top-institution': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22h18"></path><path d="M5 22V11"></path><path d="M9 22V11"></path><path d="M15 22V11"></path><path d="M19 22V11"></path><path d="M12 3 3 8h18z"></path></svg>`,
+        'top-research': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><circle cx="11" cy="15" r="2.5"></circle><path d="m13 17 2 2"></path></svg>`,
+        'top-credit': `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>`,
+        autopilot: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="10" x="3" y="11" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line><path d="M9 21h6"></path></svg>`
     };
 
     const EMPLOYEE_ASSISTANT_AVATAR_KEY_LABELS = {
@@ -4947,8 +5265,335 @@
         tanma: '业务分析助手',
         junshi: '方案生成助手',
         jiaocha: '交叉验证助手',
-        tianyan: '客户服务助手'
+        tianyan: '客户服务助手',
+        'top-ib': '投行业务助理',
+        'top-asset': '资管业务助理',
+        'top-retail': '零售业务助理',
+        'top-invest': '投资业务助理',
+        'top-sales': '销交业务助理',
+        'top-institution': '机构业务助理',
+        'top-research': '研究业务助理',
+        'top-credit': '信用业务助理',
+        autopilot: '自动驾驶大模型'
     };
+
+    const TOP_BUSINESS_ASSISTANTS = [
+        {
+            id: 'ib',
+            name: '投行业务助理',
+            avatarKey: 'top-ib',
+            image: 'images/Avatar1.png',
+            welcomeText: `**投行业务助理**
+
+可以处理投行业务一线事务：
+
+- **业务准入** — 查询股权融资、债券发行、并购重组等业务的发行条件与准入标准
+- **方案设计** — 生成融资方案草案、操作指引与尽调材料清单
+- **协同对接** — 查找各业务线的投行支持人员
+
+输入想了解的业务类型或客户情况，例如：
+>>> 帮我查一下定增的发行条件和准入标准
+>>> 为陈明精工设计一套融资扩产方案
+>>> 定增业务需要准备哪些材料`
+        },
+        {
+            id: 'asset',
+            name: '资管业务助理',
+            avatarKey: 'top-asset',
+            image: 'images/Avatar2.png',
+            welcomeText: `**资管业务助理**
+
+可以处理资管业务日常工作：
+
+- **产品查询** — 查询资管产品信息、净值走势与持仓明细
+- **产品对比** — 对比不同产品的业绩、费率与风险等级
+- **合规咨询** — 解答资管产品合规要求与销售适当性规则
+
+查询需求，例如：
+>>> 查询「华创稳健成长1号」最新净值与持仓
+>>> 对比本季度权益类和固收类资管产品业绩
+>>> 资管产品销售适当性有哪些要求`
+        },
+        {
+            id: 'retail',
+            name: '零售业务助理',
+            avatarKey: 'top-retail',
+            image: 'images/Avatar3.png',
+            welcomeText: `**零售业务助理**
+
+可以处理零售业务一线事务：
+
+- **开户服务** — 个人/机构客户开户流程指引与材料清单
+- **产品推荐** — 零售理财产品推荐与佣金费率查询
+- **客户分析** — 客户分层管理与精准营销建议
+
+输入客户情况或业务需求，例如：
+>>> 个人客户开户需要哪些材料
+>>> 查询陈明精工名下零售客户的资产规模
+>>> 本月适合稳健型客户的理财产品有哪些`
+        },
+        {
+            id: 'invest',
+            name: '投资业务助理',
+            avatarKey: 'top-invest',
+            image: 'images/Avatar4.png',
+            welcomeText: `**投资业务助理**
+
+可以处理自营投资相关事务：
+
+- **持仓查询** — 查询自营持仓明细、盈亏情况与集中度
+- **风控核查** — 核查风控指标与投资限制达标情况
+- **策略参考** — 提供投资策略参考与市场观点汇总
+
+查询需求，例如：
+>>> 查询当前自营权益持仓前十大
+>>> 核查单票集中度是否超限
+>>> 汇总本周固收投资策略观点`
+        },
+        {
+            id: 'sales',
+            name: '销交业务助理',
+            avatarKey: 'top-sales',
+            image: 'images/Avatar5.png',
+            welcomeText: `**销交业务助理**
+
+可以处理销售交易一线事务：
+
+- **委托交易** — 客户委托下单指引与成交查询
+- **费用计算** — 交易佣金、印花税等费用计算与规则说明
+- **交易分析** — 客户交易行为分析与活跃度统计
+
+输入具体需求，例如：
+>>> 查询陈明精工今日委托与成交明细
+>>> 计算这笔大宗交易的综合费用
+>>> 梳理本季度高净值客户的交易活跃度`
+        },
+        {
+            id: 'institution',
+            name: '机构业务助理',
+            avatarKey: 'top-institution',
+            image: 'images/Avatar6.png',
+            welcomeText: `**机构业务助理**
+
+可以处理机构客户服务事务：
+
+- **客户画像** — 机构客户信息、需求与合作记录查询
+- **产品定制** — 定制产品询价、方案沟通与路演安排
+- **交易服务** — 机构交易服务流程与结算指引
+
+请描述机构客户情况或需求，例如：
+>>> 查询「测试科技」的机构客户画像
+>>> 安排一场定增路演并通知相关客户
+>>> 机构客户大宗交易结算流程是什么`
+        },
+        {
+            id: 'research',
+            name: '研究业务助理',
+            avatarKey: 'top-research',
+            image: 'images/Avatar8.png',
+            welcomeText: `**研究业务助理**
+
+可以获取研究支持：
+
+- **研报查询** — 行业研究观点与公司分析报告检索
+- **观点汇总** — 核心观点、投资评级与目标价变动汇总
+- **专题研究** — 按主题或赛道汇总研究成果
+
+请告诉我研究方向或标的，例如：
+>>> 查询陈明精工最新研报观点与评级
+>>> 汇总本月半导体行业研报核心观点
+>>> 近期有哪些行业被上调评级`
+        },
+        {
+            id: 'credit',
+            name: '信用业务助理',
+            avatarKey: 'top-credit',
+            image: 'images/Avatar9.png',
+            welcomeText: `**信用业务助理**
+
+可以处理信用业务一线事务：
+
+- **两融服务** — 融资融券账户开通、维持担保比例查询与展期指引
+- **股票质押** — 股票质押回购流程、折算率与利率查询
+- **风险提示** — 信用业务风险预警与平仓线提醒
+
+输入业务需求，例如：
+>>> 查询陈明精工的维持担保比例
+>>> 股票质押回购需要准备哪些材料
+>>> 哪些客户维持担保比例低于预警线`
+        }
+    ];
+
+    function getTopBusinessAssistant(id) {
+        return TOP_BUSINESS_ASSISTANTS.find((item) => item.id === id) || null;
+    }
+
+    function getTopBusinessAssistantReply(message, assistant) {
+        if (!assistant) return markdownToHtml('已收到需求，请稍候。');
+        return `**${assistant.name}**\n\n收到需求：「${message}」。\n\n已调用相关业务能力处理，完整业务系统对接即将上线。可继续补充具体场景或客户信息，以获取更精准的指引。`;
+    }
+
+    function getTopBusinessAssistantImage(avatarKey) {
+        if (typeof avatarKey !== 'string' || avatarKey.indexOf('top-') !== 0) return null;
+        const assistant = getTopBusinessAssistant(avatarKey.slice(4));
+        return assistant?.image || null;
+    }
+
+    const TOP_SUPPORT_ASSISTANTS = [
+        {
+            id: 'ib',
+            name: '投行业务助理',
+            avatarKey: 'top-ib',
+            image: 'images/Avatar1.png',
+            welcomeText: `**投行业务助理**
+
+面向投行业务中后台管理支持，协助一线业务推进：
+
+- **项目审核** — 股权融资、债券发行、并购重组项目材料复核与准入把关
+- **流程管理** — 项目立项、内核、申报进度跟踪与节点提醒
+- **协同支持** — 对接一线投行人员，提供尽调清单、方案模板与合规要点
+
+输入需支持的项目或事项，例如：
+>>> 复核陈明精工定增项目的申报材料
+>>> 查询本月在审投行项目的进度节点
+>>> 并购重组项目内核需要关注哪些合规要点`
+        },
+        {
+            id: 'asset',
+            name: '资管业务助理',
+            avatarKey: 'top-asset',
+            image: 'images/Avatar2.png',
+            welcomeText: `**资管业务助理**
+
+面向资管业务中后台管理支持，保障产品规范运作：
+
+- **产品备案** — 资管产品设立、变更、备案材料审核与归档
+- **估值核算** — 产品净值核对、估值方法审查与异常波动排查
+- **合规监控** — 投资范围、比例限制与适当性管理合规核查
+
+输入需处理的产品或事项，例如：
+>>> 审核本月新设资管产品的备案材料
+>>> 核对「华创稳健成长1号」近期净值数据
+>>> 资管产品投资比例限制合规核查要点`
+        },
+        {
+            id: 'retail',
+            name: '零售业务助理',
+            avatarKey: 'top-retail',
+            image: 'images/Avatar3.png',
+            welcomeText: `**零售业务助理**
+
+面向零售业务中后台管理支持，赋能一线展业：
+
+- **开户审核** — 个人/机构客户开户资料审核与风险测评复核
+- **产品上架** — 零售理财产品上架审核、费率配置与适当性匹配
+- **客户管理** — 客户分层标准维护、营销活动配置与数据统计
+
+输入需支持的事项，例如：
+>>> 复核本周待审核的机构客户开户资料
+>>> 查询本月新上架零售理财产品清单
+>>> 稳健型客户适当性匹配规则核查`
+        },
+        {
+            id: 'invest',
+            name: '投资业务助理',
+            avatarKey: 'top-invest',
+            image: 'images/Avatar4.png',
+            welcomeText: `**投资业务助理**
+
+面向自营投资中后台管理支持，守住风控底线：
+
+- **风控监控** — 自营持仓集中度、比例限制与止损线实时监控
+- **持仓核对** — 自营持仓明细核对、盈亏复盘与异常交易排查
+- **合规报告** — 风控指标达标情况统计与监管报表生成
+
+输入需监控或核查的事项，例如：
+>>> 核查当前自营权益持仓单票集中度
+>>> 复核本月自营投资风控指标达标情况
+>>> 排查本周自营异常交易记录`
+        },
+        {
+            id: 'sales',
+            name: '销交业务助理',
+            avatarKey: 'top-sales',
+            image: 'images/Avatar5.png',
+            welcomeText: `**销交业务助理**
+
+面向销售交易中后台管理支持，保障交易顺畅：
+
+- **清算交收** — 客户交易清算核对、交收异常处理与对账
+- **费用管理** — 佣金费率配置、印花税核算与费用稽核
+- **交易监控** — 客户交易行为监控、异常委托识别与合规预警
+
+输入需处理的事项，例如：
+>>> 核对今日客户交易清算数据
+>>> 稽核本月大宗交易佣金费率
+>>> 排查本周异常委托交易记录`
+        },
+        {
+            id: 'institution',
+            name: '机构业务助理',
+            avatarKey: 'top-institution',
+            image: 'images/Avatar6.png',
+            welcomeText: `**机构业务助理**
+
+面向机构业务中后台管理支持，协同服务一线：
+
+- **客户档案** — 机构客户信息维护、需求登记与合作记录管理
+- **产品协同** — 定制产品需求对接、询价记录与路演安排支持
+- **服务支持** — 机构交易结算流程跟进与问题协调处理
+
+输入需支持的事项，例如：
+>>> 维护「测试科技」机构客户档案信息
+>>> 登记本月机构客户定制产品询价记录
+>>> 跟进机构客户大宗交易结算进度`
+        },
+        {
+            id: 'research',
+            name: '研究业务助理',
+            avatarKey: 'top-research',
+            image: 'images/Avatar8.png',
+            welcomeText: `**研究业务助理**
+
+面向研究中后台管理支持，保障研报合规输出：
+
+- **研报管理** — 研报发布审核、合规审查与归档管理
+- **观点汇总** — 核心观点、评级变动与目标价调整统计
+- **合规核查** — 研报信息披露、利益冲突与静默期合规检查
+
+输入需处理的事项，例如：
+>>> 审核本周待发布的研究报告
+>>> 汇总本月行业评级变动情况
+>>> 核查研报静默期合规执行情况`
+        },
+        {
+            id: 'credit',
+            name: '信用业务助理',
+            avatarKey: 'top-credit',
+            image: 'images/Avatar9.png',
+            welcomeText: `**信用业务助理**
+
+面向信用业务中后台管理支持，严控业务风险：
+
+- **担保品管理** — 维持担保比例监控、折算率调整与担保品核查
+- **风险预警** — 两融、股票质押风险客户识别与平仓线预警
+- **流程审核** — 信用业务账户开通审核、展期材料复核与台账管理
+
+输入需监控或审核的事项，例如：
+>>> 监控当前维持担保比例低于预警线的客户
+>>> 复核本周两融账户展期申请材料
+>>> 核查股票质押回购担保品折算率`
+        }
+    ];
+
+    function getTopSupportAssistant(id) {
+        return TOP_SUPPORT_ASSISTANTS.find((item) => item.id === id) || null;
+    }
+
+    function getTopSupportAssistantReply(message, assistant) {
+        if (!assistant) return markdownToHtml('已收到需求，请稍候。');
+        return `**${assistant.name}**\n\n收到需求：「${message}」。\n\n已调用相关中后台管理支持能力处理，完整业务系统对接即将上线。可继续补充具体项目或事项信息，以获取更精准的指引。`;
+    }
 
     const EMPLOYEE_ASSISTANT_INPUT_PROMPTS = {
         canmou: '分析我名下的【陈明精工这家公司】',
@@ -4957,7 +5602,19 @@
         jiaocha: '核查单笔银证转入≥100万是否存在异常',
         tianyan: '帮我梳理陈明精工待跟进的客户服务事项',
         shenpi: '查询我名下待审批的进度',
-        tongzhi: '帮我看看公司最新的通知公告和正式发文'
+        tongzhi: '帮我看看公司最新的通知公告和正式发文',
+        hegui: '帮我审查近期业务的合规风险',
+        shuju: '帮我洞察最新的经营数据',
+        xuqiu: '帮我识别客户的合作意图',
+        'skill-customer-portrait': '分析我名下的【陈明精工这家公司】',
+        'skill-business-match': '帮我匹配适合陈明精工的业务分析模型',
+        'skill-solution-gen': '为陈明精工生成一套融资扩产方案草案',
+        'skill-cross-verify': '核查单笔银证转入≥100万是否存在异常',
+        'skill-service-reply': '帮我梳理陈明精工待跟进的客户服务事项',
+        'skill-travel-audit': '帮我分析近期差旅报销的合规情况',
+        'skill-expense-check': '帮我核查费用报销是否存在异常',
+        'skill-kpi-forecast': '帮我预测本季度的绩效收入',
+        'skill-doc-summary': '帮我摘要最新的业务文档'
     };
 
     function isApprovalProgressPrompt(message) {
@@ -4977,9 +5634,7 @@
     function buildApprovalProgressReply(message) {
         return `**待办事项助手**
 
-任务：查询「${message}」相关审批进度。
-
-**名下待审批事项（3项）**
+## 名下待审批事项（3）
 
 | 事项 | 当前节点 | 预计完成 |
 |------|----------|----------|
@@ -4993,14 +5648,12 @@
     function buildNoticeDocumentSummaryReply(message) {
         return `**通知公告助手**
 
-任务：汇总「${message}」相关最新内容。
-
-**最新通知公告**
+## 最新通知公告
 
 - **《关于2026年二季度投行业务协同专项安排的通知》**（6月20日发布）：明确投行业务、研究、销交三条线协同分工，要求 T+1 响应客户经理协同请求。
 - **《员工工作台功能升级说明》**（6月18日发布）：上线助手标签联动、客户分析引导对话等功能，请各团队于6月25日前完成试用反馈。
 
-**最新正式发文**
+## 最新正式发文
 
 - **《投行业务材料报送管理办法（2026修订）》**（投行〔2026〕12号）：更新尽调材料清单、电子归档路径及报送时限，6月24日起执行。
 - **《业务支持中心异常提醒处置指引》**（运管〔2026〕08号）：明确异常分级标准与闭环时限，要求一线于收到提醒后2个工作日内反馈处置进展。
@@ -5075,7 +5728,19 @@
         if (!p || getPanelKey(p) !== 'employee') return '';
         if (!isWorkbenchInputHomePage(p)) return '';
         const state = getPanelState(p);
-        if (state.exceptionChatActive) return '';
+        if (state.currentInputSkillId) {
+            return EMPLOYEE_ASSISTANT_INPUT_PROMPTS[state.currentInputSkillId] || '';
+        }
+        if (state.currentTopBusinessAssistant) {
+            return TOP_BIZ_INPUT_PROMPTS[state.currentTopBusinessAssistant] || '';
+        }
+        if (state.currentCatalogAssistant) {
+            const id = state.currentCatalogAssistant.id || '';
+            const avatarClass = state.currentCatalogAssistant.avatarClass || '';
+            return EMPLOYEE_ASSISTANT_INPUT_PROMPTS[id]
+                || EMPLOYEE_ASSISTANT_INPUT_PROMPTS[avatarClass]
+                || '';
+        }
         if (state.currentExtraAssistantId) {
             return EMPLOYEE_ASSISTANT_INPUT_PROMPTS[state.currentExtraAssistantId] || '';
         }
@@ -5094,9 +5759,29 @@
         const input = getPanelEl('main-chat-input', p);
         if (!input) return;
 
+        // 输入框内以 chip 显示 @xxx 时，将预设提示词作为 placeholder 展示（浅灰色）
+        const state = getPanelState(p);
+        if (state.currentInputSkillId
+            || state.currentTopBusinessAssistant
+            || state.currentExtraAssistantId
+            || state.currentCatalogAssistant
+            || (typeof state.currentCardIndex === 'number' && state.currentCardIndex >= 0)) {
+            const chipPrompt = getEmployeeAssistantInputPrompt(p);
+            const prevChipPrompt = input.dataset.suggestedPrompt || '';
+            if (prevChipPrompt && input.value === prevChipPrompt) {
+                input.value = '';
+                syncMainSendButtonState(p);
+            }
+            input.dataset.suggestedPrompt = chipPrompt;
+            input.placeholder = chipPrompt;
+            refreshInputMentionChip(p);
+            return;
+        }
+
         if (!isWorkbenchInputHomePage(p)) {
             input.dataset.suggestedPrompt = '';
             input.placeholder = getChatModeInputPlaceholder(p);
+            refreshInputMentionChip(p);
             return;
         }
 
@@ -5108,6 +5793,7 @@
         }
         input.placeholder = prompt || getMainInputDefaultPlaceholder(p);
         input.dataset.suggestedPrompt = prompt;
+        refreshInputMentionChip(p);
     }
 
     function fillEmployeeMainInputPrompt(panel) {
@@ -5135,6 +5821,7 @@
     function isWorkbenchAssistantMode(state) {
         if (!state || state.exceptionChatActive) return false;
         if (state.currentExtraAssistantId) return false;
+        if (state.currentTopBusinessAssistant) return false;
         return !(typeof state.currentCardIndex === 'number' && state.currentCardIndex >= 0);
     }
 
@@ -5256,8 +5943,17 @@
             };
         }
 
-        if (options.agentId === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
-            return { avatarKey: 'exceptions', name: '异常提醒助手' };
+        if (options.agentId) {
+            if (options.agentId === SUPPORT_INPUT_AGENT_EXCEPTIONS) {
+                return { avatarKey: 'exceptions', name: '异常提醒助手' };
+            }
+            const agent = supportAgents.find((a) => a.id === options.agentId);
+            if (agent) {
+                return {
+                    avatarKey: `support-${agent.id}`,
+                    name: agent.name
+                };
+            }
         }
 
         if (options.extraAssistantId) {
@@ -5355,7 +6051,17 @@
     }
 
     function buildEmployeeMessageAvatarHtml(options = {}, text = '', panel) {
+        if (options.agentId && options.agentId !== SUPPORT_INPUT_AGENT_EXCEPTIONS) {
+            const agent = getSupportAgent(options.agentId);
+            if (agent && agent.image) {
+                return `<div class="chat-avatar employee-chat-avatar employee-bot-avatar support-chat-avatar"><img src="${escapeHtml(agent.image)}" alt="${escapeHtmlText(agent.name || '')}"></div>`;
+            }
+        }
         const meta = resolveEmployeeMessageAvatarMeta(options, text, panel);
+        const topImage = getTopBusinessAssistantImage(meta.avatarKey);
+        if (topImage) {
+            return `<div class="chat-avatar employee-chat-avatar employee-bot-avatar"><img src="${escapeHtml(topImage)}" alt="${escapeHtmlText(meta.name || '')}"></div>`;
+        }
         return buildEmployeeBotAvatarHtml(meta.name, meta.avatarKey);
     }
 
@@ -5364,9 +6070,16 @@
             return {};
         }
         if (options.agentId) {
-            return {
+            const persist = {
                 agentId: options.agentId || null
             };
+            if (options.assistantAvatarKey) {
+                persist.assistantAvatarKey = options.assistantAvatarKey;
+                if (options.assistantDisplayName) {
+                    persist.assistantDisplayName = options.assistantDisplayName;
+                }
+            }
+            return persist;
         }
 
         const meta = resolveEmployeeMessageAvatarMeta(options, text, panel);
@@ -5644,6 +6357,22 @@
             if (taskCard?.dataset.taskId) {
                 event.stopPropagation();
                 sendEmployeeTaskToChat(taskCard.dataset.taskId);
+                return;
+            }
+            const autopilotChip = event.target.closest('.autopilot-mention-chip');
+            if (autopilotChip?.dataset.mentionId) {
+                event.stopPropagation();
+                const targetPanel = autopilotChip.closest('.workbench-panel') || document.getElementById('workbench-panel-employee');
+                const inputEl = getPanelEl('main-chat-input', targetPanel);
+                const emp = getMentionEmployeeById(autopilotChip.dataset.mentionId);
+                if (emp && inputEl) {
+                    const insertText = `@${emp.name} `;
+                    inputEl.value += insertText;
+                    syncMainSendButtonState(targetPanel);
+                    addMentionedEmployee(targetPanel, emp.id);
+                    autoResizeTextarea(inputEl);
+                    inputEl.focus();
+                }
                 return;
             }
             const exceptionCard = event.target.closest('.chat-exception-card');
@@ -6055,6 +6784,149 @@
 
     window.syncEmployeeAssistantTags = syncEmployeeAssistantTags;
 
+    // 可被 @ 的员工列表（demo 数据：姓名 + 手机号 + 部门 + 头像）
+    const MENTION_EMPLOYEES = [
+        { id: 'emp-zhangming', name: '张明', phone: '13812348012', dept: '投行部', title: '高级经理', emoji: '👨‍💼' },
+        { id: 'emp-wangqiang', name: '王强', phone: '13912348034', dept: '投行部', title: '经理', emoji: '🧑‍💼' },
+        { id: 'emp-zhaomin', name: '赵敏', phone: '13712348045', dept: '投行部', title: '高级经理', emoji: '👩‍💼' },
+        { id: 'emp-liutao', name: '刘涛', phone: '13612348067', dept: '资管部', title: '副总裁', emoji: '👨‍💼' },
+        { id: 'emp-chenyu', name: '陈宇', phone: '13512348098', dept: '客户服务部', title: '经理', emoji: '🧑‍💼' },
+        { id: 'emp-lina', name: '李娜', phone: '15812348023', dept: '合规部', title: '高级经理', emoji: '👩‍💼' },
+        { id: 'emp-zhouwei', name: '周伟', phone: '15912348056', dept: '研究部', title: '分析师', emoji: '👨‍💼' },
+        { id: 'emp-sunli', name: '孙丽', phone: '15212348078', dept: '运营部', title: '经理', emoji: '👩‍💼' },
+        { id: 'emp-huangjie', name: '黄杰', phone: '15112348011', dept: '投行部', title: '董事', emoji: '👨‍💼' },
+        { id: 'emp-wuxin', name: '吴欣', phone: '15012348033', dept: '资管部', title: '经理', emoji: '👩‍💼' }
+    ];
+
+    function getMentionEmployeeById(id) {
+        return MENTION_EMPLOYEES.find((e) => e.id === id) || null;
+    }
+
+    // 获取当前会话中被 @ 的员工列表
+    function getMentionedEmployees(panel) {
+        const state = getPanelState(panel);
+        return (state.mentionedEmployees || [])
+            .map((id) => getMentionEmployeeById(id))
+            .filter(Boolean);
+    }
+
+    // 将员工加入会话成员（群聊效果）
+    function addMentionedEmployee(panel, employeeId) {
+        const p = panel || getActiveWorkbenchPanel();
+        const state = getPanelState(p);
+        if (!state.mentionedEmployees) state.mentionedEmployees = [];
+        if (!state.mentionedEmployees.includes(employeeId)) {
+            state.mentionedEmployees.push(employeeId);
+        }
+        renderChatMembersBar(p);
+    }
+
+    function clearMentionedEmployees(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const state = getPanelState(p);
+        state.mentionedEmployees = [];
+        renderChatMembersBar(p);
+    }
+
+    // 从消息文本中解析被 @ 的员工（匹配 @人名）
+    function parseMentionedEmployeesFromText(text, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const state = getPanelState(p);
+        if (!state.mentionedEmployees || !state.mentionedEmployees.length) return [];
+        const mentioned = [];
+        state.mentionedEmployees.forEach((id) => {
+            const emp = getMentionEmployeeById(id);
+            if (emp && new RegExp('@' + emp.name + '(?![\\w\\u4e00-\\u9fa5])').test(text || '')) {
+                mentioned.push(emp);
+            }
+        });
+        return mentioned;
+    }
+
+    // 渲染会话窗口顶部的成员条（群聊效果）
+    function renderChatMembersBar(panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const chatView = getPanelEl('ai-chat-view', p);
+        if (!chatView) return;
+        // 将成员条插入到 .ai-workbench-section 层级，作为对话窗口顶部固定栏
+        const section = chatView.closest('.ai-workbench-section') || chatView.closest('.center-module-view');
+        if (!section) return;
+        const sessionScroll = chatView.closest('.session-scroll') || chatView.parentElement;
+        const members = getMentionedEmployees(p);
+        let bar = section.querySelector(':scope > .chat-members-bar');
+        // 始终显示成员条（即使没有 @ 员工，也显示“我”）
+        if (!bar) {
+            bar = document.createElement('div');
+            bar.className = 'chat-members-bar';
+            section.insertBefore(bar, section.firstChild);
+        }
+        if (sessionScroll) sessionScroll.classList.add('has-members-bar');
+        const ownerName = '我';
+        const sessionStatus = window.AppShell?.getSessionStatus?.() || '推进中';
+        const statusColorClass = window.AppShell?.getStatuses?.() ? (window.AppShell?.getSessionStatus?.() || '推进中') : '推进中';
+        const statusCls = {
+            '推进中': 'status-active',
+            '目标达成': 'status-done',
+            '已暂停': 'status-paused',
+            '已取消': 'status-cancelled'
+        }[sessionStatus] || 'status-active';
+        bar.innerHTML = `
+            <span class="chat-members-bar-label">对话涉及成员：</span>
+            <span class="chat-member-chip chat-member-self">
+                <span class="chat-member-avatar" aria-hidden="true">🙋</span>
+                <span class="chat-member-name">${escapeHtmlText(ownerName)}</span>
+            </span>
+            ${members.map((m) => `
+                <span class="chat-member-chip" data-employee-id="${escapeHtmlAttr(m.id)}">
+                    <span class="chat-member-avatar" aria-hidden="true">${m.emoji || '👤'}</span>
+                    <span class="chat-member-name">${escapeHtmlText(m.name)}</span>
+                </span>
+            `).join('')}
+            <span class="chat-members-bar-status">
+                <span class="chat-members-bar-status-label">会话状态：</span>
+                <span class="chat-status-badge ${statusCls}" id="chat-status-badge" title="点击修改会话状态">${escapeHtmlText(sessionStatus)}</span>
+            </span>
+        `;
+    }
+
+    // 被 @ 员工的群聊回复内容（demo：简短确认）
+    function buildMentionedEmployeeReplyText(employee, message) {
+        return `收到，我是${employee.dept || ''}${employee.title ? employee.title + ' ' : ''}${employee.name}。`;
+    }
+
+    // 追加一条被 @ 员工的群聊消息行
+    function appendMentionedEmployeeReply(employee, text, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        const messagesEl = getPanelEl('ai-chat-messages', p);
+        if (!messagesEl) return;
+        const row = document.createElement('div');
+        row.className = 'chat-row chat-row-assistant chat-row-mention-employee';
+        row.dataset.employeeId = employee.id || '';
+        row.innerHTML = `
+            <div class="chat-avatar employee-chat-avatar mention-employee-avatar" aria-hidden="true">${employee.emoji || '👤'}</div>
+            <div class="chat-bubble chat-bubble-assistant mention-employee-bubble">
+                <div class="chat-bubble-sender">${escapeHtmlText(employee.name || '')}${employee.dept ? ' · ' + escapeHtmlText(employee.dept) : ''}</div>
+                <div class="chat-bubble-content">${escapeHtml(text || '')}</div>
+            </div>
+        `;
+        const lastBlock = messagesEl.querySelector('.chat-conversation-block:last-of-type');
+        (lastBlock || messagesEl).appendChild(row);
+        const scroller = messagesEl.closest('.ai-chat-messages') || messagesEl;
+        scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' });
+    }
+
+    // 发送含 @员工 的消息后，安排被 @ 的员工在助手回复之后追加群聊回复
+    function scheduleMentionedEmployeeReplies(message, panel) {
+        const p = panel || getActiveWorkbenchPanel();
+        if (getPanelKey(p) !== 'employee') return;
+        const mentioned = parseMentionedEmployeesFromText(message, p);
+        if (!mentioned.length) return;
+        const emp = mentioned[0];
+        setTimeout(() => {
+            appendMentionedEmployeeReply(emp, buildMentionedEmployeeReplyText(emp, message), p);
+        }, 1500);
+    }
+
     function getEmployeeAtMentionOptions() {
         return [
             { kind: 'main', index: 0, name: '客户分析助手', avatarClass: 'canmou' },
@@ -6083,10 +6955,20 @@
         ];
     }
 
+    function getEmployeeMentionOptions() {
+        return MENTION_EMPLOYEES.map((e) => ({
+            kind: 'employee',
+            employeeId: e.id,
+            name: e.name,
+            phone: e.phone,
+            dept: e.dept,
+            title: e.title,
+            emoji: e.emoji
+        }));
+    }
+
     function getAtMentionOptionsForPanel(panel) {
-        return getPanelKey(panel) === 'support'
-            ? getSupportAtMentionOptions()
-            : getEmployeeAtMentionOptions();
+        return getEmployeeMentionOptions();
     }
 
     function findAtMentionToken(text, caretIndex) {
@@ -6111,7 +6993,13 @@
         return options.filter((opt) => {
             const name = String(opt.name || '').toLowerCase();
             const shortName = name.replace(/助手$/g, '');
-            return name.includes(q) || shortName.includes(q);
+            if (name.includes(q) || shortName.includes(q)) return true;
+            if (opt.kind === 'employee') {
+                const phone = String(opt.phone || '').toLowerCase();
+                const dept = String(opt.dept || '').toLowerCase();
+                if (phone.includes(q) || dept.includes(q)) return true;
+            }
+            return false;
         });
     }
 
@@ -6151,6 +7039,8 @@
         delete menu.dataset.mentionStart;
         p?.querySelector('.enhanced-input-wrap')?.classList.remove('has-at-mention-open');
         p?.querySelector('.input-section')?.classList.remove('has-at-mention-open');
+        p?.querySelector('.ai-workbench-section')?.classList.remove('has-at-mention-open');
+        p?.querySelector('.center-workspace')?.classList.remove('has-at-mention-open');
     }
 
     function openAtMentionMenu(panel, token) {
@@ -6169,12 +7059,26 @@
         menu.hidden = false;
         wrap?.classList.add('has-at-mention-open');
         p?.querySelector('.input-section')?.classList.add('has-at-mention-open');
-        menu.innerHTML = options.map((opt, idx) => `
-            <button type="button" class="input-at-mention-option ${escapeHtmlText(opt.avatarClass || '')}" data-at-mention-idx="${idx}" data-kind="${opt.kind}" data-index="${opt.index ?? ''}" data-extra-id="${escapeHtmlText(opt.extraId || '')}" data-agent-id="${escapeHtmlAttr(opt.agentId || opt.id || '')}" data-assistant-name="${escapeHtmlAttr(opt.name || '')}">
-                ${buildAtMentionOptionIconHtml(opt, p)}
-                <span class="input-at-mention-option-name">${escapeHtmlText(opt.name || '')}</span>
-            </button>
-        `).join('');
+        p?.querySelector('.ai-workbench-section')?.classList.add('has-at-mention-open');
+        p?.querySelector('.center-workspace')?.classList.add('has-at-mention-open');
+
+        // 仅渲染员工选项
+        let html = '';
+        if (options.length) {
+            html += `<div class="input-at-mention-group-title">员工</div>`;
+            options.forEach((opt, idx) => {
+                html += `
+                    <button type="button" class="input-at-mention-option input-at-mention-employee" data-at-mention-idx="${idx}" data-kind="employee" data-employee-id="${escapeHtmlAttr(opt.employeeId || '')}" data-employee-name="${escapeHtmlAttr(opt.name || '')}">
+                        <span class="input-at-mention-option-avatar" aria-hidden="true">${opt.emoji || '👤'}</span>
+                        <span class="input-at-mention-option-body">
+                            <span class="input-at-mention-option-name">${escapeHtmlText(opt.name || '')}</span>
+                            <span class="input-at-mention-option-meta">${escapeHtmlText(opt.dept || '')} · ${escapeHtmlText(opt.phone || '')}</span>
+                        </span>
+                    </button>
+                `;
+            });
+        }
+        menu.innerHTML = html;
 
         setAtMentionActiveIndex(menu, 0);
 
@@ -6208,16 +7112,34 @@
             || btn.querySelector('.input-at-mention-option-name')?.textContent?.trim()
             || '';
 
+        // 员工 @：在输入框插入“@人名 ”文本，并把员工拉入会话成员（群聊效果）
+        if (kind === 'employee') {
+            const employeeId = btn.dataset.employeeId || '';
+            const employeeName = btn.dataset.employeeName
+                || btn.querySelector('.input-at-mention-option-name')?.textContent?.trim()
+                || '';
+            const insertText = `@${employeeName} `;
+            const caret = input.selectionStart ?? input.value.length;
+            const token = findAtMentionToken(input.value, caret);
+            if (token) {
+                const before = input.value.slice(0, token.start);
+                const after = input.value.slice(caret);
+                input.value = before + insertText + after;
+                const nextCaret = before.length + insertText.length;
+                input.setSelectionRange(nextCaret, nextCaret);
+            } else {
+                input.value += insertText;
+            }
+            syncMainSendButtonState(p);
+            if (employeeId) addMentionedEmployee(p, employeeId);
+            closeAtMentionMenu(p);
+            input.focus();
+            return;
+        }
+
         const caret = input.selectionStart ?? input.value.length;
         const token = findAtMentionToken(input.value, caret);
-        if (token && assistantName) {
-            const before = input.value.slice(0, token.start);
-            const after = input.value.slice(caret);
-            const mentionText = `@${assistantName} `;
-            input.value = before + mentionText + after;
-            const nextCaret = before.length + mentionText.length;
-            input.setSelectionRange(nextCaret, nextCaret);
-        } else if (token) {
+        if (token) {
             const before = input.value.slice(0, token.start);
             const after = input.value.slice(caret);
             input.value = before + after;
@@ -6465,6 +7387,7 @@
         state.currentInputSkillId = null;
         updateSupportAssistantTagSelection(p);
         refreshInputSkillPicker(p);
+        refreshInputMentionChip(p);
     }
 
     function clearSupportExtraAssistant(panel) {
@@ -6478,6 +7401,7 @@
         state.currentInputSkillId = null;
         updateSupportAssistantTagSelection(p);
         refreshInputSkillPicker(p);
+        refreshInputMentionChip(p);
     }
 
     function selectSupportExtraAssistant(extraId, panel) {
@@ -6491,6 +7415,7 @@
         state.currentInputSkillId = null;
         updateSupportAssistantTagSelection(p);
         refreshInputSkillPicker(p);
+        refreshInputMentionChip(p);
     }
 
     function appendSupportExtraAssistantWelcome(extraId, panel) {
@@ -6700,11 +7625,12 @@
         if (getPanelKey(p) !== 'employee') return;
         const state = getPanelState(p);
         if (!state.currentSessionId || !window.AppShell?.saveSessionMessages) return;
+        const contextBundle = window.ContextPanel?.getState?.() || null;
         window.AppShell.saveSessionMessages(
             state.currentSessionId,
             state.chatMessages || [],
             state.currentCardIndex,
-            { workbenchAssistant: isWorkbenchAssistantMode(state) }
+            { workbenchAssistant: isWorkbenchAssistantMode(state), contextBundle }
         );
     }
 
@@ -6751,11 +7677,22 @@
             : (typeof session?.assistantIndex === 'number' ? session.assistantIndex : null);
         const isExceptionSession = String(session?.title || '').startsWith('异常提醒·')
             || state.chatMessages.some((msg) => msg.agentId === SUPPORT_INPUT_AGENT_EXCEPTIONS);
+        const topAssistantAvatarKey = state.chatMessages
+            .map((msg) => msg.assistantAvatarKey)
+            .find((key) => typeof key === 'string' && key.indexOf('top-') === 0);
+        state.currentTopBusinessAssistant = null;
         if (isExceptionSession) {
             clearEmployeeAssistantInputSelection(p);
+            updateTopAvatarActive(null);
         } else if (workbenchSession) {
             state.exceptionChatActive = false;
             state.currentExtraAssistantId = null;
+            updateEmployeeAssistantSelection(null, p);
+            updateTopAvatarActive(null);
+        } else if (topAssistantAvatarKey) {
+            state.exceptionChatActive = false;
+            state.currentTopBusinessAssistant = topAssistantAvatarKey.slice(4);
+            updateTopAvatarActive(topAssistantAvatarKey.slice(4));
             updateEmployeeAssistantSelection(null, p);
         } else {
             state.exceptionChatActive = false;
@@ -6766,6 +7703,7 @@
                 typeof state.currentCardIndex === 'number' ? state.currentCardIndex : null,
                 p
             );
+            updateTopAvatarActive(null);
         }
 
         if (!state.chatMessages.length) {
@@ -6805,6 +7743,16 @@
             }
         });
         scrollWorkbenchChatToBottom(p);
+
+        // 恢复右侧边栏上下文（关联任务等）
+        window.ContextPanel?.reset?.();
+        if (session?.contextBundle) {
+            const bundle = session.contextBundle;
+            if (window.ContextPanel?.loadSnapshot && (bundle.outputs?.length || bundle.models?.length || bundle.customers?.length || bundle.tasks?.length || bundle.inputs?.length)) {
+                window.ContextPanel.loadSnapshot(bundle);
+            }
+        }
+        window.ContextPanel?.renderAllSections?.();
     }
 
     function applyEmployeeChatModeUI(panel, options = {}) {
@@ -6885,6 +7833,9 @@
             clearEmployeeChatMessages(p);
         }
 
+        // 刷新会话状态徽章
+        window.AppShell?.updateChatStatusBadge?.();
+
         if (showWelcome) {
             if (state.currentExtraAssistantId) {
                 appendExtraAssistantConversation(state.currentExtraAssistantId, p);
@@ -6898,6 +7849,9 @@
         syncEmployeeChatModeLayout();
         refreshInputSkillPicker(p);
         updateEmployeeInputPlaceholder(p);
+        renderChatMembersBar(p);
+        // 进入聊天模式时自动展开右侧边栏
+        window.AppShell?.expandContextPanel?.();
     }
 
     function enterChatMode(index, panel) {
@@ -7180,6 +8134,9 @@
         (lastBlock || messagesEl).appendChild(row);
         scrollWorkbenchChatToBottom(p);
 
+        // 刷新滚动条标记
+        window.ChatScrollMarkers?.refresh?.();
+
         if (role === 'assistant') {
             const bubble = row.querySelector('.chat-bubble-assistant');
             syncAssistantMessageContext(bubble, text, {
@@ -7263,9 +8220,31 @@
     function handleEmployeeAssistantMessage(message, panel) {
         const p = panel || getActiveWorkbenchPanel();
         const state = getPanelState(p);
+        if (state.currentTopBusinessAssistant) {
+            const assistant = getTopBusinessAssistant(state.currentTopBusinessAssistant);
+            setTimeout(() => {
+                appendChatMessage(
+                    getTopBusinessAssistantReply(message, assistant),
+                    'assistant',
+                    p,
+                    {
+                        assistantAvatarKey: assistant?.avatarKey,
+                        assistantDisplayName: assistant?.name,
+                        userMessage: message
+                    }
+                );
+            }, 400);
+            return;
+        }
         if (isWorkbenchAssistantMode(state)) {
             setTimeout(() => {
-                appendChatMessage(getWorkbenchAssistantReply(message), 'assistant', p, { workbenchAssistant: true });
+                const reply = getWorkbenchAssistantReply(message);
+                appendChatMessage(reply, 'assistant', p, { workbenchAssistant: true });
+                const detected = detectSessionStatus(message, reply);
+                if (detected) {
+                    const sid = window.AppShell?.getCurrentSessionId?.();
+                    if (sid) window.AppShell?.setSessionStatus?.(sid, detected);
+                }
             }, 400);
             return;
         }
@@ -7438,6 +8417,8 @@
         const hasMainSelection = typeof state.currentCardIndex === 'number' && state.currentCardIndex >= 0;
         const extraAssistant = state.currentExtraAssistantId ? getExtraAssistantById(state.currentExtraAssistantId) : null;
         const workbenchMode = !extraAssistant && !hasMainSelection;
+        // 消息中 @ 了员工时，仅由被 @ 员工在群聊中回复，工作台/助手不再自动回复卡片
+        const hasMentionedEmployee = parseMentionedEmployeesFromText(message, p).length > 0;
 
         if (workbenchMode) {
             applyEmployeeChatModeUI(p, {
@@ -7448,7 +8429,7 @@
                 sessionTitle: message.length > 30 ? `${message.slice(0, 30)}…` : message
             });
             appendChatMessage(message, 'user', p);
-            handleEmployeeAssistantMessage(message, p);
+            if (!hasMentionedEmployee) handleEmployeeAssistantMessage(message, p);
             return;
         }
 
@@ -7460,7 +8441,7 @@
                 sessionTitle: message.length > 30 ? `${message.slice(0, 30)}…` : message
             });
             appendChatMessage(message, 'user', p);
-            handleEmployeeAssistantMessage(message, p);
+            if (!hasMentionedEmployee) handleEmployeeAssistantMessage(message, p);
             return;
         }
 
@@ -7485,7 +8466,7 @@
         });
         updateEmployeeAssistantSelection(targetIndex, p);
         appendChatMessage(message, 'user', p);
-        handleEmployeeAssistantMessage(message, p);
+        if (!hasMentionedEmployee) handleEmployeeAssistantMessage(message, p);
     }
 
     // 处理主输入框回车键
@@ -7683,6 +8664,18 @@
         if (input) input.value = '';
         syncMainSendButtonState(panel);
 
+        // 检查是否为状态修改命令：/状态 推进中
+        const statusCmd = parseStatusCommand(raw);
+        if (statusCmd) {
+            appendChatMessage(raw, 'user', panel);
+            const sid = window.AppShell?.getCurrentSessionId?.();
+            if (sid) {
+                window.AppShell?.setSessionStatus?.(sid, statusCmd);
+                appendChatMessage(`已将会话状态修改为「${statusCmd}」`, 'assistant', panel);
+            }
+            return;
+        }
+
         if (getPanelKey(panel) === 'org') {
             appendOrgChatMessage(message, 'user', panel);
             setTimeout(() => {
@@ -7708,17 +8701,46 @@
 
         if (getPanelState(panel).chatModeActive) {
             appendChatMessage(message, 'user', panel);
-            if (getPanelKey(panel) === 'employee') {
-                handleEmployeeAssistantMessage(message, panel);
-            } else {
-                setTimeout(() => {
-                    appendChatMessage(getAssistantReply(message, getPanelState(panel).currentCardIndex, panel), 'assistant', panel);
-                }, 400);
+            // 消息中 @ 了员工时，仅由被 @ 员工在群聊中回复，工作台助手不再自动回复卡片
+            const hasMentionedEmployee = parseMentionedEmployeesFromText(message, panel).length > 0;
+            if (!hasMentionedEmployee) {
+                if (getPanelKey(panel) === 'employee') {
+                    handleEmployeeAssistantMessage(message, panel);
+                    // 发送消息后清除顶部业务助理 @chip
+                    const empState = getPanelState(panel);
+                    if (empState.currentTopBusinessAssistant) {
+                        empState.currentTopBusinessAssistant = null;
+                        updateTopAvatarActive(null);
+                        updateEmployeeInputPlaceholder(panel);
+                    }
+                } else {
+                    setTimeout(() => {
+                        const reply = getAssistantReply(message, getPanelState(panel).currentCardIndex, panel);
+                        appendChatMessage(reply, 'assistant', panel);
+                        // AI 智能判断会话状态
+                        const detected = detectSessionStatus(message, reply);
+                        if (detected) {
+                            const sid = window.AppShell?.getCurrentSessionId?.();
+                            if (sid) window.AppShell?.setSessionStatus?.(sid, detected);
+                        }
+                    }, 400);
+                }
             }
+            scheduleMentionedEmployeeReplies(message, panel);
             return;
         }
-        
+
         startEmployeeChatFromMainInput(message, panel);
+        // 从主页首次发送后清除顶部业务助理 @chip
+        if (getPanelKey(panel) === 'employee') {
+            const empState = getPanelState(panel);
+            if (empState.currentTopBusinessAssistant) {
+                empState.currentTopBusinessAssistant = null;
+                updateTopAvatarActive(null);
+                updateEmployeeInputPlaceholder(panel);
+            }
+        }
+        scheduleMentionedEmployeeReplies(message, panel);
     }
     
     // 语音识别输入
@@ -7733,6 +8755,38 @@
         fileInput?.click();
     }
 
+    // 发起新会话（与当前会话关联）
+    function startNewRelatedSession() {
+        const parentSessionId = window.AppShell?.getCurrentSessionId?.();
+        // 创建新会话并双向关联
+        const newSession = window.AppShell?.createRelatedSession?.('关联新对话');
+        if (!newSession) return;
+        // 重置当前对话窗口
+        const panel = getActiveWorkbenchPanel();
+        if (panel) {
+            const messagesEl = getPanelEl('ai-chat-messages', panel);
+            if (messagesEl) messagesEl.innerHTML = '';
+            const chatView = getPanelEl('ai-chat-view', panel);
+            if (chatView) {
+                chatView.classList.add('is-visible');
+                chatView.style.display = '';
+            }
+            const state = getPanelState(panel);
+            state.chatMessages = [];
+            state.mentionedEmployees = [];
+            renderChatMembersBar(panel);
+            updateEmployeeInputPlaceholder(panel);
+        }
+        // 重置右栏上下文
+        window.ContextPanel?.reset?.();
+        window.AppShell?.expandContextPanel?.();
+        // 切换到关联会话 Tab 以展示关联关系
+        window.ContextPanel?.switchContextTab?.('related');
+        // 提示
+        const input = getPanelEl('main-chat-input', panel);
+        input?.focus();
+    }
+
     function handleMainFileUpload(input) {
         const file = input.files?.[0];
         if (!file) return;
@@ -7741,6 +8795,15 @@
         const panel = getActiveWorkbenchPanel();
         const message = `📎 ${file.name}`;
         const key = getPanelKey(panel);
+
+        // 记录到右栏输入物
+        const ext = (file.name.split('.').pop() || '').toLowerCase();
+        const kindMap = { pdf: 'pdf', doc: 'word', docx: 'word', ppt: 'ppt', pptx: 'ppt', txt: 'txt' };
+        window.ContextPanel?.addInput?.({
+            fileName: file.name,
+            fileKind: kindMap[ext] || 'txt',
+            sizeText: file.size > 1024 * 1024 ? (file.size / 1024 / 1024).toFixed(1) + ' MB' : (file.size / 1024).toFixed(0) + ' KB'
+        });
 
         if (key === 'org') {
             appendOrgChatMessage(message, 'user', panel);
@@ -9845,7 +10908,7 @@
     
     // ========== 今日任务 / 工作日志功能 ==========
     const EMPLOYEE_DAILY_TASKS_KEY = 'employeeDailyTasks';
-    const EMPLOYEE_DAILY_TASKS_SEED_VERSION = 6;
+    const EMPLOYEE_DAILY_TASKS_SEED_VERSION = 7;
     let pendingDeleteEmployeeTaskId = null;
     let selectedEmployeeTaskId = null;
 
@@ -9955,6 +11018,17 @@
     }
 
     const defaultEmployeeDailyTasks = [
+        {
+            id: 'seed-0',
+            title: '昨日会话复盘：3项任务推进进展低于预期，建议拉通相关责任人协同处理',
+            summary: '基于昨日4场会话记录分析，识别出客户季度回访、机构开户补件、私募双录3项任务推进缓慢，建议尽快拉通投资业务助理、资管业务助理及合规部李娜协同跟进',
+            content: '自动驾驶大模型于今日09:00自动复盘昨日（7月1日）全部会话记录，共涉及4场对话、3位业务助理。经分析识别出3项任务推进进展低于预期：①客户张某季度回访（投资业务助理发起，昨日未完成外呼，客户资产变动15%待确认）；②测试科技有限公司开户补件（投行业务助理跟进，营业执照补件尚未上传，法人证件即将过期）；③私募基金双录视频（资管业务助理跟进，客户已签风险揭示书但双录视频未上传）。建议拉通相关责任人与合规部李娜共同推进，确保本周内完成闭环。',
+            source: '自动驾驶大模型',
+            sourceType: 'auto-pilot',
+            date: '2026-07-02',
+            time: '09:00',
+            timestamp: new Date('2026-07-02T09:00:00').getTime()
+        },
         {
             id: 'seed-1',
             title: '客户张某（账户资产888万）季度回访待完成，近3月资产变动约15%，待外呼确认',
@@ -10224,9 +11298,76 @@
         return assistantIndex;
     }
 
+    function getSupportAgentByName(name) {
+        return supportAgents.find(a => a.name === name) || null;
+    }
+
     function getTaskAssistantReply(task, index, panel) {
+        if (task.sourceType === 'auto-pilot') {
+            return buildAutoPilotTaskReplyHtml(task);
+        }
+        if (task.sourceType === 'agent') {
+            const agent = getSupportAgentByName(task.source);
+            if (agent) {
+                return `**${agent.name}**\n\n任务：${task.title}\n\n梳理背景与节点、生成执行建议、跟进进展。\n\n输入：指定起始步骤或补充材料。`;
+            }
+        }
         const assistant = getEmployeeAssistant(index, panel || getActiveWorkbenchPanel());
         return `**${assistant.name}**\n\n任务：${task.title}\n\n梳理背景与节点、生成执行建议、跟进进展。\n\n输入：指定起始步骤或补充材料。`;
+    }
+
+    function buildAutoPilotTaskReplyHtml(task) {
+        return `<div class="autopilot-reply-card">
+            <p class="chat-md-h2">昨日会话复盘报告</p>
+            <p>我已自动复盘昨日（7月1日）的全部会话记录，共涉及 <strong>4场对话</strong>、<strong>3位业务助理</strong>，识别出 <strong>3项任务</strong> 推进进展低于预期，需尽快协同处理。</p>
+            <p><strong>进展滞后任务清单</strong></p>
+            <div class="autopilot-task-list">
+                <div class="autopilot-task-item">
+                    <div class="autopilot-task-item-title">① 客户张某季度回访</div>
+                    <div class="autopilot-task-item-meta">
+                        <span class="autopilot-task-item-source">投资业务助理</span>
+                        <span class="autopilot-task-item-status autopilot-task-item-status--warning">未完成外呼</span>
+                    </div>
+                    <div class="autopilot-task-item-desc">客户资产变动约15%，权益类持仓占比62%超C2上限，昨日会话中未完成外呼确认</div>
+                </div>
+                <div class="autopilot-task-item">
+                    <div class="autopilot-task-item-title">② 测试科技有限公司开户补件</div>
+                    <div class="autopilot-task-item-meta">
+                        <span class="autopilot-task-item-source">投行业务助理</span>
+                        <span class="autopilot-task-item-status autopilot-task-item-status--warning">补件未上传</span>
+                    </div>
+                    <div class="autopilot-task-item-desc">营业执照扫描件不清晰需重新上传，法人身份证下月到期需同步更新</div>
+                </div>
+                <div class="autopilot-task-item">
+                    <div class="autopilot-task-item-title">③ 私募基金双录视频</div>
+                    <div class="autopilot-task-item-meta">
+                        <span class="autopilot-task-item-source">资管业务助理</span>
+                        <span class="autopilot-task-item-status autopilot-task-item-status--warning">双录未上传</span>
+                    </div>
+                    <div class="autopilot-task-item-desc">客户李四已签署风险揭示书，但双录视频尚未上传至合规系统</div>
+                </div>
+            </div>
+            <p><strong>建议拉通的相关人员</strong></p>
+            <p>以下人员与上述任务直接相关，点击即可将其拉入当前会话协同推进：</p>
+            <div class="autopilot-mention-suggestions">
+                <button type="button" class="autopilot-mention-chip" data-mention-id="emp-zhangming">
+                    <span class="autopilot-mention-emoji">👨‍💼</span>
+                    <span class="autopilot-mention-name">张明</span>
+                    <span class="autopilot-mention-dept">投行部·高级经理</span>
+                </button>
+                <button type="button" class="autopilot-mention-chip" data-mention-id="emp-liutao">
+                    <span class="autopilot-mention-emoji">👨‍💼</span>
+                    <span class="autopilot-mention-name">刘涛</span>
+                    <span class="autopilot-mention-dept">资管部·副总裁</span>
+                </button>
+                <button type="button" class="autopilot-mention-chip" data-mention-id="emp-lina">
+                    <span class="autopilot-mention-emoji">👩‍💼</span>
+                    <span class="autopilot-mention-name">李娜</span>
+                    <span class="autopilot-mention-dept">合规部·高级经理</span>
+                </button>
+            </div>
+            <p class="autopilot-reply-footer">💡 点击上方人员卡片将其拉入会话，或在下方输入 <code>@</code> 选择更多相关人员，共同推进任务闭环。</p>
+        </div>`;
     }
 
     function sendEmployeeTaskToChat(taskId) {
@@ -10238,9 +11379,35 @@
         if (!panel) return;
 
         const assistantIndex = ensureEmployeeChatMode(panel);
+
+        // 将任务同步到右侧「关联任务」面板（必须在 ensureEmployeeChatMode 之后，因为首次进入可能会 reset 上下文）
+        window.ContextPanel?.addTask?.({
+            id: task.id,
+            title: task.title || '任务',
+            status: task.status || '待处理',
+            dueDate: task.date ? `${task.date} ${task.time || ''}`.trim() : ''
+        });
+
         appendChatMessage(task.title, 'user', panel);
         setTimeout(() => {
-            appendChatMessage(getTaskAssistantReply(task, getPanelState(panel).currentCardIndex ?? assistantIndex, panel), 'assistant', panel);
+            let options = {};
+            if (task.sourceType === 'agent') {
+                const agent = getSupportAgentByName(task.source);
+                if (agent) {
+                    options = {
+                        agentId: agent.id,
+                        assistantAvatarKey: `support-${agent.id}`,
+                        assistantDisplayName: agent.name
+                    };
+                }
+            } else if (task.sourceType === 'auto-pilot') {
+                options = {
+                    assistantAvatarKey: 'autopilot',
+                    assistantDisplayName: '自动驾驶大模型',
+                    html: true
+                };
+            }
+            appendChatMessage(getTaskAssistantReply(task, getPanelState(panel).currentCardIndex ?? assistantIndex, panel), 'assistant', panel, options);
         }, 400);
 
         syncEmployeeChatModeLayout();
@@ -10559,6 +11726,7 @@
         state.currentCatalogAssistant = null;
         state.currentSessionId = null;
         state.chatMessages = [];
+        state.mentionedEmployees = [];
         window.AppShell?.setCurrentSessionId?.(null);
 
         const hero = document.getElementById('center-hero');
@@ -10579,8 +11747,14 @@
         if (miniAvatars) miniAvatars.style.display = 'none';
         if (workbench) workbench.classList.remove('chat-mode');
         if (inputSection) inputSection.classList.remove('chat-mode');
-        if (sessionScroll) sessionScroll.classList.remove('is-chat-active');
+        if (sessionScroll) {
+            sessionScroll.classList.remove('is-chat-active');
+            sessionScroll.classList.remove('has-members-bar');
+        }
         if (messagesEl) messagesEl.innerHTML = '';
+        // 成员条已移至 .ai-workbench-section 层级
+        const section = chatView?.closest('.ai-workbench-section') || chatView?.closest('.center-module-view');
+        section?.querySelector(':scope > .chat-members-bar')?.remove();
 
         panel.querySelectorAll('.ai-card-fan').forEach((card) => {
             card.classList.remove('active');
@@ -10648,10 +11822,183 @@
     window.markdownToHtml = markdownToHtml;
     window.clickPromptCard = clickPromptCard;
     window.appendChatMessage = appendChatMessage;
+    window.renderChatMembersBar = renderChatMembersBar;
 
     // 页面加载时初始化（app-shell.js 也会初始化，此处保留兼容）
     document.addEventListener('DOMContentLoaded', function() {
         if (typeof initAppShell === 'function') initAppShell();
         else showLoginPage();
         initDigitalAvatarsScrollControls();
+
+        // 监听会话切换：从历史会话恢复消息到对话框
+        document.addEventListener('workbench:switch-session', (e) => {
+            const sessionId = e?.detail?.sessionId;
+            if (!sessionId) return;
+            const session = window.AppShell?.getSessionById?.(sessionId);
+            if (!session) return;
+            const panel = getActiveWorkbenchPanel();
+            if (!panel) return;
+            // 清空当前对话框
+            const messagesEl = getPanelEl('ai-chat-messages', panel);
+            if (messagesEl) messagesEl.innerHTML = '';
+            const state = getPanelState(panel);
+            state.chatMessages = [];
+            state.mentionedEmployees = [];
+            renderChatMembersBar(panel);
+            // 进入聊天模式
+            if (!state.chatModeActive) {
+                state.chatModeActive = true;
+                const chatView = getPanelEl('ai-chat-view', panel);
+                if (chatView) {
+                    chatView.classList.add('is-visible');
+                    chatView.style.display = '';
+                }
+                syncEmployeeChatModeLayout();
+            }
+            // 恢复消息
+            const msgs = Array.isArray(session.messages) ? session.messages : [];
+            msgs.forEach((m) => {
+                if (m && m.text) appendChatMessage(m.text, m.role || 'user', panel);
+            });
+            // 刷新右侧边栏：先重置，再从会话快照恢复，最后渲染所有区块
+            window.ContextPanel?.reset?.();
+            if (session.contextBundle) {
+                // 直接恢复完整状态
+                const bundle = session.contextBundle;
+                if (window.ContextPanel?.loadSnapshot && (bundle.outputs?.length || bundle.models?.length || bundle.customers?.length || bundle.tasks?.length || bundle.inputs?.length)) {
+                    window.ContextPanel.loadSnapshot(bundle);
+                }
+            }
+            window.ContextPanel?.renderAllSections?.();
+            // 刷新状态徽章
+            window.AppShell?.updateChatStatusBadge?.();
+            updateEmployeeInputPlaceholder(panel);
+        });
     });
+
+    // ===== 会话状态管理（全局作用域） =====
+    let statusDropdown = null;
+
+    function closeStatusDropdown() {
+        if (statusDropdown) {
+            statusDropdown.remove();
+            statusDropdown = null;
+        }
+    }
+
+    function openStatusDropdown(anchorEl) {
+        closeStatusDropdown();
+        const statuses = window.AppShell?.getStatuses?.() || ['推进中', '目标达成', '已暂停', '已取消'];
+        const colorMap = {
+            '推进中': 'status-active',
+            '目标达成': 'status-done',
+            '已暂停': 'status-paused',
+            '已取消': 'status-cancelled'
+        };
+        statusDropdown = document.createElement('div');
+        statusDropdown.className = 'status-dropdown';
+        statusDropdown.innerHTML = statuses.map((s) => {
+            const cls = colorMap[s] || 'status-active';
+            return `<div class="status-dropdown-item" data-status="${s}">
+                <span class="status-dot ${cls}"></span>
+                <span>${s}</span>
+            </div>`;
+        }).join('') + `
+            <div class="status-dropdown-divider"></div>
+            <div class="status-dropdown-custom">
+                <input type="text" class="status-dropdown-input" placeholder="自定义状态…" maxlength="20" />
+                <button type="button" class="status-dropdown-confirm">确定</button>
+            </div>
+        `;
+        document.body.appendChild(statusDropdown);
+
+        const rect = anchorEl.getBoundingClientRect();
+        statusDropdown.style.position = 'fixed';
+        statusDropdown.style.top = (rect.bottom + 4) + 'px';
+        statusDropdown.style.right = (window.innerWidth - rect.right) + 'px';
+
+        statusDropdown.addEventListener('click', (e) => {
+            const item = e.target.closest('.status-dropdown-item');
+            if (!item) return;
+            const status = item.dataset.status;
+            const sid = window.AppShell?.getCurrentSessionId?.();
+            if (sid && status) {
+                window.AppShell?.setSessionStatus?.(sid, status);
+                appendChatMessage(`已将会话状态修改为「${status}」`, 'assistant', getActiveWorkbenchPanel());
+            }
+            closeStatusDropdown();
+        });
+
+        // 自定义状态输入：支持手动修改文字
+        const customInput = statusDropdown.querySelector('.status-dropdown-input');
+        const confirmBtn = statusDropdown.querySelector('.status-dropdown-confirm');
+        const applyCustomStatus = () => {
+            const val = (customInput.value || '').trim().slice(0, 20);
+            if (!val) return;
+            const sid = window.AppShell?.getCurrentSessionId?.();
+            if (sid) {
+                window.AppShell?.setSessionStatus?.(sid, val);
+                appendChatMessage(`已将会话状态修改为「${val}」`, 'assistant', getActiveWorkbenchPanel());
+            }
+            closeStatusDropdown();
+        };
+        confirmBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            applyCustomStatus();
+        });
+        customInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                applyCustomStatus();
+            }
+        });
+        // 自动聚焦输入框
+        setTimeout(() => customInput?.focus(), 0);
+
+        setTimeout(() => {
+            document.addEventListener('click', closeStatusDropdownOnOutside, { once: true });
+        }, 0);
+    }
+
+    function closeStatusDropdownOnOutside(e) {
+        if (statusDropdown && !statusDropdown.contains(e.target) && !e.target.closest('#chat-status-badge')) {
+            closeStatusDropdown();
+        } else if (statusDropdown) {
+            setTimeout(() => {
+                document.addEventListener('click', closeStatusDropdownOnOutside, { once: true });
+            }, 0);
+        }
+    }
+
+    document.addEventListener('click', (e) => {
+        const badge = e.target.closest('#chat-status-badge');
+        if (badge) {
+            e.stopPropagation();
+            openStatusDropdown(badge);
+        }
+    });
+
+    // AI 智能判断会话状态
+    function detectSessionStatus(userMessage, aiReply) {
+        const text = (userMessage + ' ' + aiReply).toLowerCase();
+        if (/目标达成|已完成|已经完成|搞定了|任务完成|达成了|已解决|问题已解决|方案已确认|确认通过/.test(text)) {
+            return '目标达成';
+        }
+        if (/暂停|先放一放|稍后再说|暂时搁置|以后再说|先不推进|暂停推进/.test(text)) {
+            return '已暂停';
+        }
+        if (/取消|放弃|不需要了|作废|终止|不要了|取消推进/.test(text)) {
+            return '已取消';
+        }
+        return null;
+    }
+
+    // 用户通过输入修改状态：/状态 推进中
+    function parseStatusCommand(text) {
+        const match = text.match(/^\/状态\s+(.+)$/);
+        if (!match) return null;
+        const status = match[1].trim();
+        const valid = window.AppShell?.getStatuses?.() || ['推进中', '目标达成', '已暂停', '已取消'];
+        return valid.includes(status) ? status : null;
+    }

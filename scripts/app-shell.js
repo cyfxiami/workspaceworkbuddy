@@ -457,6 +457,60 @@
 
     const SESSION_ITEM_ICON_HTML = '<span class="session-item-icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 3.5h10a1 1 0 0 1 1 1v5.5a1 1 0 0 1-1 1H7l-2.5 2V10.5H3a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/><circle cx="5.5" cy="7" r="0.55" fill="currentColor"/><circle cx="8" cy="7" r="0.55" fill="currentColor"/><circle cx="10.5" cy="7" r="0.55" fill="currentColor"/></svg></span>';
 
+    // 会话状态相关
+    const SESSION_STATUSES = ['推进中', '目标达成', '已暂停', '已取消'];
+    const STATUS_COLORS = {
+        '推进中': 'status-active',
+        '目标达成': 'status-done',
+        '已暂停': 'status-paused',
+        '已取消': 'status-cancelled'
+    };
+
+    function getSessionStatus(sessionId) {
+        const s = getSessionById(sessionId || currentSessionId);
+        return s?.status || '推进中';
+    }
+
+    function setSessionStatus(sessionId, status) {
+        // 允许预设状态与自定义状态文字（非空、长度限制内）
+        if (!status || typeof status !== 'string') return;
+        status = status.trim().slice(0, 20);
+        if (!status) return;
+        const id = sessionId || currentSessionId;
+        if (!id) return;
+        const sessions = getSessions();
+        const session = sessions.find((s) => s.id === id);
+        if (!session) return;
+        session.status = status;
+        saveSessions(sessions);
+        renderSessionHistory();
+        updateChatStatusBadge();
+        window.ContextPanel?.renderRelatedSessions?.();
+    }
+
+    function getStatusColorClass(status) {
+        return STATUS_COLORS[status] || 'status-active';
+    }
+
+    function getStatuses() {
+        return SESSION_STATUSES.slice();
+    }
+
+    function updateChatStatusBadge() {
+        const status = getSessionStatus();
+        const badge = document.getElementById('chat-status-badge');
+        if (badge) {
+            badge.textContent = status;
+            badge.className = 'chat-status-badge ' + getStatusColorClass(status);
+        }
+        // 同时刷新成员条
+        if (window.WorkbenchApp?.renderChatMembersBar) {
+            window.WorkbenchApp.renderChatMembersBar();
+        } else if (typeof renderChatMembersBar === 'function') {
+            renderChatMembersBar();
+        }
+    }
+
     function renderSessionHistory() {
         const list = document.getElementById('sidebar-sessions-list');
         if (!list) return;
@@ -465,15 +519,20 @@
             list.innerHTML = '<div class="context-empty">暂无历史会话</div>';
             return;
         }
-        list.innerHTML = sessions.map((s) =>
-            `<button type="button" class="session-item${s.id === currentSessionId ? ' active' : ''}" data-session-id="${s.id}">
+        list.innerHTML = sessions.map((s) => {
+            const status = s.status || '推进中';
+            const statusClass = getStatusColorClass(status);
+            return `<button type="button" class="session-item${s.id === currentSessionId ? ' active' : ''}" data-session-id="${s.id}">
                 ${SESSION_ITEM_ICON_HTML}
                 <span class="session-item-body">
                     <span class="session-item-title">${escapeHtml(s.title)}</span>
-                    <span class="session-item-time">${formatRelativeTime(s.timestamp)}</span>
+                    <span class="session-item-meta">
+                        <span class="session-status-tag ${statusClass}">${status}</span>
+                        <span class="session-item-time">${formatRelativeTime(s.timestamp)}</span>
+                    </span>
                 </span>
-            </button>`
-        ).join('');
+            </button>`;
+        }).join('');
     }
 
     function escapeHtml(str) {
@@ -492,6 +551,7 @@
             timestamp: Date.now(),
             assistantIndex: typeof assistantIndex === 'number' ? assistantIndex : null,
             workbenchAssistant: options.workbenchAssistant === true,
+            status: options.status || '推进中',
             messages: []
         };
         sessions.unshift(entry);
@@ -517,6 +577,67 @@
         highlightSessionInSidebar(currentSessionId);
     }
 
+    // 获取当前会话的关联会话列表
+    function getRelatedSessions(sessionId) {
+        const id = sessionId || currentSessionId;
+        if (!id) return [];
+        const session = getSessionById(id);
+        if (!session) return [];
+        return Array.isArray(session.relatedSessions) ? session.relatedSessions : [];
+    }
+
+    // 双向关联两个会话
+    function linkSessions(sessionIdA, sessionIdB) {
+        if (!sessionIdA || !sessionIdB || sessionIdA === sessionIdB) return false;
+        const sessions = getSessions();
+        const a = sessions.find((s) => s.id === sessionIdA);
+        const b = sessions.find((s) => s.id === sessionIdB);
+        if (!a || !b) return false;
+        if (!Array.isArray(a.relatedSessions)) a.relatedSessions = [];
+        if (!Array.isArray(b.relatedSessions)) b.relatedSessions = [];
+        if (!a.relatedSessions.includes(sessionIdB)) a.relatedSessions.push(sessionIdB);
+        if (!b.relatedSessions.includes(sessionIdA)) b.relatedSessions.push(sessionIdA);
+        saveSessions(sessions);
+        return true;
+    }
+
+    // 解除双向关联
+    function unlinkSessions(sessionIdA, sessionIdB) {
+        if (!sessionIdA || !sessionIdB) return false;
+        const sessions = getSessions();
+        const a = sessions.find((s) => s.id === sessionIdA);
+        const b = sessions.find((s) => s.id === sessionIdB);
+        if (a && Array.isArray(a.relatedSessions)) {
+            a.relatedSessions = a.relatedSessions.filter((id) => id !== sessionIdB);
+        }
+        if (b && Array.isArray(b.relatedSessions)) {
+            b.relatedSessions = b.relatedSessions.filter((id) => id !== sessionIdA);
+        }
+        saveSessions(sessions);
+        return true;
+    }
+
+    // 发起一个与当前会话关联的新会话，返回新会话
+    function createRelatedSession(title) {
+        const parentSessionId = currentSessionId;
+        const newSession = createSession(title || '关联新对话');
+        if (parentSessionId && newSession.id !== parentSessionId) {
+            linkSessions(parentSessionId, newSession.id);
+        }
+        return newSession;
+    }
+
+    // 跳转到指定会话（加载该会话并切换）
+    function switchToSession(sessionId) {
+        if (!sessionId) return;
+        const session = getSessionById(sessionId);
+        if (!session) return;
+        currentSessionId = sessionId;
+        highlightSessionInSidebar(sessionId);
+        // 触发会话切换事件，由 workbench-app 监听并恢复消息
+        document.dispatchEvent(new CustomEvent('workbench:switch-session', { detail: { sessionId } }));
+    }
+
     function saveSessionMessages(sessionId, messages, assistantIndex, options = {}) {
         if (!sessionId) return;
         const sessions = getSessions();
@@ -532,6 +653,10 @@
         if (options.workbenchAssistant === true) {
             session.workbenchAssistant = true;
             session.assistantIndex = null;
+        }
+        // 保存右侧边栏上下文快照
+        if (options.contextBundle !== undefined) {
+            session.contextBundle = options.contextBundle;
         }
         session.timestamp = Date.now();
         saveSessions(sessions);
@@ -769,10 +894,17 @@
     window.AppShell = {
         addSession,
         createSession,
+        createRelatedSession,
         touchCurrentSession,
         saveSessionMessages,
         setCurrentSessionId,
         getSessionById,
+        getSessions,
+        getRelatedSessions,
+        linkSessions,
+        unlinkSessions,
+        switchToSession,
+        getCurrentSessionId: () => currentSessionId,
         highlightSessionInSidebar,
         setCenterView,
         returnToMainSessionView,
@@ -784,6 +916,10 @@
         expandContextPanel,
         collapseContextPanel,
         setContextPanelCollapsed,
-        applyWorkbenchEntryLayout
+        applyWorkbenchEntryLayout,
+        getSessionStatus,
+        setSessionStatus,
+        getStatuses,
+        updateChatStatusBadge
     };
 })();
